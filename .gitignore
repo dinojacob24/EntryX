@@ -1,0 +1,23 @@
+# Configuration Files (Contain Secrets)
+config/db.php
+config/google_config.php
+config/secrets.php
+
+# User Generated Content (If any)
+uploads/
+
+# Dependency Directories
+vendor/
+node_modules/
+
+# System Files
+.DS_Store
+Thumbs.db
+
+# Logs
+error_log
+*.log
+
+# Temp Scripts
+db_test.php
+check_system.php
