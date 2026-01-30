@@ -1,72 +1,81 @@
 <?php
-require_once '../config/db.php';
+require_once '../config/db_connect.php';
+
 session_start();
+header('Content-Type: application/json');
 
-$action = $_GET['action'] ?? '';
-$data = json_decode(file_get_contents('php://input'), true);
+// Only allow authenticated staff (Super Admin, Event Coordinator, or Security)
+if (!isset($_SESSION['role']) || !in_array($_SESSION['role'], ['super_admin', 'event_admin', 'security'])) {
+    echo json_encode(['success' => false, 'error' => 'Unauthorized Access']);
+    exit;
+}
 
-if ($action === 'scan') {
-    $qr_token = $data['qr_token'];
+$input = json_decode(file_get_contents('php://input'), true);
+$qrToken = $input['qr_token'] ?? '';
+$scannerEventId = $input['event_id'] ?? 0;
 
-    try {
-        // Find Registration
-        $stmt = $pdo->prepare("
-            SELECT r.id, r.user_id, r.event_id, u.name, u.role 
-            FROM registrations r
-            JOIN users u ON r.user_id = u.id
-            WHERE r.qr_token = ?
-        ");
-        $stmt->execute([$qr_token]);
-        $reg = $stmt->fetch();
+if (empty($qrToken)) {
+    echo json_encode(['success' => false, 'error' => 'No QR Token']);
+    exit;
+}
 
-        if (!$reg) {
-            die(json_encode(['error' => 'Invalid Ticket']));
-        }
+try {
+    // 1. Validate Registration via Token
+    // We join with Users table to get the name for the response
+    $stmt = $pdo->prepare("SELECT r.id as reg_id, r.event_id, u.name as user_name, u.role as user_role 
+                           FROM registrations r 
+                           JOIN users u ON r.user_id = u.id 
+                           WHERE r.qr_token = ?");
+    $stmt->execute([$qrToken]);
+    $reg = $stmt->fetch();
 
-        // Check Attendance State
-        $stmt = $pdo->prepare("SELECT * FROM attendance WHERE registration_id = ? ORDER BY id DESC LIMIT 1");
-        $stmt->execute([$reg['id']]);
-        $last_record = $stmt->fetch();
+    if (!$reg) {
+        echo json_encode(['success' => false, 'error' => 'Invalid QR Code']);
+        exit;
+    }
 
-        $message = '';
-        $type = '';
+    if ($reg['event_id'] != $scannerEventId) {
+        echo json_encode(['success' => false, 'error' => 'Ticket is for a different event']);
+        exit;
+    }
 
-        if (!$last_record || $last_record['status'] === 'outside' || $last_record['status'] === 'completed') {
-            // Mark Entry
-            $stmt = $pdo->prepare("INSERT INTO attendance (registration_id, entry_time, status) VALUES (?, NOW(), 'inside')");
-            $stmt->execute([$reg['id']]);
-            $message = "Entry Allowed: " . $reg['name'];
-            $type = 'entry';
-        } else {
-            // Mark Exit
-            $stmt = $pdo->prepare("UPDATE attendance SET exit_time = NOW(), status = 'completed' WHERE id = ?");
-            $stmt->execute([$last_record['id']]);
-            $message = "Exit Marked: " . $reg['name'];
-            $type = 'exit';
-        }
+    // 2. Check Attendance State
+    // Look for an 'inside' record (where exit_time is NULL)
+    $stmtLog = $pdo->prepare("SELECT id FROM attendance_logs WHERE registration_id = ? AND exit_time IS NULL");
+    $stmtLog->execute([$reg['reg_id']]);
+    $fActiveLog = $stmtLog->fetch();
 
-        // Get Current Count for this Event
-        $stmt = $pdo->prepare("
-            SELECT COUNT(*) as count 
-            FROM attendance a 
-            JOIN registrations r ON a.registration_id = r.id
-            WHERE r.event_id = ? AND a.status = 'inside'
-        ");
-        $stmt->execute([$reg['event_id']]);
-        $count = $stmt->fetch()['count'];
+    if ($fActiveLog) {
+        // User is Inside -> Process EXIT
+        $update = $pdo->prepare("UPDATE attendance_logs SET exit_time = CURRENT_TIMESTAMP, status = 'exited' WHERE id = ?");
+        $update->execute([$fActiveLog['id']]);
 
         echo json_encode([
             'success' => true,
-            'message' => $message,
-            'type' => $type,
-            'current_count' => $count,
-            'user' => $reg['name'],
-            'role' => $reg['role']
+            'type' => 'exit',
+            'message' => 'Exit Recorded',
+            'user_name' => $reg['user_name'],
+            'user_role' => $reg['user_role'],
+            'time' => date('H:i:s')
         ]);
+    } else {
+        // User is Outside -> Process ENTRY
+        // Optional: Check if event is started?
 
-    } catch (PDOException $e) {
-        http_response_code(500);
-        echo json_encode(['error' => $e->getMessage()]);
+        $insert = $pdo->prepare("INSERT INTO attendance_logs (registration_id, entry_time, status) VALUES (?, CURRENT_TIMESTAMP, 'inside')");
+        $insert->execute([$reg['reg_id']]);
+
+        echo json_encode([
+            'success' => true,
+            'type' => 'entry',
+            'message' => 'Entry Recorded',
+            'user_name' => $reg['user_name'],
+            'user_role' => $reg['user_role'],
+            'time' => date('H:i:s')
+        ]);
     }
+
+} catch (PDOException $e) {
+    echo json_encode(['success' => false, 'error' => 'Database Error: ' . $e->getMessage()]);
 }
 ?>

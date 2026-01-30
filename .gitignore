@@ -1,7 +1,10 @@
-# Configuration Files (Contain Secrets)
-config/db.php
-config/google_config.php
-config/secrets.php
+# Environment Configuration
+.env
+
+# Configuration Files (Safe template files)
+config/db.example.php
+config/google_config.example.php
+config/secrets.example.php
 
 # User Generated Content (If any)
 uploads/
