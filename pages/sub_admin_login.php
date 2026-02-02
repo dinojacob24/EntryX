@@ -50,7 +50,7 @@ if (isset($_SESSION['user_id'])) {
                 <div style="position: relative;">
                     <i class="fa-solid fa-envelope"
                         style="position: absolute; left: 1.5rem; top: 50%; transform: translateY(-50%); color: #3b82f6;"></i>
-                    <input type="email" name="email" required placeholder="staff@entryx.system"
+                    <input type="email" name="email" required placeholder="staff@entryx.system" autocomplete="off"
                         style="width: 100%; padding: 1.2rem 1.5rem 1.2rem 4rem; background: rgba(255,255,255,0.03); border: 1px solid var(--p-border); border-radius: 16px; color: white; transition: 0.3s;"
                         onfocus="this.style.borderColor='#3b82f6'; this.style.background='rgba(59,130,246,0.05)';"
                         onblur="this.style.borderColor='var(--p-border)'; this.style.background='rgba(255,255,255,0.03)';">
@@ -58,17 +58,13 @@ if (isset($_SESSION['user_id'])) {
             </div>
 
             <div style="margin-bottom: 2.5rem;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem;">
-                    <label
-                        style="color: var(--p-text-muted); font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin: 0;">Security
-                        Key</label>
-                    <a href="forgot_password.php"
-                        style="color: #3b82f6; font-size: 0.8rem; font-weight: 600; text-decoration: none;">Reset?</a>
-                </div>
+                <label
+                    style="display: block; color: var(--p-text-muted); font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.8rem;">Security
+                    Key</label>
                 <div style="position: relative;">
                     <i class="fa-solid fa-key"
                         style="position: absolute; left: 1.5rem; top: 50%; transform: translateY(-50%); color: #3b82f6;"></i>
-                    <input type="password" name="password" required placeholder="••••••••"
+                    <input type="password" name="password" required placeholder="••••••••" autocomplete="new-password"
                         style="width: 100%; padding: 1.2rem 1.5rem 1.2rem 4rem; background: rgba(255,255,255,0.03); border: 1px solid var(--p-border); border-radius: 16px; color: white; transition: 0.3s;"
                         onfocus="this.style.borderColor='#3b82f6'; this.style.background='rgba(59,130,246,0.05)';"
                         onblur="this.style.borderColor='var(--p-border)'; this.style.background='rgba(255,255,255,0.03)';">

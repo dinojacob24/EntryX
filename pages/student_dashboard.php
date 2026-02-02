@@ -14,6 +14,12 @@ if (in_array($_SESSION['role'], ['super_admin', 'event_admin', 'security'])) {
     exit;
 }
 
+// Redirect External Users to their dedicated dashboard
+if ($_SESSION['role'] === 'external') {
+    header('Location: external_dashboard.php');
+    exit;
+}
+
 // NOW we can safely include files that output content
 require_once '../includes/header.php';
 require_once '../config/db_connect.php';
@@ -495,6 +501,48 @@ $upcomingEventsCount = count($availableEvents);
         </div>
     </div>
 
+    <!-- Hall of Fame / Results section -->
+    <h2 class="section-title reveal"><i class="fa-solid fa-trophy" style="color: #eab308;"></i> Hall of Fame</h2>
+    <div
+        style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 2.5rem; margin-bottom: 5rem;">
+        <?php
+        $resStmt = $pdo->query("SELECT r.*, e.name as event_name FROM results r JOIN events e ON r.event_id = e.id ORDER BY r.published_at DESC LIMIT 3");
+        $recentResults = $resStmt->fetchAll();
+
+        if (empty($recentResults)): ?>
+            <div class="glass-panel reveal" style="padding: 4rem; text-align: center; grid-column: 1/-1;">
+                <p style="color: var(--p-text-dim);">Historical records will appear here once published.</p>
+            </div>
+        <?php else:
+            foreach ($recentResults as $idx => $res): ?>
+                <div class="glass-panel reveal"
+                    style="padding: 2.5rem; border-color: rgba(234, 179, 8, 0.2); background: rgba(234,179,8,0.03); position: relative; overflow: hidden; animation-delay: <?php echo $idx * 0.1; ?>s;">
+                    <div style="position: absolute; top: -15px; right: -15px; color: rgba(234,179,8,0.1);">
+                        <i class="fa-solid fa-medal fa-6x"></i>
+                    </div>
+                    <div
+                        style="width: 50px; height: 50px; background: rgba(234,179,8,0.1); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #eab308; margin-bottom: 1.5rem;">
+                        <i class="fa-solid fa-award fa-xl"></i>
+                    </div>
+                    <h3 style="color: white; font-weight: 800; font-size: 1.5rem; margin-bottom: 0.5rem;">
+                        <?php echo htmlspecialchars($res['winner_name']); ?>
+                    </h3>
+                    <p
+                        style="color: #eab308; font-size: 0.85rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 1.5rem;">
+                        Winner - <?php echo htmlspecialchars($res['event_name']); ?></p>
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 1.5rem;">
+                        <span style="color: var(--p-text-dim); font-size: 0.9rem; font-weight: 600;">Runner Up:
+                            <?php echo htmlspecialchars($res['runner_up_name']); ?></span>
+                        <a href="results.php"
+                            style="color: var(--p-brand); font-size: 0.9rem; font-weight: 700; text-decoration: none;">Explore
+                            All <i class="fa-solid fa-arrow-right fa-xs"></i></a>
+                    </div>
+                </div>
+            <?php endforeach;
+        endif; ?>
+    </div>
+
     <!-- Registered Events -->
     <h2 class="section-title reveal"><i class="fa-solid fa-ticket-simple" style="color: var(--p-brand);"></i> My Event
         Passes
@@ -513,8 +561,8 @@ $upcomingEventsCount = count($availableEvents);
                 <div class="event-card-glass reveal" style="animation-delay: <?php echo $idx * 0.1; ?>s;">
                     <div class="card-banner">
                         <span
-                            class="status-badge <?php echo $reg['payment_status'] === 'free' ? 'status-inside' : 'status-pending'; ?>">
-                            <?php echo strtoupper($reg['payment_status'] === 'free' ? 'Confirmed' : $reg['payment_status']); ?>
+                            class="status-badge <?php echo in_array($reg['payment_status'], ['free', 'completed']) ? 'status-inside' : 'status-pending'; ?>">
+                            <?php echo strtoupper(in_array($reg['payment_status'], ['free', 'completed']) ? 'Confirmed' : $reg['payment_status']); ?>
                         </span>
                     </div>
                     <div class="card-content">
@@ -607,7 +655,7 @@ $upcomingEventsCount = count($availableEvents);
                     </div>
                     <button class="btn btn-primary"
                         style="width: 100%; padding: 1.2rem; border-radius: 18px; font-weight: 800; font-size: 1rem; box-shadow: 0 15px 30px rgba(255,31,31,0.2);"
-                        onclick="registerEvent(<?php echo $event['id']; ?>)">
+                        onclick="registerEvent(<?php echo htmlspecialchars(json_encode($event)); ?>)">
                         Register <i class="fa-solid fa-arrow-right-long"
                             style="margin-left: 0.8rem; transition: transform 0.3s ease;"></i>
                     </button>
@@ -616,6 +664,7 @@ $upcomingEventsCount = count($availableEvents);
         <?php endforeach; ?>
     </div>
 </div>
+
 
 <!-- Premium Ticket Modal -->
 <div id="ticketModal"
@@ -647,8 +696,9 @@ $upcomingEventsCount = count($availableEvents);
         <div style="padding: 3rem 2.5rem; text-align: center; background: #fff; border-radius: 0 0 40px 40px;">
             <div
                 style="background: #f8fafc; padding: 2.5rem; border-radius: 30px; border: 2px dashed #cbd5e1; display: inline-block; margin-bottom: 2.5rem; position: relative;">
-                <img id="qrImage" src="" alt="QR Code"
-                    style="width: 260px; height: 260px; display: block; filter: contrast(1.1) brightness(1.05);">
+                <div id="qrContainer"
+                    style="width: 260px; height: 260px; display: flex; align-items: center; justify-content: center; background: white;">
+                </div>
                 <div
                     style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 15px solid #fff; pointer-events: none; border-radius: 20px;">
                 </div>
@@ -693,14 +743,109 @@ $upcomingEventsCount = count($availableEvents);
     </div>
 </div>
 
+
+
+<!-- Manual Payment Modal (Restored) -->
+<div id="paymentModal"
+    style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); backdrop-filter: blur(10px); z-index: 3000; justify-content: center; align-items: center; padding: 1rem;">
+    <div class="glass-panel"
+        style="max-width: 450px; width: 100%; border-radius: 30px; border-color: rgba(255,165,0,0.3); background: #0a0a0a; color: #fff; position: relative; padding: 2rem;">
+        <h3 id="payEventName" style="color: #fff; font-weight: 800; margin-bottom: 0.5rem; text-align: center;">Event
+            Payment</h3>
+
+        <div
+            style="background: #fff; padding: 1.5rem; border-radius: 20px; text-align: center; margin-bottom: 2rem; color: #000;">
+            <div id="payQr" style="display: inline-block; margin-bottom: 1rem;"></div>
+            <div style="font-size: 2rem; font-weight: 900; color: #10b981;" id="payAmount">₹0.00</div>
+            <div style="color: #64748b; font-size: 0.8rem; font-weight: 600;">UPI: <span id="payUpiId"
+                    style="color: #0f172a;"></span></div>
+        </div>
+
+        <div style="margin-bottom: 2rem;">
+            <label
+                style="color: #94a3b8; font-size: 0.8rem; font-weight: 600; display: block; margin-bottom: 0.5rem;">TRANSACTION
+                ID / UTR</label>
+            <input type="text" id="payTransactionId" placeholder="Enter 12-digit UTR..."
+                style="width: 100%; padding: 1rem; border-radius: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; font-family: monospace;">
+        </div>
+
+        <div style="display: flex; gap: 1rem;">
+            <button onclick="document.getElementById('paymentModal').style.display='none'" class="btn btn-outline"
+                style="flex: 1; border-color: rgba(255,255,255,0.1); color: #94a3b8;">Cancel</button>
+            <button onclick="submitPayment()" class="btn btn-primary"
+                style="flex: 2; background: #eab308; color: #000; border: none;">Verify & Register</button>
+        </div>
+    </div>
+</div>
 <script>
+    let eventQrInstance = null;
     function showTicket(token, name) {
         document.getElementById('ticketEventName').textContent = name;
-        document.getElementById('qrImage').src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${token}`;
+        const container = document.getElementById('qrContainer');
+        container.innerHTML = ''; // Clear previous
+
+        qrInstance = new QRCode(container, {
+            text: token,
+            width: 240,
+            height: 240,
+            colorDark: "#000000",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.H
+        });
+
         document.getElementById('ticketModal').style.display = 'flex';
     }
 
-    async function registerEvent(eventId) {
+    // Event Registration Logic
+    let currentEventId = null;
+
+    async function registerEvent(event) {
+        const eventId = typeof event === 'object' ? event.id : event;
+        const isPaid = (typeof event === 'object' && event.is_paid == '1');
+
+        if (isPaid) {
+            currentEventId = eventId;
+            const upiId = event.payment_upi || 'admin@upi';
+            const amount = event.base_price || 0;
+
+            document.getElementById('payEventName').innerText = event.name || 'Event';
+            document.getElementById('payAmount').innerText = '₹' + parseFloat(amount).toFixed(2);
+            document.getElementById('payUpiId').innerText = upiId;
+            document.getElementById('payTransactionId').value = '';
+
+            // Generate QR
+            const qrContainer = document.getElementById('payQr');
+            qrContainer.innerHTML = '';
+            const qrUrl = `upi://pay?pa=${upiId}&pn=EntryX&am=${amount}&tn=Reg ${eventId}`;
+
+            new QRCode(qrContainer, {
+                text: qrUrl,
+                width: 160,
+                height: 160,
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.M
+            });
+
+            document.getElementById('paymentModal').style.display = 'flex';
+            return;
+        }
+
+        proceedWithRegistration(eventId);
+    }
+
+    // Confirm Payment
+    function submitPayment() {
+        const txId = document.getElementById('payTransactionId').value.trim();
+        if (!txId || txId.length < 5) {
+            Swal.fire('Error', 'Invalid Transaction ID', 'error');
+            return;
+        }
+        document.getElementById('paymentModal').style.display = 'none';
+        proceedWithRegistration(currentEventId, txId);
+    }
+
+    async function proceedWithRegistration(eventId, transactionId = null) {
         // Fallback if Swal is not loaded
         if (typeof Swal === 'undefined') {
             if (confirm('Confirm Registration: Secure your spot now?')) {
@@ -754,7 +899,10 @@ $upcomingEventsCount = count($availableEvents);
                 const response = await fetch('../api/registrations.php?action=create', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ event_id: eventId })
+                    body: JSON.stringify({
+                        event_id: eventId,
+                        transaction_id: transactionId
+                    })
                 });
 
                 const result = await response.json();
@@ -762,15 +910,16 @@ $upcomingEventsCount = count($availableEvents);
                 if (result.success) {
                     await Swal.fire({
                         icon: 'success',
-                        title: 'Success!',
-                        text: 'You are now registered.',
+                        title: 'Done!',
+                        text: result.payment_needed ? 'Registration submitted for verification.' : 'You are now registered.',
                         confirmButtonColor: '#ff1f1f',
                         background: '#0a0a0a',
                         color: '#fff',
                         timer: 3000,
                         timerProgressBar: true
                     });
-                    window.location.href = 'student_dashboard.php?registered=1';
+                    const redirectParam = result.payment_needed ? 'submitted=1' : 'registered=1';
+                    window.location.href = `student_dashboard.php?${redirectParam}`;
                 } else {
                     throw new Error(result.error || 'Unknown error occurred');
                 }
@@ -791,20 +940,26 @@ $upcomingEventsCount = count($availableEvents);
     // Show success message if redirected after registration
     document.addEventListener('DOMContentLoaded', function () {
         const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.has('registered')) {
+        if (urlParams.has('registered') || urlParams.has('submitted')) {
+            const isPending = urlParams.has('submitted');
+
             if (typeof Swal !== 'undefined') {
                 Swal.fire({
                     toast: true,
                     position: 'top-end',
                     icon: 'success',
-                    title: 'Registration confirmed!',
+                    title: isPending ? 'Registration Submitted (Pending Verification)' : 'Registration confirmed!',
                     showConfirmButton: false,
                     timer: 5000,
                     timerProgressBar: true,
-                    background: '#10b981',
+                    background: isPending ? '#f59e0b' : '#10b981',
                     color: '#fff'
                 });
             }
+
+            // Clear the URL parameters without refreshing the page
+            const newUrl = window.location.pathname;
+            window.history.replaceState({}, document.title, newUrl);
 
             // Highlight the "My Event Passes" section
             const myPassesHeader = document.querySelector('.section-title');
@@ -942,4 +1097,5 @@ $upcomingEventsCount = count($availableEvents);
 </script>
 
 
+<script src="../assets/js/qrcode.min.js"></script>
 <?php require_once '../includes/footer.php'; ?>

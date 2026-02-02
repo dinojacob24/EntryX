@@ -1,7 +1,8 @@
 <?php
 // Set session cookie path once at the top to ensure visibility across directories
 if (session_status() === PHP_SESSION_NONE) {
-    session_set_cookie_params(0, '/Project/EntryX');
+    session_set_cookie_params(0, '/');
+    session_start();
 }
 
 require_once __DIR__ . '/../config/db_connect.php';
@@ -28,15 +29,28 @@ if ($action === 'register') {
     // --- Server-side Validation ---
     $name = trim(htmlspecialchars($_POST['name'] ?? ''));
     $email = trim(filter_var($_POST['email'] ?? '', FILTER_SANITIZE_EMAIL));
-    $password = $_POST['password'] ?? '';
-    $confirmPassword = $_POST['confirm_password'] ?? '';
+    // Password is now auto-generated from phone number for guests
     $role = $_POST['role'] ?? 'external';
     $phone = trim(htmlspecialchars($_POST['phone'] ?? ''));
     $college_id = trim(htmlspecialchars($_POST['college_id'] ?? ''));
+    $college_organization = trim(htmlspecialchars($_POST['college_organization'] ?? ''));
+    $department = trim(htmlspecialchars($_POST['department'] ?? '')); // Added Department
+    $external_program_id = $_POST['external_program_id'] ?? null;
+    $registration_source = $role === 'external' ? 'external_program' : 'direct';
+    $payment_status = $_POST['payment_status'] ?? 'not_required';
+    $payment_method = $_POST['payment_method'] ?? null;
+    $transaction_id = trim(htmlspecialchars($_POST['transaction_id'] ?? ''));
     $id_proof_path = null;
 
+    // Use Phone Number as Password
+    if (empty($phone)) {
+        echo json_encode(['success' => false, 'error' => 'Phone/WhatsApp Number is required.']);
+        exit;
+    }
+    $password = $phone;
+
     // 1. Basic Empty Checks
-    if (empty($name) || empty($email) || empty($password)) {
+    if (empty($name) || empty($email)) {
         echo json_encode(['success' => false, 'error' => 'Please fill in all required fields.']);
         exit;
     }
@@ -47,18 +61,35 @@ if ($action === 'register') {
         exit;
     }
 
-    // 3. Password Match Check
-    if (!empty($confirmPassword) && $password !== $confirmPassword) {
-        echo json_encode(['success' => false, 'error' => 'Passwords do not match.']);
-        exit;
+    // --- DOMAIN VALIDATION (Internal vs External) ---
+    $allowedDomains = ['ajce.in', 'ac.in']; // Internal domains
+    $emailDomain = substr(strrchr($email, "@"), 1);
+
+    // Check if domain ends with any allowed domain (to handle subdomains like student.ajce.in)
+    $isInternalEmail = false;
+    foreach ($allowedDomains as $domain) {
+        if (substr($emailDomain, -strlen($domain)) === $domain) {
+            $isInternalEmail = true;
+            break;
+        }
     }
 
-    // 4. Password Strength Check (Serverside)
-    // At least 8 chars, 1 uppercase, 1 lowercase, 1 number
-    if (strlen($password) < 8 || !preg_match("/[A-Z]/", $password) || !preg_match("/[a-z]/", $password) || !preg_match("/[0-9]/", $password)) {
-        echo json_encode(['success' => false, 'error' => 'Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, and one number.']);
-        exit;
+    if ($role === 'internal') {
+        if (!$isInternalEmail) {
+            echo json_encode(['success' => false, 'error' => 'Internal registration is restricted to College Email IDs ending in .ajce.in or .ac.in']);
+            exit;
+        }
+    } elseif ($role === 'external') {
+        // Optional: Block internal emails from registering as external? User didn't ask for this explicitly, but it makes sense.
+        // User request: "internal users will be differentiated on the basis of their collegew email... and all other mails should be external".
+        // This implies if you have a college mail, you ARE internal.
+        if ($isInternalEmail) {
+            echo json_encode(['success' => false, 'error' => 'Please use the "Internal Student" option for College Email IDs.']);
+            exit;
+        }
     }
+
+    // Removed Password Match & Strength Checks as we auto-set it
 
     // Handle File Upload for External Users
     if ($role === 'external') {
@@ -71,7 +102,6 @@ if ($action === 'register') {
         if (!is_dir($uploadDir))
             mkdir($uploadDir, 0777, true);
 
-        // Professional file naming (sanitized)
         $fileExt = strtolower(pathinfo($_FILES['id_proof']['name'], PATHINFO_EXTENSION));
         $allowed = ['jpg', 'jpeg', 'png', 'pdf'];
 
@@ -102,21 +132,43 @@ if ($action === 'register') {
         'password' => $password,
         'role' => $role,
         'phone' => $phone,
-        'college_id' => $role === 'internal' ? $college_id : null,
-        'id_proof' => $id_proof_path
+        'college_id' => $college_id,
+        'college_organization' => $college_organization,
+        'department' => $department,
+        'id_proof' => $id_proof_path,
+        'external_program_id' => $external_program_id,
+        'registration_source' => $registration_source,
+        'payment_status' => $payment_status,
+        'payment_method' => $payment_method,
+        'transaction_id' => $transaction_id
     ];
 
     $result = $user->register($data);
+
+    // Auto-Login for External Users upon successful registration
+    if ($result['success']) {
+        // Fetch the user to get ID and other details
+        $newUser = $user->getUserByEmail($email);
+        if ($newUser) {
+            if (session_status() === PHP_SESSION_NONE)
+                session_start();
+            $_SESSION['user_id'] = $newUser['id'];
+            $_SESSION['role'] = $newUser['role'];
+            $_SESSION['name'] = $newUser['name'];
+            $_SESSION['email'] = $newUser['email'];
+        }
+    }
+
     echo json_encode($result);
     exit;
 }
 
 if ($action === 'login') {
     $input = json_decode(file_get_contents('php://input'), true);
-    $email = $input['email'] ?? '';
+    $identifier = $input['email'] ?? ''; // Reusing the same name from frontend for compatibility
     $password = $input['password'] ?? '';
 
-    $result = $user->login($email, $password);
+    $result = $user->login($identifier, $password);
     echo json_encode($result);
     exit;
 }
@@ -296,10 +348,24 @@ if ($action === 'google_callback') {
                 $name = $googleUser['name'];
                 $picture = $googleUser['picture'] ?? null;
 
-                if ($user->createOrLoginGoogleUser($googleId, $email, $name, $picture)) {
-                    header('Location: ../pages/student_dashboard.php');
+                $loginResult = $user->createOrLoginGoogleUser($googleId, $email, $name, $picture);
+
+                if ($loginResult === true) {
+                    // Success - Redirect based on role
+                    if ($_SESSION['role'] === 'external') {
+                        header('Location: ../pages/external_dashboard.php');
+                    } elseif ($_SESSION['role'] === 'staff') {
+                        header('Location: ../pages/staff_dashboard.php');
+                    } else {
+                        header('Location: ../pages/student_dashboard.php');
+                    }
+                    exit;
+                } elseif (is_array($loginResult) && isset($loginResult['registration_required'])) {
+                    // Unregistered Guest - Redirect to Register
+                    header('Location: ../pages/register.php?error=external_registration_required');
                     exit;
                 } else {
+                    // Other errors (like admin linking block)
                     header('Location: ../pages/user_login.php?error=linking_failed');
                     exit;
                 }
@@ -307,6 +373,29 @@ if ($action === 'google_callback') {
         }
     }
     header('Location: ../pages/user_login.php?error=auth_failed');
+    exit;
+}
+
+if ($action === 'delete_account') {
+    if (!isset($_SESSION['user_id'])) {
+        echo json_encode(['success' => false, 'error' => 'Not authenticated']);
+        exit;
+    }
+
+    if ($_SESSION['role'] !== 'external') {
+        echo json_encode(['success' => false, 'error' => 'Only external users can self-delete registrations']);
+        exit;
+    }
+
+    $userId = $_SESSION['user_id'];
+    $result = $user->deleteUser($userId);
+
+    if ($result['success']) {
+        session_destroy();
+        echo json_encode(['success' => true]);
+    } else {
+        echo json_encode(['success' => false, 'error' => $result['error']]);
+    }
     exit;
 }
 

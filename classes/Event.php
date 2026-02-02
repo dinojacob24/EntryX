@@ -10,8 +10,8 @@ class Event
 
     public function createEvent($data)
     {
-        $sql = "INSERT INTO events (name, description, event_date, venue, capacity, type, is_paid, base_price, is_gst_enabled, gst_rate, created_by) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        $sql = "INSERT INTO events (name, description, event_date, venue, capacity, type, is_paid, base_price, is_gst_enabled, gst_rate, payment_upi, gst_target, created_by) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try {
             $stmt = $this->pdo->prepare($sql);
@@ -26,6 +26,8 @@ class Event
                 $data['base_price'],
                 $data['is_gst_enabled'],
                 $data['gst_rate'],
+                $data['payment_upi'] ?? null,
+                $data['gst_target'] ?? 'both',
                 $data['created_by']
             ]);
             return ['success' => true, 'message' => 'Event created successfully'];
@@ -57,7 +59,8 @@ class Event
         $sql = "UPDATE events SET 
                 name = ?, description = ?, event_date = ?, venue = ?, 
                 capacity = ?, type = ?, is_paid = ?, base_price = ?, 
-                is_gst_enabled = ?, gst_rate = ?, status = ?
+                is_gst_enabled = ?, gst_rate = ?, payment_upi = ?,
+                gst_target = ?, status = ?
                 WHERE id = ?";
 
         try {
@@ -73,6 +76,8 @@ class Event
                 $data['base_price'],
                 $data['is_gst_enabled'],
                 $data['gst_rate'],
+                $data['payment_upi'] ?? null,
+                $data['gst_target'] ?? 'both',
                 $data['status'],
                 $id
             ]);

@@ -437,18 +437,6 @@ $entriesToday = $stmtToday->fetchColumn();
 
         <input type="hidden" id="activeEventId" value="<?php echo $initialEventId; ?>">
 
-        <div style="margin-top: 1rem;">
-            <div class="stat-label">Active Event Node</div>
-            <div id="activeEventNode" style="padding: 1rem; background: rgba(255,255,255,0.03); border: 1px solid var(--sec-border); border-radius: 12px; border-left: 4px solid var(--sec-brand);">
-                <div style="font-weight: 800; color: white; margin-bottom: 0.2rem;" id="activeEventNameDisplay">
-                    <?php echo !empty($events) ? htmlspecialchars($events[0]['name']) : 'NO EVENT LINKED'; ?>
-                </div>
-                <div style="font-size: 0.75rem; color: #94a3b8;">Scanning for this event...</div>
-            </div>
-            <button class="cam-btn" style="width: 100%; justify-content: center; margin-top: 0.5rem;" onclick="showEventList()">
-                <i class="fa-solid fa-list"></i> Change Event Node
-            </button>
-        </div>
 
         <div style="margin-top: auto; padding-top: 2rem; border-top: 1px solid rgba(255,255,255,0.05);">
             <div style="font-size: 0.8rem; color: #475569;">
@@ -479,9 +467,15 @@ $entriesToday = $stmtToday->fetchColumn();
                     <p style="color: #94a3b8; font-size: 0.9rem;">Hardware initialization required to proceed</p>
                 </div>
                 <div style="display: flex; flex-direction: column; gap: 1rem; width: 100%; max-width: 300px;">
-                    <button class="btn btn-primary" style="padding: 1.2rem; border-radius: 16px; width: 100%;"
-                        onclick="startScanner()">
-                        <i class="fa-solid fa-bolt"></i> Initialize Sensor
+                    <button class="btn btn-primary"
+                        style="padding: 1.2rem; border-radius: 16px; width: 100%; font-weight: 800; background: #10b981; border: none;"
+                        onclick="startScanner('entry')">
+                        <i class="fa-solid fa-right-to-bracket"></i> START ENTRY SCAN
+                    </button>
+                    <button class="btn btn-primary"
+                        style="padding: 1.2rem; border-radius: 16px; width: 100%; font-weight: 800; background: #ef4444; border: none;"
+                        onclick="startScanner('exit')">
+                        <i class="fa-solid fa-right-from-bracket"></i> START EXIT SCAN
                     </button>
                 </div>
             </div>
@@ -494,25 +488,33 @@ $entriesToday = $stmtToday->fetchColumn();
         </div>
 
         <div id="cameraControls" class="camera-controls" style="display: none;">
-             <button class="cam-btn" onclick="toggleFlash()"><i class="fa-solid fa-bolt"></i> Flashlight</button>
-             <button class="cam-btn" onclick="switchCamera()"><i class="fa-solid fa-camera-rotate"></i> Switch Camera</button>
-             <button class="cam-btn" style="background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.3); color: #ef4444;" onclick="stopScanner()">
+            <button class="cam-btn" onclick="toggleFlash()"><i class="fa-solid fa-bolt"></i> Flashlight</button>
+            <button class="cam-btn" onclick="switchCamera()"><i class="fa-solid fa-camera-rotate"></i> Switch
+                Camera</button>
+            <button class="cam-btn"
+                style="background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.3); color: #ef4444;"
+                onclick="stopScanner()">
                 <i class="fa-solid fa-video-slash"></i> OFF SENSOR
-             </button>
+            </button>
         </div>
 
         <div style="display: flex; gap: 1rem; align-items: stretch;">
             <div id="recentClearance" class="recent-profile-card" style="flex: 2; margin-top: 0;">
-                <div style="width: 50px; height: 50px; background: var(--sec-brand); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white;">
+                <div
+                    style="width: 50px; height: 50px; background: var(--sec-brand); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white;">
                     <i class="fa-solid fa-user-check fa-lg"></i>
                 </div>
                 <div>
-                    <div id="clearanceName" style="font-weight: 800; font-size: 1.1rem; color: white;">Awaiting Scan...</div>
-                    <div id="clearanceDetails" style="font-size: 0.8rem; color: var(--sec-brand); font-weight: 700;">No active participant</div>
+                    <div id="clearanceName" style="font-weight: 800; font-size: 1.1rem; color: white;">Awaiting Scan...
+                    </div>
+                    <div id="clearanceDetails" style="font-size: 0.8rem; color: var(--sec-brand); font-weight: 700;">No
+                        active participant</div>
                 </div>
             </div>
-            
-            <button id="nextScanBtn" class="btn" style="flex: 1; display: none; background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid #10b981; border-radius: 20px; font-weight: 800;" onclick="manualReset()">
+
+            <button id="nextScanBtn" class="btn"
+                style="flex: 1; display: none; background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid #10b981; border-radius: 20px; font-weight: 800;"
+                onclick="manualReset()">
                 <i class="fa-solid fa-forward"></i> NEXT SCAN
             </button>
         </div>
@@ -534,20 +536,27 @@ $entriesToday = $stmtToday->fetchColumn();
     const errorSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3');
 
     let isInitializing = false;
-    async function startScanner() {
-        if (isInitializing) return;
+    let currentScanMode = 'entry'; // 'entry' or 'exit'
 
-        // Allowing Alert - Ask for permission before starting
+    async function startScanner(mode = 'entry') {
+        if (isInitializing) return;
+        currentScanMode = mode;
+
+        const actionText = mode === 'entry' ? 'scan entry tickets' : 'scan exit passes';
+        const titleText = mode === 'entry' ? 'Enable Entry Optical Sensor?' : 'Enable Exit Optical Sensor?';
+        const confirmColor = mode === 'entry' ? '#10b981' : '#ef4444';
+
+        // 1. User Intent Confirmation (UI Alert)
         const confirm = await Swal.fire({
-            title: 'Initialize Sensor?',
-            text: "This will activate the camera hardware for scanning.",
-            icon: 'question',
+            title: titleText,
+            text: `System needs camera access to ${actionText}.`,
+            icon: 'info',
             showCancelButton: true,
-            confirmButtonText: 'Allow Access',
+            confirmButtonText: 'Start Camera',
             cancelButtonText: 'Cancel',
             background: '#0a0a0a',
             color: '#fff',
-            confirmButtonColor: '#3b82f6',
+            confirmButtonColor: confirmColor,
             cancelButtonColor: 'rgba(255,255,255,0.1)'
         });
 
@@ -557,35 +566,98 @@ $entriesToday = $stmtToday->fetchColumn();
         const initOverlay = document.getElementById('initOverlay');
         const scannerGrid = document.getElementById('vanguardGrid');
         const cameraControls = document.getElementById('cameraControls');
+        const gateCondition = document.getElementById('gateCondition');
+
+        // Visual Feedback for Mode
+        if (mode === 'exit') {
+            document.querySelector('.scan-target').style.borderColor = '#ef4444';
+            document.querySelector('.laser-line').style.background = '#ef4444';
+            document.querySelector('.laser-line').style.boxShadow = '0 0 20px #ef4444';
+        } else {
+            document.querySelector('.scan-target').style.borderColor = '#3b82f6';
+            document.querySelector('.laser-line').style.background = '#3b82f6';
+            document.querySelector('.laser-line').style.boxShadow = '0 0 20px #3b82f6';
+        }
 
         try {
-            // Clear existing scanner if any
+            // 2. Clear existing scanner session
             if (html5QrCode) {
-                try { await html5QrCode.stop(); } catch (e) {}
-                html5QrCode = null;
+                try {
+                     // Check if scanning
+                     if(html5QrCode.isScanning) {
+                         await html5QrCode.stop();
+                     }
+                     html5QrCode.clear();
+                } catch (e) { console.log(e); }
             }
 
+            // 3. Request Camera - DIRECT BROWSER API FIRST
             html5QrCode = new Html5Qrcode("reader");
             const config = { fps: 20, qrbox: { width: 300, height: 300 } };
-            const cameraMode = currentCamera === 'environment' ? { facingMode: "environment" } : { facingMode: "user" };
-
-            await html5QrCode.start(cameraMode, config, onScanSuccess);
             
+            try {
+                // First, verify we can even touch the camera via browser API
+                // This bypasses the library to confirm hardware access
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                
+                // If we get here, browser has granted access!
+                // Stop this test stream immediately so library can use it
+                stream.getTracks().forEach(track => track.stop());
+                
+                // Now get the specific device ID we want to use
+                const devices = await Html5Qrcode.getCameras();
+                if (devices && devices.length) {
+                    // Filter: Try to find 'back' or 'environment' camera if desired, else 'user'
+                    // For now, let's just grab the first available one to GUARANTEE it works
+                    const cameraId = devices[0].id; // Simply take the first valid one
+
+                    await html5QrCode.start(cameraId, config, onScanSuccess);
+                } else {
+                    throw new Error("Browser granted permission but no camera devices found.");
+                }
+
+            } catch (cameraErr) {
+                console.error("Direct Access Failed:", cameraErr);
+                
+                // Fallback: Last ditch effort, let library try its own magic blindly
+                // This handles cases where getUserMedia behaves oddly on some OS/Browsers
+                console.warn("Retrying with blind library start...");
+                await html5QrCode.start({ facingMode: "user" }, config, onScanSuccess);
+            }
+
+            // 4. Success State
             initOverlay.classList.add('active');
             scannerGrid.style.display = 'block';
             cameraControls.style.display = 'flex';
-            addToLog("Sensor: Hardware linked successfully", "info");
-            document.getElementById('gateCondition').textContent = 'ACTIVE';
+            addToLog(`Sensor: ${mode.toUpperCase()} MODE initialized`, "info");
+
+            if (gateCondition) {
+                gateCondition.textContent = mode === 'entry' ? 'ENTRY ACTIVE' : 'EXIT ACTIVE';
+                gateCondition.style.color = mode === 'entry' ? '#10b981' : '#ef4444';
+            }
+
         } catch (err) {
             console.error("Scanner Error:", err);
+            
+            // Specific Error Handling for Permissions
+            let errorMsg = 'Could not access camera.';
+            if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+                errorMsg = 'Camera permission was denied. Please allow camera access in your browser address bar.';
+            } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+                errorMsg = 'No camera device found on this system.';
+            } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+                 errorMsg = 'Camera is already in use by another application.';
+            }
+
             Swal.fire({
                 title: 'Sensor Error',
-                text: 'Could not link to camera hardware. Please check your browser permissions.',
+                text: errorMsg,
                 icon: 'error',
                 background: '#0a0a0a',
-                color: '#fff'
+                color: '#fff',
+                confirmButtonText: 'Retry'
             });
-            addToLog("Error: Camera initialization failed", "error");
+            addToLog("Error: " + errorMsg, "error");
         } finally {
             isInitializing = false;
         }
@@ -593,11 +665,11 @@ $entriesToday = $stmtToday->fetchColumn();
 
     async function stopScanner() {
         if (!html5QrCode) return;
-        
+
         try {
             await html5QrCode.stop();
             html5QrCode = null;
-            
+
             document.getElementById('initOverlay').classList.remove('active');
             document.getElementById('vanguardGrid').style.display = 'none';
             document.getElementById('cameraControls').style.display = 'none';
@@ -610,17 +682,18 @@ $entriesToday = $stmtToday->fetchColumn();
         }
     }
 
-    let currentCamera = 'environment';
+    let currentCamera = 'user';
     async function switchCamera() {
         currentCamera = currentCamera === 'environment' ? 'user' : 'environment';
-        await startScanner();
+        await stopScanner(); // Stop first
+        await startScanner(currentScanMode); // Restart with new mode
     }
 
     async function resetTerminal() {
         if (html5QrCode) {
             try {
                 await html5QrCode.stop();
-            } catch (e) {}
+            } catch (e) { }
         }
         location.reload();
     }
@@ -633,34 +706,13 @@ $entriesToday = $stmtToday->fetchColumn();
         addToLog("System: Manual unlock triggered", "info");
     }
 
-    async function showEventList() {
-        const events = <?php echo json_encode($events); ?>;
-        const inputOptions = {};
-        events.forEach(e => { inputOptions[e.id] = e.name; });
+    // Removed showEventList as requested
 
-        const { value: eventId } = await Swal.fire({
-            title: 'Link Terminal to Event',
-            input: 'select',
-            inputOptions: inputOptions,
-            inputPlaceholder: 'Select an event node',
-            showCancelButton: true,
-            background: '#0a0a0a',
-            color: '#fff',
-            confirmButtonColor: '#3b82f6'
-        });
-
-        if (eventId) {
-            const event = events.find(e => e.id == eventId);
-            document.getElementById('activeEventId').value = eventId;
-            document.getElementById('activeEventNameDisplay').textContent = event.name;
-            addToLog(`System: Switched to Node ${event.name}`, 'info');
-        }
-    }
 
     function processManualEntry() {
         const id = document.getElementById('manualTicketId').value.trim();
         if (!id) return;
-        
+
         onScanSuccess(id);
         document.getElementById('manualTicketId').value = '';
     }
@@ -669,7 +721,7 @@ $entriesToday = $stmtToday->fetchColumn();
         if (!html5QrCode) return;
         const state = html5QrCode.getState();
         if (state !== Html5QrcodeScannerState.SCANNING) return;
-        
+
         // This is a browser-dependent feature, might not work on all devices
         html5QrCode.applyVideoConstraints({
             advanced: [{ torch: true }]
@@ -697,14 +749,14 @@ $entriesToday = $stmtToday->fetchColumn();
 
     function onScanSuccess(decodedText) {
         if (isProcessing) return;
-        
+
         const eId = document.getElementById('activeEventId').value;
         if (!eId || eId == 0) {
-            addToLog("Error: No event node linked! Select an event first.", "error");
-            Swal.fire('Error', 'Please link this terminal to an event node first.', 'error');
+            addToLog("Error: No active event found in system.", "error");
+            Swal.fire('Configuration Error', 'No active event found. Please contact Administrator to create an event first.', 'error');
             return;
         }
-        
+
         isProcessing = true;
         document.getElementById('nextScanBtn').style.display = 'flex';
         document.getElementById('gateCondition').textContent = 'PROCESSING';
@@ -712,17 +764,17 @@ $entriesToday = $stmtToday->fetchColumn();
         fetch('../api/attendance.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ qr_token: decodedText, event_id: eId })
+            body: JSON.stringify({ qr_token: decodedText, event_id: eId, mode: currentScanMode })
         })
             .then(res => res.json())
             .then(data => {
                 const profile = document.getElementById('recentClearance');
-                
+
                 if (data.success) {
-                    successSound.play().catch(e => {});
+                    successSound.play().catch(e => { });
                     showFeedback(data.type.toUpperCase() + ' GRANTED');
                     addToLog(`${data.user_name} - ${data.message}`, data.type);
-                    
+
                     document.getElementById('clearanceName').textContent = data.user_name;
                     document.getElementById('clearanceDetails').textContent = `${data.type.toUpperCase()} • ${new Date().toLocaleTimeString()}`;
                     profile.classList.add('active');
@@ -741,17 +793,17 @@ $entriesToday = $stmtToday->fetchColumn();
                     document.getElementById('countInside').textContent = insideNow;
                     updateCapacity();
                 } else {
-                    errorSound.play().catch(e => {});
+                    errorSound.play().catch(e => { });
                     showFeedback('DENIED', true);
                     addToLog(`Failed: ${data.error}`, 'error');
-                    
+
                     document.getElementById('gateCondition').style.color = '#ef4444';
                     document.getElementById('gateCondition').textContent = 'BLOCKED!';
                     profile.classList.remove('active');
                 }
 
                 // Auto-reset after 3 seconds, or manual override available
-                setTimeout(() => { 
+                setTimeout(() => {
                     if (isProcessing) manualReset();
                 }, 3000);
             })

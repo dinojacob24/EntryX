@@ -29,6 +29,26 @@ try {
     $stmt->execute([$qrToken]);
     $reg = $stmt->fetch();
 
+    // FALLBACK: If not found in registrations, check users table (for External Guests)
+    if (!$reg) {
+        $stmtUser = $pdo->prepare("SELECT id as user_id, name as user_name, role as user_role, '0' as reg_id, '0' as event_id FROM users WHERE qr_token = ?");
+        $stmtUser->execute([$qrToken]);
+        $userReg = $stmtUser->fetch();
+
+        if ($userReg) {
+            // Found a valid User Token
+            // Since they are external, we might not track precise "Entry/Exit" against an event ID in log if they are just generic guests,
+            // OR we treat them as registered for the 'scannerEventId' implicitly if they are a valid user.
+            // For now, let's treat it as a valid entry.
+            $reg = $userReg;
+            $reg['reg_id'] = 'USER_' . $userReg['user_id']; // Virtual Diff Key
+
+            // Bypass event ID check for generic external passes if needed, or enforce it?
+            // If the user is just a 'Guest', we might allow them in.
+            $reg['event_id'] = $scannerEventId;
+        }
+    }
+
     if (!$reg) {
         echo json_encode(['success' => false, 'error' => 'Invalid QR Code']);
         exit;
@@ -39,40 +59,52 @@ try {
         exit;
     }
 
-    // 2. Check Attendance State
-    // Look for an 'inside' record (where exit_time is NULL)
+    // 2. Check Attendance State with Explicit Mode
+    $scanMode = $input['mode'] ?? 'entry'; // default to entry if missing
+
+    // Look for an 'inside' record (active session)
     $stmtLog = $pdo->prepare("SELECT id FROM attendance_logs WHERE registration_id = ? AND exit_time IS NULL");
     $stmtLog->execute([$reg['reg_id']]);
     $fActiveLog = $stmtLog->fetch();
 
-    if ($fActiveLog) {
-        // User is Inside -> Process EXIT
-        $update = $pdo->prepare("UPDATE attendance_logs SET exit_time = CURRENT_TIMESTAMP, status = 'exited' WHERE id = ?");
-        $update->execute([$fActiveLog['id']]);
+    if ($scanMode === 'exit') {
+        // --- EXIT MODE ---
+        if ($fActiveLog) {
+            // User IS inside -> Process EXIT
+            $update = $pdo->prepare("UPDATE attendance_logs SET exit_time = CURRENT_TIMESTAMP, status = 'exited' WHERE id = ?");
+            $update->execute([$fActiveLog['id']]);
 
-        echo json_encode([
-            'success' => true,
-            'type' => 'exit',
-            'message' => 'Exit Recorded',
-            'user_name' => $reg['user_name'],
-            'user_role' => $reg['user_role'],
-            'time' => date('H:i:s')
-        ]);
+            echo json_encode([
+                'success' => true,
+                'type' => 'exit',
+                'message' => 'Exit Recorded',
+                'user_name' => $reg['user_name'],
+                'user_role' => $reg['user_role'],
+                'time' => date('H:i:s')
+            ]);
+        } else {
+            // User is NOT inside -> ERROR
+            echo json_encode(['success' => false, 'error' => 'User is not inside (No Entry Record)']);
+        }
     } else {
-        // User is Outside -> Process ENTRY
-        // Optional: Check if event is started?
+        // --- ENTRY MODE ---
+        if ($fActiveLog) {
+            // User IS inside -> ERROR (Already entered)
+            echo json_encode(['success' => false, 'error' => 'User is already inside!']);
+        } else {
+            // User is OUTSIDE -> Process ENTRY
+            $insert = $pdo->prepare("INSERT INTO attendance_logs (registration_id, entry_time, status) VALUES (?, CURRENT_TIMESTAMP, 'inside')");
+            $insert->execute([$reg['reg_id']]);
 
-        $insert = $pdo->prepare("INSERT INTO attendance_logs (registration_id, entry_time, status) VALUES (?, CURRENT_TIMESTAMP, 'inside')");
-        $insert->execute([$reg['reg_id']]);
-
-        echo json_encode([
-            'success' => true,
-            'type' => 'entry',
-            'message' => 'Entry Recorded',
-            'user_name' => $reg['user_name'],
-            'user_role' => $reg['user_role'],
-            'time' => date('H:i:s')
-        ]);
+            echo json_encode([
+                'success' => true,
+                'type' => 'entry',
+                'message' => 'Entry Recorded',
+                'user_name' => $reg['user_name'],
+                'user_role' => $reg['user_role'],
+                'time' => date('H:i:s')
+            ]);
+        }
     }
 
 } catch (PDOException $e) {

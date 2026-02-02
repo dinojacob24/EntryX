@@ -1,10 +1,12 @@
 <?php
-require_once '../includes/header.php';
+session_start();
 
 if (isset($_SESSION['user_id'])) {
     header('Location: student_dashboard.php');
     exit;
 }
+
+require_once '../includes/header.php';
 ?>
 
 <section
@@ -31,72 +33,49 @@ if (isset($_SESSION['user_id'])) {
             <h2
                 style="color: white; margin-bottom: 0.5rem; font-size: 2.2rem; font-weight: 800; letter-spacing: -0.02em;">
                 Login</h2>
-            <p style="color: var(--p-text-dim); font-size: 1rem;">Enter your credentials to access your dashboard.</p>
+            <p style="color: var(--p-text-dim); font-size: 1rem; max-width: 380px; margin: 0 auto;">Sign in securely
+                with your Google account to access your dashboard.</p>
         </div>
 
-        <form id="loginForm" autocomplete="off">
-            <div style="margin-bottom: 2rem;">
-                <label
-                    style="display: block; color: var(--p-text-muted); font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.8rem;">University
-                    Email</label>
-                <div style="position: relative;">
-                    <i class="fa-solid fa-envelope"
-                        style="position: absolute; left: 1.5rem; top: 50%; transform: translateY(-50%); color: var(--p-text-muted);"></i>
-                    <input type="email" name="email" required placeholder="name@university.edu"
-                        style="width: 100%; padding: 1.2rem 1.5rem 1.2rem 4rem; background: rgba(255,255,255,0.03); border: 1px solid var(--p-border); border-radius: 16px; color: white; transition: 0.3s;"
-                        onfocus="this.style.borderColor='var(--p-brand)'; this.style.background='rgba(255,255,255,0.06)';"
-                        onblur="this.style.borderColor='var(--p-border)'; this.style.background='rgba(255,255,255,0.03)';">
-                </div>
-            </div>
+        <!-- Google Sign-in Button -->
+        <a href="../api/auth.php?action=google_login"
+            style="width: 100%; padding: 1.3rem; display: flex; align-items: center; justify-content: center; gap: 1rem; border-radius: 12px; text-decoration: none; background: white; color: #3c4043; font-size: 1rem; font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24); transition: all 0.2s; border: none;"
+            onmouseover="this.style.boxShadow='0 3px 8px rgba(0,0,0,0.15), 0 3px 6px rgba(0,0,0,0.1)'; this.style.transform='translateY(-1px)';"
+            onmouseout="this.style.boxShadow='0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24)'; this.style.transform='translateY(0)';">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20" height="20"
+                alt="Google">
+            Sign in with Google
+        </a>
 
-            <div style="margin-bottom: 2.5rem;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem;">
-                    <label
-                        style="color: var(--p-text-muted); font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin: 0;">Password</label>
-                    <a href="forgot_password.php"
-                        style="color: var(--p-brand); font-size: 0.8rem; font-weight: 600; text-decoration: none;">Forgot
-                        Password?</a>
-                </div>
-                <div style="position: relative;">
-                    <i class="fa-solid fa-lock"
-                        style="position: absolute; left: 1.5rem; top: 50%; transform: translateY(-50%); color: var(--p-text-muted);"></i>
-                    <input type="password" name="password" required placeholder="••••••••"
-                        style="width: 100%; padding: 1.2rem 1.5rem 1.2rem 4rem; background: rgba(255,255,255,0.03); border: 1px solid var(--p-border); border-radius: 16px; color: white; transition: 0.3s;"
-                        onfocus="this.style.borderColor='var(--p-brand)'; this.style.background='rgba(255,255,255,0.06)';"
-                        onblur="this.style.borderColor='var(--p-border)'; this.style.background='rgba(255,255,255,0.03)';">
-                </div>
-            </div>
-
-            <button type="submit" class="btn btn-primary"
-                style="width: 100%; padding: 1.2rem; font-size: 1.1rem; font-weight: 800; border-radius: 16px;">
-                Login <i class="fa-solid fa-arrow-right-to-bracket" style="margin-left: 0.5rem;"></i>
-            </button>
-
-            <div style="margin: 2.5rem 0; display: flex; align-items: center; gap: 1rem;">
-                <div style="flex: 1; height: 1px; background: rgba(255,255,255,0.05);"></div>
-                <span
-                    style="color: var(--p-text-muted); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em;">or
-                    continue with</span>
-                <div style="flex: 1; height: 1px; background: rgba(255,255,255,0.05);"></div>
-            </div>
-
-            <a href="../api/auth.php?action=google_login" class="btn btn-outline"
-                style="width: 100%; padding: 1.2rem; gap: 1rem; border-color: rgba(255,255,255,0.1); border-radius: 16px; text-decoration: none; color: white;">
-                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20" height="20"
-                    alt="Google">
-                Sign in with Google
-            </a>
-
-            <p style="text-align: center; margin-top: 3rem; color: var(--p-text-muted); font-size: 0.95rem;">
-                Need an account? <a href="register.php"
-                    style="color: white; font-weight: 700; text-decoration: none; border-bottom: 1px solid var(--p-brand);">Register</a>
+        <div
+            style="margin: 3rem 0; padding: 1.5rem; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,31,31,0.1); border-radius: 16px;">
+            <p style="color: var(--p-text-dim); font-size: 0.85rem; margin: 0; line-height: 1.6;">
+                <i class="fa-solid fa-info-circle" style="color: var(--p-brand); margin-right: 0.5rem;"></i>
+                <strong style="color: white;">Internal Users:</strong> Use your @ajce.in or @ac.in email<br>
+                <i class="fa-solid fa-info-circle" style="color: var(--p-brand); margin-right: 0.5rem;"></i>
+                <strong style="color: white;">External Users:</strong> Register first, then sign in with the same email
             </p>
-        </form>
+        </div>
+
+        <p style="text-align: center; color: var(--p-text-muted); font-size: 0.95rem;">
+            Need an account? <a href="register.php"
+                style="color: white; font-weight: 700; text-decoration: none; border-bottom: 1px solid var(--p-brand);">Register</a>
+        </p>
     </div>
 </section>
 
-
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
+    passwordInput.type = 'text';
+    toggleIcon.classList.remove('fa-eye');
+    toggleIcon.classList.add('fa-eye-slash');
+        } else {
+        passwordInput.type = 'password';
+        toggleIcon.classList.remove('fa-eye-slash');
+        toggleIcon.classList.add('fa-eye');
+    }
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
         // Email/Password Login
         const loginForm = document.getElementById('loginForm');
@@ -131,15 +110,39 @@ if (isset($_SESSION['user_id'])) {
                             window.location.href = 'admin_dashboard.php';
                         } else if (result.role === 'security') {
                             window.location.href = 'security_dashboard.php';
+                        } else if (result.role === 'external') {
+                            window.location.href = 'external_dashboard.php';
+                        } else if (result.role === 'staff') {
+                            window.location.href = 'staff_dashboard.php';
                         } else {
                             window.location.href = 'student_dashboard.php';
                         }
+                    } else if (result.error === 'registration_required') {
+                        // Guest trying to log in directly without registering
+                        Swal.fire({
+                            icon: 'info',
+                            title: 'Guest Registration Required',
+                            text: 'It looks like you haven\'t registered for an external program yet. Please sign up first to access your dashboard.',
+                            showCancelButton: true,
+                            confirmButtonText: 'Sign Up Now',
+                            confirmButtonColor: '#ff1f1f',
+                            background: '#0a0a0a',
+                            color: '#fff'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                window.location.href = 'register.php';
+                            }
+                        });
+                        loginBtn.disabled = false;
+                        loginBtn.innerHTML = originalBtnHtml;
                     } else {
                         Swal.fire({
                             icon: 'error',
                             title: 'Login Failed',
                             text: result.error || 'Invalid email or password.',
-                            confirmButtonColor: '#ff1f1f'
+                            confirmButtonColor: '#ff1f1f',
+                            background: '#0a0a0a',
+                            color: '#fff'
                         });
                         loginBtn.disabled = false;
                         loginBtn.innerHTML = originalBtnHtml;
@@ -150,6 +153,25 @@ if (isset($_SESSION['user_id'])) {
                     loginBtn.disabled = false;
                     loginBtn.innerHTML = originalBtnHtml;
                 }
+            });
+        }
+
+        // Check for Google Login Redirection Errors
+        const urlParams = new URLSearchParams(window.location.search);
+        const error = urlParams.get('error');
+        if (error) {
+            let errorMsg = 'An error occurred during Google authentication.';
+            if (error === 'google_internal_only') errorMsg = 'Google Sign-in is reserved for College Students & Staff with official Email IDs. Guests must use their Registered Email & Password.';
+            if (error === 'linking_failed') errorMsg = 'This Google account cannot be linked to an admin profile. Please use your credentials.';
+            if (error === 'auth_failed') errorMsg = 'Google authentication failed. Please try again.';
+
+            Swal.fire({
+                icon: 'warning',
+                title: 'Access Restricted',
+                text: errorMsg,
+                confirmButtonColor: '#ff1f1f',
+                background: '#0a0a0a',
+                color: '#fff'
             });
         }
     });

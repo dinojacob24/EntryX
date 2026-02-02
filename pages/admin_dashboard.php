@@ -498,6 +498,33 @@ $insideCount = $stmtInside->fetchColumn();
         </div>
     </div>
 
+    <!-- Payment Verification Section -->
+    <div class="glass-panel reveal"
+        style="padding: 3rem; margin-top: 4rem; border-color: rgba(234, 179, 8, 0.2); box-shadow: 0 40px 80px rgba(0,0,0,0.4); border-radius: 32px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2.5rem;">
+            <div>
+                <h2
+                    style="display: flex; align-items: center; gap: 1rem; font-size: 1.8rem; color: white; margin: 0 0 0.5rem 0;">
+                    <i class="fa-solid fa-receipt" style="color: #eab308;"></i> Payment Verification
+                </h2>
+                <p style="color: var(--p-text-dim); font-size: 0.9rem; margin: 0;">
+                    Review and confirm pending registrations against bank transaction records
+                </p>
+            </div>
+            <button class="btn btn-outline"
+                style="padding: 0.8rem 1.5rem; font-size: 0.9rem; border-color: rgba(234, 179, 8, 0.4); color: #eab308;"
+                onclick="loadPendingPayments()">
+                <i class="fa-solid fa-rotate"></i> Refresh List
+            </button>
+        </div>
+
+        <div id="pendingPaymentsTableContainer">
+            <p style="text-align: center; color: var(--p-text-muted); padding: 2rem;">
+                <i class="fa-solid fa-spinner fa-spin"></i> Checking for pending payments...
+            </p>
+        </div>
+    </div>
+
     <!-- High-Performance Modal System -->
     <div id="eventModal"
         style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 2000; justify-content: center; align-items: center; backdrop-filter: blur(15px);">
@@ -515,9 +542,21 @@ $insideCount = $stmtInside->fetchColumn();
                     <input type="text" name="name" id="eventName" required placeholder="Name of the event">
                 </div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
-                    <div>
-                        <label>Date and Time</label>
-                        <input type="datetime-local" name="event_date" id="eventDate" required>
+                    <div style="position: relative;">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                            <label style="margin: 0;">Date and Time</label>
+                            <button type="button" onclick="setEventToNow()"
+                                style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: var(--p-brand); padding: 0.2rem 0.8rem; border-radius: 6px; font-size: 0.75rem; cursor: pointer; font-weight: 700;">
+                                <i class="fa-solid fa-clock"></i> SET NOW
+                            </button>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 1rem;">
+                            <input type="date" name="event_date_only" id="eventDateOnly" required
+                                style="padding: 0.8rem; border-radius: 8px;">
+                            <input type="time" name="event_time_only" id="eventTimeOnly" required
+                                style="padding: 0.8rem; border-radius: 8px;">
+                        </div>
                     </div>
                     <div>
                         <label>Event Location</label>
@@ -538,19 +577,12 @@ $insideCount = $stmtInside->fetchColumn();
                         <label>Who can attend?</label>
                         <select name="type" id="eventType">
                             <option value="both">Everyone (Internal & External)</option>
-                            <option value="internal">College Students Only</option>
+                            <option value="internal">Internals Only</option>
                             <option value="external">Outside Participants Only</option>
                         </select>
                     </div>
                 </div>
-                <div id="statusSection" style="display: none; margin-bottom: 2rem;">
-                    <label>Event Status</label>
-                    <select name="status" id="eventStatus">
-                        <option value="active">Active</option>
-                        <option value="cancelled">Cancelled</option>
-                        <option value="completed">Finished</option>
-                    </select>
-                </div>
+
                 <div
                     style="background: rgba(255,255,255,0.03); padding: 2.5rem; border-radius: 24px; margin-bottom: 3rem; border: 1px solid rgba(255,255,255,0.08);">
                     <h4
@@ -563,14 +595,63 @@ $insideCount = $stmtInside->fetchColumn();
                             is a Paid Event</label>
                     </div>
                     <div id="paidSettings" style="display: none;">
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 1.5rem;">
                             <div>
                                 <label>Registration Fee (₹)</label>
-                                <input type="number" step="0.01" name="base_price" id="eventPrice">
+                                <input type="number" step="0.01" name="base_price" id="eventPrice" placeholder="0.00">
                             </div>
+                            <div>
+                                <label>Apply GST for:</label>
+                                <select name="gst_target" id="eventGstTarget">
+                                    <option value="both" selected>Both (Local & Guest)</option>
+                                    <option value="externals_only">Outside Guests Only</option>
+                                    <option value="internals_only">Internals Only</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 1.5rem;">
                             <div>
                                 <label>GST Rate (%)</label>
                                 <input type="number" step="0.01" name="gst_rate" id="eventGst" value="18.00">
+                            </div>
+                            <div>
+                                <label>Total Amount (Inc. GST)</label>
+                                <input type="text" id="eventTotalAmount" readonly
+                                    style="background: rgba(255,255,255,0.05); cursor: not-allowed;"
+                                    placeholder="₹0.00">
+                            </div>
+                        </div>
+
+                        <!-- UPI ID Field (Same as external event) -->
+                        <div style="margin-bottom: 1.5rem;">
+                            <label>UPI ID (for Payment QR)</label>
+                            <input type="text" name="payment_upi" id="eventPaymentUpi"
+                                placeholder="e.g. username@okaxis">
+                            <small style="color: var(--p-text-dim); font-size: 0.75rem;">Used to generate registration
+                                QR code</small>
+                        </div>
+
+                        <!-- GST Breakdown Preview -->
+                        <div id="eventGstBreakdown"
+                            style="background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.1); border-radius: 12px; padding: 1.2rem; display: none;">
+                            <div style="font-size: 0.85rem; color: var(--p-text-dim); margin-bottom: 0.5rem;">
+                                <strong style="color: #10b981;">Pricing Summary:</strong>
+                            </div>
+                            <div
+                                style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.3rem;">
+                                <span>Base Registration Fee:</span>
+                                <span id="eventBreakdownBase" style="color: white; font-weight: 600;">₹0.00</span>
+                            </div>
+                            <div
+                                style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.3rem;">
+                                <span>GST (<span id="eventBreakdownRate">18</span>%):</span>
+                                <span id="eventBreakdownGst" style="color: white; font-weight: 600;">₹0.00</span>
+                            </div>
+                            <div
+                                style="border-top: 1px solid rgba(16, 185, 129, 0.1); margin: 0.5rem 0; padding-top: 0.5rem; display: flex; justify-content: space-between;">
+                                <strong style="color: white;">Effective Total:</strong>
+                                <strong id="eventBreakdownTotal"
+                                    style="color: #10b981; font-size: 1.1rem;">₹0.00</strong>
                             </div>
                         </div>
                     </div>
@@ -791,6 +872,17 @@ $insideCount = $stmtInside->fetchColumn();
                             Configure gateway settings in Payment Settings
                         </small>
                     </div>
+
+                    <!-- UPI ID Configuration -->
+                    <div style="margin-top: 1rem;">
+                        <label>UPI ID (for QR Code) <span style="color: #ef4444;">*</span></label>
+                        <input type="text" name="payment_upi" id="programPaymentUpi" placeholder="e.g. username@okaxis"
+                            style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 0.8rem; border-radius: 8px; width: 100%;">
+                        <small
+                            style="color: var(--p-text-dim); font-size: 0.75rem; display: block; margin-top: 0.3rem;">
+                            This UPI ID will be used to generate the payment QR code.
+                        </small>
+                    </div>
                 </div>
             </div>
 
@@ -801,7 +893,7 @@ $insideCount = $stmtInside->fetchColumn();
                     <i class="fa-solid fa-info-circle"></i> Program Status
                 </h4>
                 <div style="display: flex; align-items: center; gap: 1rem;">
-                    <input type="checkbox" id="programIsActive" name="is_active" checked
+                    <input type="checkbox" id="programIsActive" name="is_active"
                         style="width: 24px; height: 24px; cursor: pointer;">
                     <label for="programIsActive"
                         style="margin: 0; cursor: pointer; text-transform: none; color: white;">
@@ -876,6 +968,15 @@ $insideCount = $stmtInside->fetchColumn();
         }
     }
 
+    function setEventToNow() {
+        const now = new Date();
+        const dateStr = now.toISOString().split('T')[0];
+        const timeStr = now.toTimeString().split(' ')[0].substring(0, 5);
+        document.getElementById('eventDateOnly').value = dateStr;
+        document.getElementById('eventTimeOnly').value = timeStr;
+    }
+
+
     function closeModal() {
         modal.style.display = 'none';
     }
@@ -892,7 +993,11 @@ $insideCount = $stmtInside->fetchColumn();
                 document.getElementById('eventId').value = event.id;
                 document.getElementById('eventName').value = event.name;
                 document.getElementById('eventDescription').value = event.description;
-                document.getElementById('eventDate').value = event.event_date.replace(' ', 'T');
+
+                const dt = event.event_date.split(' ');
+                document.getElementById('eventDateOnly').value = dt[0];
+                document.getElementById('eventTimeOnly').value = dt[1].substring(0, 5);
+
                 document.getElementById('eventVenue').value = event.venue;
                 document.getElementById('eventCapacity').value = event.capacity;
                 document.getElementById('eventType').value = event.type;
@@ -902,6 +1007,12 @@ $insideCount = $stmtInside->fetchColumn();
                 paidSettings.style.display = isPaid.checked ? 'block' : 'none';
                 document.getElementById('eventPrice').value = event.base_price;
                 document.getElementById('eventGst').value = event.gst_rate;
+                document.getElementById('eventGstTarget').value = event.gst_target || 'both';
+                document.getElementById('eventPaymentUpi').value = event.payment_upi || '';
+
+                if (isPaid.checked) {
+                    calculateEventGST();
+                }
             } else {
                 Swal.fire('Error', 'Could not find event details', 'error');
             }
@@ -973,15 +1084,47 @@ $insideCount = $stmtInside->fetchColumn();
 
     isPaid.addEventListener('change', (e) => {
         paidSettings.style.display = e.target.checked ? 'block' : 'none';
+        if (e.target.checked) calculateEventGST();
     });
+
+    // GST Calculation for Events
+    function calculateEventGST() {
+        const baseFee = parseFloat(document.getElementById('eventPrice').value) || 0;
+        const gstRate = parseFloat(document.getElementById('eventGst').value) || 18;
+        const isPaidChecked = document.getElementById('isPaid').checked;
+
+        if (baseFee > 0 && isPaidChecked) {
+            const gstAmount = (baseFee * gstRate) / 100;
+            const totalAmount = baseFee + gstAmount;
+
+            document.getElementById('eventTotalAmount').value = `₹${totalAmount.toFixed(2)}`;
+            document.getElementById('eventBreakdownBase').textContent = `₹${baseFee.toFixed(2)}`;
+            document.getElementById('eventBreakdownRate').textContent = gstRate.toFixed(2);
+            document.getElementById('eventBreakdownGst').textContent = `₹${gstAmount.toFixed(2)}`;
+            document.getElementById('eventBreakdownTotal').textContent = `₹${totalAmount.toFixed(2)}`;
+            document.getElementById('eventGstBreakdown').style.display = 'block';
+        } else {
+            document.getElementById('eventTotalAmount').value = baseFee > 0 ? `₹${baseFee.toFixed(2)}` : '';
+            document.getElementById('eventGstBreakdown').style.display = 'none';
+        }
+    }
+
+    document.getElementById('eventPrice').addEventListener('input', calculateEventGST);
+    document.getElementById('eventGst').addEventListener('input', calculateEventGST);
 
     eventForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const formData = new FormData(e.target);
         const data = Object.fromEntries(formData.entries());
 
+        const dateOnly = document.getElementById('eventDateOnly').value;
+        const timeOnly = document.getElementById('eventTimeOnly').value;
+        data.event_date = `${dateOnly} ${timeOnly}:00`;
+
         data.is_paid = isPaid.checked ? 1 : 0;
         data.is_gst_enabled = isPaid.checked ? 1 : 0;
+        data.gst_target = data.gst_target || 'both';
+        data.payment_upi = data.payment_upi || '';
 
         const id = document.getElementById('eventId').value;
         const action = id ? 'update' : 'create';
@@ -1000,14 +1143,27 @@ $insideCount = $stmtInside->fetchColumn();
 
             const result = await res.json();
             if (result.success) {
-                Swal.fire('Success', 'Event settings updated successfully.', 'success').then(() => location.reload());
+                closeModal();
+                Swal.fire({
+                    title: 'Success!',
+                    text: 'Event created Successfully',
+                    icon: 'success',
+                    background: '#0a0a0a',
+                    color: '#fff',
+                    confirmButtonText: 'Great!',
+                    confirmButtonColor: '#10b981'
+                }).then(() => location.reload());
             } else {
                 Swal.fire('Error', result.error, 'error');
                 saveBtn.disabled = false;
                 saveBtn.innerHTML = 'Publish Event';
             }
         } catch (err) {
+            console.error('Save Error:', err);
             Swal.fire('Error', 'Request processing failed', 'error');
+            const saveBtn = document.getElementById('saveBtn');
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = 'Publish Event';
         }
     });
 
@@ -1049,6 +1205,7 @@ $insideCount = $stmtInside->fetchColumn();
     document.addEventListener('DOMContentLoaded', function () {
         loadExternalRegStatus().then(() => {
             loadExternalPrograms();
+            loadPendingPayments(); // Also load pending payments on start
         });
     });
 
@@ -1210,10 +1367,10 @@ $insideCount = $stmtInside->fetchColumn();
             document.getElementById('externalProgramId').value = '';
 
             // Reset Payment UI
-            document.getElementById('paymentSettings').style.display = 'none';
             document.getElementById('gstSettings').style.display = 'none';
             document.getElementById('gstBreakdown').style.display = 'none';
             document.getElementById('programTotalAmount').value = '';
+            document.getElementById('programPaymentUpi').value = '';
         }
     }
 
@@ -1253,6 +1410,9 @@ $insideCount = $stmtInside->fetchColumn();
                 if (isPaid && isGst) {
                     calculateGST();
                 }
+
+                // Populate UPI ID (New Field)
+                document.getElementById('programPaymentUpi').value = program.payment_upi || '';
             } else {
                 Swal.fire('Error', 'Could not load program details', 'error');
             }
@@ -1261,33 +1421,83 @@ $insideCount = $stmtInside->fetchColumn();
         }
     }
 
-    async function deleteExternalProgram(id, name) {
-        const confirm = await Swal.fire({
-            title: 'Delete External Program?',
-            text: `Are you sure you want to delete "${name}"? This action cannot be undone.`,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#ef4444',
-            confirmButtonText: 'Yes, Delete Program',
-            background: '#0a0a0a',
-            color: '#fff'
-        });
+    async function deleteExternalProgram(id, name, force = false) {
+        let confirm;
+        if (force) {
+            confirm = await Swal.fire({
+                title: 'Confirm Forced Deletion',
+                text: `WARNING: This will permanently delete program "${name}" AND ALL its registered participants. This data cannot be recovered.`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                confirmButtonText: 'I Understand, Delete Everything',
+                background: '#0a0a0a',
+                color: '#fff'
+            });
+        } else {
+            confirm = await Swal.fire({
+                title: 'Delete External Program?',
+                text: `Are you sure you want to delete "${name}"? This action cannot be undone.`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                confirmButtonText: 'Yes, Delete Program',
+                background: '#0a0a0a',
+                color: '#fff'
+            });
+        }
 
         if (confirm.isConfirmed) {
-            try {
-                const res = await fetch(`/Project/EntryX/api/external_programs.php?action=delete&id=${id}`, {
-                    method: 'POST'
-                });
-                const result = await res.json();
+            // Second Confirmation Layer
+            const finalConfirm = await Swal.fire({
+                title: 'Final Confirmation',
+                text: 'This is a critical action. Please confirm once more that you want to delete this program.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                confirmButtonText: 'Yes, Delete It',
+                cancelButtonText: 'No, Wait',
+                background: '#0a0a0a',
+                color: '#fff'
+            });
 
-                if (result.success) {
-                    Swal.fire('Deleted!', 'Program has been removed.', 'success');
-                    loadExternalPrograms();
-                } else {
-                    Swal.fire('Error', result.error, 'error');
+            if (finalConfirm.isConfirmed) {
+                try {
+                    const url = force
+                        ? `/Project/EntryX/api/external_programs.php?action=delete&id=${id}&force=true`
+                        : `/Project/EntryX/api/external_programs.php?action=delete&id=${id}`;
+
+                    const res = await fetch(url, { method: 'POST' });
+                    const result = await res.json();
+
+                    if (result.success) {
+                        Swal.fire('Deleted!', 'Program has been removed.', 'success');
+                        loadExternalPrograms();
+                    } else {
+                        // Check if error is due to participants
+                        if (result.error && result.error.includes("registered participants")) {
+                            const forceConfirm = await Swal.fire({
+                                title: 'Cannot Delete: Participants Exist',
+                                text: `${result.error}. Do you want to FORCE delete this program and remove all these participants from the system?`,
+                                icon: 'error',
+                                showCancelButton: true,
+                                confirmButtonColor: '#ef4444',
+                                confirmButtonText: 'Yes, FORCE DELETE',
+                                cancelButtonText: 'No, Cancel',
+                                background: '#0a0a0a',
+                                color: '#fff'
+                            });
+
+                            if (forceConfirm.isConfirmed) {
+                                deleteExternalProgram(id, name, true);
+                            }
+                        } else {
+                            Swal.fire('Error', result.error, 'error');
+                        }
+                    }
+                } catch (err) {
+                    Swal.fire('Error', 'Failed to delete program', 'error');
                 }
-            } catch (err) {
-                Swal.fire('Error', 'Failed to delete program', 'error');
             }
         }
     }
@@ -1427,7 +1637,8 @@ $insideCount = $stmtInside->fetchColumn();
             currency: formData.get('currency') || 'INR',
             is_gst_enabled: document.getElementById('programGstEnabled').checked ? 1 : 0,
             gst_rate: formData.get('gst_rate') || 18,
-            payment_gateway: formData.get('payment_gateway') || 'razorpay'
+            payment_gateway: formData.get('payment_gateway') || 'razorpay',
+            payment_upi: formData.get('payment_upi') || ''
         };
 
         const id = document.getElementById('externalProgramId').value;
@@ -1460,11 +1671,139 @@ $insideCount = $stmtInside->fetchColumn();
         }
     });
 
-    window.onclick = function (event) {
-        if (event.target == modal) closeModal();
-        if (event.target == document.getElementById('adminModal')) document.getElementById('adminModal').style.display = 'none';
-        if (event.target == document.getElementById('externalProgramModal')) closeExternalProgramModal();
+    // ========== PAYMENT VERIFICATION SYSTEM ==========
+
+    async function loadPendingPayments() {
+        const container = document.getElementById('pendingPaymentsTableContainer');
+        try {
+            const res = await fetch('/Project/EntryX/api/verify_payment.php?action=list_pending');
+            const result = await res.json();
+
+            if (result.success) {
+                displayPendingPayments(result.data);
+            } else {
+                container.innerHTML = `<p style="text-align: center; color: var(--p-text-muted); padding: 2rem;">Error: ${result.error}</p>`;
+            }
+        } catch (err) {
+            container.innerHTML = '<p style="text-align: center; color: #ef4444; padding: 2rem;"><i class="fa-solid fa-exclamation-triangle"></i> Communication error</p>';
+        }
+    }
+
+    function displayPendingPayments(payments) {
+        const container = document.getElementById('pendingPaymentsTableContainer');
+        if (payments.length === 0) {
+            container.innerHTML = `
+                <div style="text-align: center; padding: 3rem; color: var(--p-text-muted);">
+                    <i class="fa-solid fa-check-double" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.2;"></i>
+                    <p>All payments verified! No pending registrations found.</p>
+                </div>
+            `;
+            return;
+        }
+
+        let html = '<table style="width: 100%; border-collapse: separate; border-spacing: 0 1rem;">';
+        html += `
+            <thead>
+                <tr style="text-align: left; color: var(--p-text-muted); font-size: 0.8rem; text-transform: uppercase;">
+                    <th style="padding: 0 1.5rem;">User / Contact</th>
+                    <th>Event Name</th>
+                    <th>Transaction ID (UTR)</th>
+                    <th>Amount Paid</th>
+                    <th style="text-align: right; padding: 0 1.5rem;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+        `;
+
+        payments.forEach(reg => {
+            html += `
+                <tr style="background: rgba(234, 179, 8, 0.05); border-left: 4px solid #eab308;">
+                    <td style="padding: 1.5rem; border-radius: 0 0 0 0; border-top: 1px solid rgba(234, 179, 8, 0.1); border-bottom: 1px solid rgba(234, 179, 8, 0.1);">
+                        <div style="font-weight: 700; color: white;">${reg.user_name}</div>
+                        <div style="font-size: 0.8rem; color: var(--p-text-dim);">${reg.user_email}</div>
+                    </td>
+                    <td style="color: white; border-top: 1px solid rgba(234, 179, 8, 0.1); border-bottom: 1px solid rgba(234, 179, 8, 0.1);">
+                        ${reg.event_name}
+                    </td>
+                    <td style="border-top: 1px solid rgba(234, 179, 8, 0.1); border-bottom: 1px solid rgba(234, 179, 8, 0.1);">
+                        <code style="background: rgba(0,0,0,0.3); padding: 0.4rem 0.8rem; border-radius: 6px; color: #eab308; font-family: monospace; font-size: 1.1rem; border: 1px solid rgba(234, 179, 8, 0.2);">
+                            ${reg.transaction_id}
+                        </code>
+                    </td>
+                    <td style="font-weight: 800; color: white; border-top: 1px solid rgba(234, 179, 8, 0.1); border-bottom: 1px solid rgba(234, 179, 8, 0.1);">
+                        ₹${parseFloat(reg.total_amount).toFixed(2)}
+                    </td>
+                    <td style="text-align: right; padding: 1.5rem; border-top: 1px solid rgba(234, 179, 8, 0.1); border-bottom: 1px solid rgba(234, 179, 8, 0.1);">
+                        <button class="btn btn-primary" style="background: #eab308; color: #000; font-weight: 800; font-size: 0.9rem;"
+                            onclick="verifyPaymentReg(${reg.id}, '${reg.user_name}')">
+                            <i class="fa-solid fa-check"></i> Verify & Confirm
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+
+        html += '</tbody></table>';
+        container.innerHTML = html;
+    }
+
+    async function verifyPaymentReg(regId, name) {
+        const confirm = await Swal.fire({
+            title: 'Verify Payment?',
+            text: `Please confirm that you have received payment for ${name} in your bank account.`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#eab308',
+            confirmButtonText: 'Yes, Payment Received',
+            background: '#0a0a0a',
+            color: '#fff'
+        });
+
+        if (confirm.isConfirmed) {
+            try {
+                const res = await fetch('/Project/EntryX/api/verify_payment.php?action=verify', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ registration_id: regId })
+                });
+                const result = await res.json();
+
+                if (result.success) {
+                    Swal.fire({
+                        title: 'Verified!',
+                        text: 'Registration has been confirmed and ticket is now active.',
+                        icon: 'success',
+                        timer: 2000,
+                        showConfirmButton: false,
+                        background: '#0a0a0a',
+                        color: '#fff'
+                    });
+                    loadPendingPayments();
+                } else {
+                    Swal.fire('Error', result.error, 'error');
+                }
+            } catch (err) {
+                Swal.fire('Error', 'Communication failure', 'error');
+            }
+        }
+    }
+
+
+    // Professional Logout with Confirmation
+    async function confirmLogout() {
+        const res = await Swal.fire({
+            title: 'Logout?',
+            text: 'Are you sure you want to end your session?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            confirmButtonText: 'Logout',
+            background: '#0a0a0a',
+            color: '#fff'
+        });
+        if (res.isConfirmed) {
+            window.location.href = '/Project/EntryX/api/auth.php?action=logout';
+        }
     }
 </script>
-
 <?php require_once '../includes/footer.php'; ?>

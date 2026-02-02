@@ -9,7 +9,7 @@ try {
     $superadmin = [
         'name' => 'John Doe (Superadmin)',
         'email' => 'admin@entryx.com',
-        'password' => password_hash('Admin@123', PASSWORD_BCRYPT),
+        'password' => password_hash('password', PASSWORD_BCRYPT),
         'role' => 'super_admin'
     ];
 
@@ -29,7 +29,7 @@ try {
     $stmt->execute([$security['name'], $security['email'], $security['password'], $security['role']]);
 
     echo "Initial administration accounts created successfully!\n";
-    echo "Superadmin: admin@entryx.com / Admin@123\n";
+    echo "Superadmin: admin@entryx.com / password\n";
     echo "Security: security@entryx.com / Security@123\n";
 
 } catch (Exception $e) {

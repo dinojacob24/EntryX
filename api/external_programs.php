@@ -73,6 +73,31 @@ try {
 
 function getAllPrograms($pdo)
 {
+    // Auto-Deletion Protocol: Remove programs that have passed their end date
+    try {
+        // 1. Get expired programs
+        $stmtCheck = $pdo->query("SELECT id, program_name FROM external_programs WHERE end_date < CURDATE() AND end_date IS NOT NULL");
+        $expiredPrograms = $stmtCheck->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach ($expiredPrograms as $program) {
+            // 2. Check for participants to prevent data loss
+            $stmtCount = $pdo->prepare("SELECT COUNT(*) FROM users WHERE external_program_id = ?");
+            $stmtCount->execute([$program['id']]);
+            $count = $stmtCount->fetchColumn();
+
+            if ($count == 0) {
+                // Safe to delete (No participants)
+                $pdo->prepare("DELETE FROM external_programs WHERE id = ?")->execute([$program['id']]);
+            } else {
+                // Has participants - just deactivate/archive to preserve data
+                $pdo->prepare("UPDATE external_programs SET is_active = 0 WHERE id = ?")->execute([$program['id']]);
+            }
+        }
+    } catch (Exception $e) {
+        // Silent failure for auto-cleanup to not disrupt main flow
+        error_log("Auto-cleanup error: " . $e->getMessage());
+    }
+
     $stmt = $pdo->query("
         SELECT ep.*, u.name as creator_name,
                (SELECT COUNT(*) FROM users WHERE external_program_id = ep.id) as participant_count
@@ -105,8 +130,8 @@ function createProgram($pdo, $userId)
         INSERT INTO external_programs 
         (program_name, program_description, registration_form_fields, is_active, 
          start_date, end_date, max_participants, is_paid, registration_fee, 
-         is_gst_enabled, gst_rate, payment_gateway, currency, created_by)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         is_gst_enabled, gst_rate, payment_gateway, payment_upi, currency, created_by)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ");
 
     $formFields = json_encode($data['form_fields'] ?? []);
@@ -115,7 +140,7 @@ function createProgram($pdo, $userId)
         $data['program_name'],
         $data['program_description'] ?? '',
         $formFields,
-        $data['is_active'] ?? 1,
+        0, // Default to 0 (Inactive) for new programs
         $data['start_date'] ?? null,
         $data['end_date'] ?? null,
         $data['max_participants'] ?? 500,
@@ -124,6 +149,7 @@ function createProgram($pdo, $userId)
         $data['is_gst_enabled'] ?? 0,
         $data['gst_rate'] ?? 18.00,
         $data['payment_gateway'] ?? 'razorpay',
+        $data['payment_upi'] ?? null,
         $data['currency'] ?? 'INR',
         $userId
     ]);
@@ -152,7 +178,7 @@ function updateProgram($pdo, $id, $userId)
         SET program_name = ?, program_description = ?, registration_form_fields = ?,
             is_active = ?, start_date = ?, end_date = ?, max_participants = ?,
             is_paid = ?, registration_fee = ?, is_gst_enabled = ?, gst_rate = ?,
-            payment_gateway = ?, currency = ?
+            payment_gateway = ?, payment_upi = ?, currency = ?
         WHERE id = ?
     ");
 
@@ -171,6 +197,7 @@ function updateProgram($pdo, $id, $userId)
         $data['is_gst_enabled'] ?? 0,
         $data['gst_rate'] ?? 18.00,
         $data['payment_gateway'] ?? 'razorpay',
+        $data['payment_upi'] ?? null,
         $data['currency'] ?? 'INR',
         $id
     ]);
@@ -189,32 +216,97 @@ function updateProgram($pdo, $id, $userId)
 
 function deleteProgram($pdo, $id, $userId)
 {
-    // Check if program has participants
-    $stmt = $pdo->prepare("SELECT COUNT(*) FROM users WHERE external_program_id = ?");
-    $stmt->execute([$id]);
-    $count = $stmt->fetchColumn();
+    $force = isset($_GET['force']) && $_GET['force'] === 'true';
 
-    if ($count > 0) {
-        echo json_encode([
-            'success' => false,
-            'error' => "Cannot delete program with {$count} registered participants"
-        ]);
-        return;
+    try {
+        $pdo->beginTransaction();
+
+        // Check if program has participants
+        $stmt = $pdo->prepare("SELECT COUNT(*) FROM users WHERE external_program_id = ?");
+        $stmt->execute([$id]);
+        $count = $stmt->fetchColumn();
+
+        if ($count > 0) {
+            if (!$force) {
+                $pdo->rollBack();
+                echo json_encode([
+                    'success' => false,
+                    'count' => $count, // Return count for UI message
+                    'error' => "Cannot delete program with {$count} registered participants"
+                ]);
+                return;
+            } else {
+                // Force delete: Remove all participants first
+
+                // 1. Delete GST Breakdowns linked to payments of this program
+                // Note: We use LEFT JOIN or IN clause cautiously. 
+                // Safest to delete payments first if cascade works, but we manually clean up to be sure.
+
+                // Get all payment IDs for this program to delete GST breakdown
+                $stmtPayIds = $pdo->prepare("SELECT id FROM program_payments WHERE program_id = ?");
+                $stmtPayIds->execute([$id]);
+                $paymentIds = $stmtPayIds->fetchAll(PDO::FETCH_COLUMN);
+
+                if (!empty($paymentIds)) {
+                    $inQuery = implode(',', array_fill(0, count($paymentIds), '?'));
+                    $pdo->prepare("DELETE FROM payment_gst_breakdown WHERE payment_id IN ($inQuery)")->execute($paymentIds);
+                }
+
+                // 2. Delete Payments linked to this program
+                $pdo->prepare("DELETE FROM program_payments WHERE program_id = ?")->execute([$id]);
+
+                // 3. Now safe to delete users
+                $pdo->prepare("DELETE FROM users WHERE external_program_id = ?")->execute([$id]);
+            }
+        } else {
+            // Even if no users, there might be orphan payments blocking deletion
+            $stmtPayIds = $pdo->prepare("SELECT id FROM program_payments WHERE program_id = ?");
+            $stmtPayIds->execute([$id]);
+            $paymentIds = $stmtPayIds->fetchAll(PDO::FETCH_COLUMN);
+
+            if (!empty($paymentIds)) {
+                $inQuery = implode(',', array_fill(0, count($paymentIds), '?'));
+                $pdo->prepare("DELETE FROM payment_gst_breakdown WHERE payment_id IN ($inQuery)")->execute($paymentIds);
+            }
+
+            // 2. Delete Payments linked to this program
+            $pdo->prepare("DELETE FROM program_payments WHERE program_id = ?")->execute([$id]);
+        }
+
+        $stmt = $pdo->prepare("DELETE FROM external_programs WHERE id = ?");
+        $stmt->execute([$id]);
+
+        // SYNC CHECK: If this was the active program, disable registration
+        $stmtCheck = $pdo->prepare("SELECT setting_value FROM system_settings WHERE setting_key = 'current_external_program_id'");
+        $stmtCheck->execute();
+        $currentActiveId = $stmtCheck->fetchColumn();
+
+        if ($currentActiveId == $id) {
+            // Use the existing function logic inline or call it if it doesn't output JSON
+            // Since disableExternalRegistration outputs JSON, we should just update DB directly here to avoid double output
+            $stmtDate = $pdo->prepare("UPDATE system_settings SET setting_value = '0', updated_by = ? WHERE setting_key = 'external_registration_enabled'");
+            $stmtDate->execute([$userId]);
+            $pdo->exec("UPDATE external_programs SET is_active = 0");
+        }
+
+        logAdminAction(
+            $pdo,
+            $userId,
+            'delete_external_program',
+            "Deleted external program ID: {$id}" . ($force ? " (Forced including {$count} participants)" : ""),
+            'external_programs',
+            $id
+        );
+
+        $pdo->commit();
+        echo json_encode(['success' => true]);
+
+    } catch (Exception $e) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        echo json_encode(['success' => false, 'error' => 'Database Error: ' . $e->getMessage()]);
     }
-
-    $stmt = $pdo->prepare("DELETE FROM external_programs WHERE id = ?");
-    $stmt->execute([$id]);
-
-    logAdminAction(
-        $pdo,
-        $userId,
-        'delete_external_program',
-        "Deleted external program ID: {$id}",
-        'external_programs',
-        $id
-    );
-
-    echo json_encode(['success' => true]);
 }
 
 function toggleProgramStatus($pdo, $id, $userId)
@@ -242,6 +334,17 @@ function getSystemSettings($pdo)
     $settingsArray = [];
     foreach ($settings as $setting) {
         $settingsArray[$setting['setting_key']] = $setting['setting_value'];
+    }
+
+    // Verify if the active program still exists to prevent "Ghost" enabling
+    if (isset($settingsArray['current_external_program_id']) && !empty($settingsArray['current_external_program_id'])) {
+        $stmtCheck = $pdo->prepare("SELECT id FROM external_programs WHERE id = ?");
+        $stmtCheck->execute([$settingsArray['current_external_program_id']]);
+        if (!$stmtCheck->fetch()) {
+            // Program doesn't exist anymore! Override the live status
+            $settingsArray['external_registration_enabled'] = '0';
+            $settingsArray['current_external_program_name'] = 'None';
+        }
     }
 
     echo json_encode(['success' => true, 'data' => $settingsArray]);

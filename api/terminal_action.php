@@ -81,7 +81,7 @@ if ($action === 'manual_entry') {
     try {
         // Find Registration
         $stmt = $pdo->prepare("
-            SELECT r.id, r.user_id, r.event_id, u.name, u.role 
+            SELECT r.id, r.user_id, r.event_id, r.payment_status, u.name, u.role 
             FROM registrations r
             JOIN users u ON r.user_id = u.id
             WHERE r.qr_token = ?
@@ -90,7 +90,12 @@ if ($action === 'manual_entry') {
         $reg = $stmt->fetch();
 
         if ($reg) {
-            // Existing Registration Logic (Check Event Match)
+            // 1. Check if Payment is Verified
+            if ($reg['payment_status'] === 'pending') {
+                die(json_encode(['error' => 'Payment Verification Pending. Entry Denied.']));
+            }
+
+            // 2. Check Event Match
             if ($reg['event_id'] != $event_id) {
                 die(json_encode(['error' => 'Ticket is for a different event']));
             }

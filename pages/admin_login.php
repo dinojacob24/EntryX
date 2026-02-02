@@ -1,5 +1,5 @@
 <?php
-require_once '../includes/header.php';
+session_start();
 
 if (isset($_SESSION['user_id'])) {
     if (in_array($_SESSION['role'], ['super_admin', 'event_admin'])) {
@@ -12,6 +12,8 @@ if (isset($_SESSION['user_id'])) {
         exit;
     }
 }
+
+require_once '../includes/header.php';
 ?>
 
 <section
@@ -52,7 +54,7 @@ if (isset($_SESSION['user_id'])) {
                 <div style="position: relative;">
                     <i class="fa-solid fa-user-shield"
                         style="position: absolute; left: 1.5rem; top: 50%; transform: translateY(-50%); color: var(--p-brand);"></i>
-                    <input type="email" name="email" required placeholder="admin@entryx.system"
+                    <input type="email" name="email" required placeholder="admin@entryx.system" autocomplete="off"
                         style="width: 100%; padding: 1.2rem 1.5rem 1.2rem 4rem; background: rgba(255,255,255,0.03); border: 1px solid var(--p-border); border-radius: 16px; color: white; transition: 0.3s;"
                         onfocus="this.style.borderColor='var(--p-brand)'; this.style.background='rgba(255,31,31,0.05)';"
                         onblur="this.style.borderColor='var(--p-border)'; this.style.background='rgba(255,255,255,0.03)';">
@@ -60,18 +62,13 @@ if (isset($_SESSION['user_id'])) {
             </div>
 
             <div style="margin-bottom: 2.5rem;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem;">
-                    <label
-                        style="color: var(--p-text-muted); font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin: 0;">Security
-                        Key</label>
-                    <a href="forgot_password.php"
-                        style="color: var(--p-brand); font-size: 0.8rem; font-weight: 600; text-decoration: none;">Reset
-                        Access?</a>
-                </div>
+                <label
+                    style="display: block; color: var(--p-text-muted); font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.8rem;">Security
+                    Key</label>
                 <div style="position: relative;">
                     <i class="fa-solid fa-key"
                         style="position: absolute; left: 1.5rem; top: 50%; transform: translateY(-50%); color: var(--p-brand);"></i>
-                    <input type="password" name="password" required placeholder="••••••••"
+                    <input type="password" name="password" required placeholder="••••••••" autocomplete="new-password"
                         style="width: 100%; padding: 1.2rem 1.5rem 1.2rem 4rem; background: rgba(255,255,255,0.03); border: 1px solid var(--p-border); border-radius: 16px; color: white; transition: 0.3s;"
                         onfocus="this.style.borderColor='var(--p-brand)'; this.style.background='rgba(255,31,31,0.05)';"
                         onblur="this.style.borderColor='var(--p-border)'; this.style.background='rgba(255,255,255,0.03)';">
