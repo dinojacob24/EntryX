@@ -1,6 +1,7 @@
 <?php
-require_once '../includes/header.php';
+session_start();
 
+// Redirect already-authenticated users to their dashboard
 if (isset($_SESSION['user_id'])) {
     if (in_array($_SESSION['role'], ['super_admin', 'event_admin'])) {
         header('Location: admin_dashboard.php');
@@ -8,8 +9,13 @@ if (isset($_SESSION['user_id'])) {
     } elseif ($_SESSION['role'] === 'security') {
         header('Location: security_dashboard.php');
         exit;
+    } elseif ($_SESSION['role'] === 'staff') {
+        header('Location: staff_dashboard.php');
+        exit;
     }
 }
+
+require_once '../includes/header.php';
 ?>
 
 <section
@@ -22,7 +28,7 @@ if (isset($_SESSION['user_id'])) {
     <div class="glass-panel reveal"
         style="width: 100%; max-width: 500px; padding: 4rem; border-color: rgba(59, 130, 246, 0.15); box-shadow: 0 30px 60px rgba(59,130,246,0.1); position: relative;">
         <!-- Back Link -->
-        <a href="../index.php"
+        <a href="<?php echo isset($_SESSION['user_id']) ? 'security_dashboard.php' : '../index.php'; ?>"
             style="position: absolute; top: 1.5rem; left: 1.5rem; color: var(--p-text-muted); text-decoration: none; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; display: flex; align-items: center; gap: 0.5rem; transition: 0.3s;"
             onmouseover="this.style.color='white'; this.style.transform='translateX(-5px)';"
             onmouseout="this.style.color='var(--p-text-muted)'; this.style.transform='translateX(0)';">

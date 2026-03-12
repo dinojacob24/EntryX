@@ -348,9 +348,14 @@ $event = $eventObj->getEventById($eventId);
             fps: 15,
             qrbox: { width: 300, height: 300 },
             aspectRatio: 1.0,
-            rememberLastUsedCamera: true
+            rememberLastUsedCamera: true,
+            supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA]
         },
-        false);
+        /* verbose= */ false);
+
+    // Optional: We can try to explicitly start with 'user' if we used Html5Qrcode class,
+    // but for Html5QrcodeScanner (the UI version), it usually remembers or asks.
+    // However, we can add a small hint or just ensure it's not forced to environment.
 
     html5QrcodeScanner.render(onScanSuccess, onScanFailure);
 

@@ -30,11 +30,62 @@ if ($action === 'create' || $action === 'update') {
 
     $input = json_decode(file_get_contents('php://input'), true);
 
-    // Validation
+    // === SERVER-SIDE VALIDATION ===
     if (empty($input['name']) || empty($input['event_date'])) {
-        echo json_encode(['success' => false, 'error' => 'Missing required fields']);
+        echo json_encode(['success' => false, 'error' => 'Event name and date are required.']);
         exit;
     }
+
+    if (strlen(trim($input['name'])) < 2) {
+        echo json_encode(['success' => false, 'error' => 'Event name must be at least 2 characters.']);
+        exit;
+    }
+
+    // Date: reject past dates (allow today)
+    $eventDate = date('Y-m-d', strtotime($input['event_date']));
+    $today = date('Y-m-d');
+    if ($action === 'create' && $eventDate < $today) {
+        echo json_encode(['success' => false, 'error' => 'Event date cannot be in the past. Please select today or a future date.']);
+        exit;
+    }
+
+    // Capacity: must be >= 1
+    if (isset($input['capacity']) && (int) $input['capacity'] < 1) {
+        echo json_encode(['success' => false, 'error' => 'Event capacity must be at least 1.']);
+        exit;
+    }
+
+    // Price: if paid event, must be > 0
+    if (!empty($input['is_paid']) && $input['is_paid'] == 1) {
+        $price = isset($input['base_price']) ? floatval($input['base_price']) : 0;
+        if ($price <= 0) {
+            echo json_encode(['success' => false, 'error' => 'Registration fee must be greater than ₹0 for a paid event.']);
+            exit;
+        }
+    }
+
+    // GST rate: must be 0-100
+    if (isset($input['gst_rate'])) {
+        $gst = floatval($input['gst_rate']);
+        if ($gst < 0 || $gst > 100) {
+            echo json_encode(['success' => false, 'error' => 'GST rate must be between 0% and 100%.']);
+            exit;
+        }
+    }
+    // Team Sizes: if group event, min/max must be valid
+    if (!empty($input['is_group_event'])) {
+        $min = isset($input['min_team_size']) ? (int) $input['min_team_size'] : 1;
+        $max = isset($input['max_team_size']) ? (int) $input['max_team_size'] : 1;
+        if ($min < 1) {
+            echo json_encode(['success' => false, 'error' => 'Minimum team size must be at least 1.']);
+            exit;
+        }
+        if ($max < $min) {
+            echo json_encode(['success' => false, 'error' => 'Maximum team size must be greater than or equal to minimum.']);
+            exit;
+        }
+    }
+    // === END VALIDATION ===
 
     if ($action === 'create') {
         $input['created_by'] = $_SESSION['user_id'];

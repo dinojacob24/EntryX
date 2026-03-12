@@ -1,5 +1,6 @@
 <?php
 require_once '../config/db_connect.php';
+require_once '../config/razorpay_config.php';
 require_once '../classes/Registration.php';
 
 if (session_status() === PHP_SESSION_NONE) {
@@ -17,6 +18,8 @@ $data = json_decode(file_get_contents('php://input'), true);
 $razorpay_order_id = $data['razorpay_order_id'] ?? '';
 $razorpay_payment_id = $data['razorpay_payment_id'] ?? '';
 $razorpay_signature = $data['razorpay_signature'] ?? '';
+$team_name = $data['team_name'] ?? null;
+$team_members = $data['team_members'] ?? null;
 
 if (!$razorpay_order_id || !$razorpay_payment_id || !$razorpay_signature) {
     echo json_encode(['success' => false, 'error' => 'Invalid payment data received']);
@@ -24,17 +27,8 @@ if (!$razorpay_order_id || !$razorpay_payment_id || !$razorpay_signature) {
 }
 
 try {
-    // 1. Get Gateway Credentials
-    $stmt = $pdo->prepare("SELECT api_secret FROM payment_settings WHERE gateway_name = 'razorpay'");
-    $stmt->execute();
-    $gateway = $stmt->fetch();
-
-    if (!$gateway) {
-        throw new Exception("Gateway configuration not found");
-    }
-
-    // 2. Verify Signature
-    $generated_signature = hash_hmac('sha256', $razorpay_order_id . "|" . $razorpay_payment_id, $gateway['api_secret']);
+    // 1. Verify Signature using .env secret
+    $generated_signature = hash_hmac('sha256', $razorpay_order_id . "|" . $razorpay_payment_id, RAZORPAY_KEY_SECRET);
 
     if ($generated_signature !== $razorpay_signature) {
         throw new Exception("Payment signature verification failed. Transaction may be tampered.");
@@ -77,7 +71,7 @@ try {
 
         // registerUser will handle the duplicate check and insertion
         // We pass the payment_id as transaction_id
-        $result = $registration->registerUser($payRecord['user_id'], $eventId, $razorpay_payment_id);
+        $result = $registration->registerUser($payRecord['user_id'], $eventId, $razorpay_payment_id, $team_name, $team_members);
 
         if (!$result['success']) {
             throw new Exception("Registration failed: " . $result['error']);

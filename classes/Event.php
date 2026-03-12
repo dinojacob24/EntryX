@@ -10,8 +10,8 @@ class Event
 
     public function createEvent($data)
     {
-        $sql = "INSERT INTO events (name, description, event_date, venue, capacity, type, is_paid, base_price, is_gst_enabled, gst_rate, payment_upi, gst_target, created_by) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        $sql = "INSERT INTO events (name, description, event_date, venue, capacity, type, is_group_event, min_team_size, max_team_size, is_paid, base_price, is_gst_enabled, gst_rate, payment_upi, gst_target, created_by) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try {
             $stmt = $this->pdo->prepare($sql);
@@ -22,6 +22,9 @@ class Event
                 $data['venue'],
                 $data['capacity'],
                 $data['type'],
+                $data['is_group_event'] ?? 0,
+                $data['min_team_size'] ?? 1,
+                $data['max_team_size'] ?? 1,
                 $data['is_paid'],
                 $data['base_price'],
                 $data['is_gst_enabled'],
@@ -58,9 +61,9 @@ class Event
     {
         $sql = "UPDATE events SET 
                 name = ?, description = ?, event_date = ?, venue = ?, 
-                capacity = ?, type = ?, is_paid = ?, base_price = ?, 
-                is_gst_enabled = ?, gst_rate = ?, payment_upi = ?,
-                gst_target = ?, status = ?
+                capacity = ?, type = ?, is_group_event = ?, min_team_size = ?, max_team_size = ?,
+                is_paid = ?, base_price = ?, is_gst_enabled = ?, gst_rate = ?, 
+                payment_upi = ?, gst_target = ?, status = ?
                 WHERE id = ?";
 
         try {
@@ -72,6 +75,9 @@ class Event
                 $data['venue'],
                 $data['capacity'],
                 $data['type'],
+                $data['is_group_event'] ?? 0,
+                $data['min_team_size'] ?? 1,
+                $data['max_team_size'] ?? 1,
                 $data['is_paid'],
                 $data['base_price'],
                 $data['is_gst_enabled'],

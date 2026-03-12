@@ -1,0 +1,331 @@
+Array
+(
+    [events] => Array
+        (
+            [0] => Array
+                (
+                    [Field] => id
+                    [Type] => int(11)
+                    [Null] => NO
+                    [Key] => PRI
+                    [Default] => 
+                    [Extra] => auto_increment
+                )
+
+            [1] => Array
+                (
+                    [Field] => name
+                    [Type] => varchar(200)
+                    [Null] => NO
+                    [Key] => 
+                    [Default] => 
+                    [Extra] => 
+                )
+
+            [2] => Array
+                (
+                    [Field] => description
+                    [Type] => text
+                    [Null] => YES
+                    [Key] => 
+                    [Default] => 
+                    [Extra] => 
+                )
+
+            [3] => Array
+                (
+                    [Field] => poster_image
+                    [Type] => varchar(255)
+                    [Null] => YES
+                    [Key] => 
+                    [Default] => 
+                    [Extra] => 
+                )
+
+            [4] => Array
+                (
+                    [Field] => event_date
+                    [Type] => datetime
+                    [Null] => NO
+                    [Key] => 
+                    [Default] => 
+                    [Extra] => 
+                )
+
+            [5] => Array
+                (
+                    [Field] => venue
+                    [Type] => varchar(100)
+                    [Null] => NO
+                    [Key] => 
+                    [Default] => 
+                    [Extra] => 
+                )
+
+            [6] => Array
+                (
+                    [Field] => capacity
+                    [Type] => int(11)
+                    [Null] => YES
+                    [Key] => 
+                    [Default] => 100
+                    [Extra] => 
+                )
+
+            [7] => Array
+                (
+                    [Field] => type
+                    [Type] => enum('internal','external','both')
+                    [Null] => YES
+                    [Key] => 
+                    [Default] => both
+                    [Extra] => 
+                )
+
+            [8] => Array
+                (
+                    [Field] => program_type
+                    [Type] => enum('regular','external_program','both')
+                    [Null] => YES
+                    [Key] => 
+                    [Default] => regular
+                    [Extra] => 
+                )
+
+            [9] => Array
+                (
+                    [Field] => is_external_registration_open
+                    [Type] => tinyint(1)
+                    [Null] => YES
+                    [Key] => 
+                    [Default] => 0
+                    [Extra] => 
+                )
+
+            [10] => Array
+                (
+                    [Field] => external_program_details
+                    [Type] => text
+                    [Null] => YES
+                    [Key] => 
+                    [Default] => 
+                    [Extra] => 
+                )
+
+            [11] => Array
+                (
+                    [Field] => is_paid
+                    [Type] => tinyint(1)
+                    [Null] => YES
+                    [Key] => 
+                    [Default] => 0
+                    [Extra] => 
+                )
+
+            [12] => Array
+                (
+                    [Field] => base_price
+                    [Type] => decimal(10,2)
+                    [Null] => YES
+                    [Key] => 
+                    [Default] => 0.00
+                    [Extra] => 
+                )
+
+            [13] => Array
+                (
+                    [Field] => is_gst_enabled
+                    [Type] => tinyint(1)
+                    [Null] => YES
+                    [Key] => 
+                    [Default] => 0
+                    [Extra] => 
+                )
+
+            [14] => Array
+                (
+                    [Field] => gst_rate
+                    [Type] => decimal(5,2)
+                    [Null] => YES
+                    [Key] => 
+                    [Default] => 18.00
+                    [Extra] => 
+                )
+
+            [15] => Array
+                (
+                    [Field] => payment_upi
+                    [Type] => varchar(255)
+                    [Null] => YES
+                    [Key] => 
+                    [Default] => 
+                    [Extra] => 
+                )
+
+            [16] => Array
+                (
+                    [Field] => gst_target
+                    [Type] => enum('externals_only','both','internals_only')
+                    [Null] => YES
+                    [Key] => 
+                    [Default] => both
+                    [Extra] => 
+                )
+
+            [17] => Array
+                (
+                    [Field] => status
+                    [Type] => enum('upcoming','ongoing','completed','cancelled')
+                    [Null] => YES
+                    [Key] => 
+                    [Default] => upcoming
+                    [Extra] => 
+                )
+
+            [18] => Array
+                (
+                    [Field] => created_by
+                    [Type] => int(11)
+                    [Null] => YES
+                    [Key] => MUL
+                    [Default] => 
+                    [Extra] => 
+                )
+
+            [19] => Array
+                (
+                    [Field] => created_at
+                    [Type] => timestamp
+                    [Null] => NO
+                    [Key] => 
+                    [Default] => current_timestamp()
+                    [Extra] => 
+                )
+
+        )
+
+    [registrations] => Array
+        (
+            [0] => Array
+                (
+                    [Field] => id
+                    [Type] => int(11)
+                    [Null] => NO
+                    [Key] => PRI
+                    [Default] => 
+                    [Extra] => auto_increment
+                )
+
+            [1] => Array
+                (
+                    [Field] => user_id
+                    [Type] => int(11)
+                    [Null] => NO
+                    [Key] => MUL
+                    [Default] => 
+                    [Extra] => 
+                )
+
+            [2] => Array
+                (
+                    [Field] => event_id
+                    [Type] => int(11)
+                    [Null] => NO
+                    [Key] => MUL
+                    [Default] => 
+                    [Extra] => 
+                )
+
+            [3] => Array
+                (
+                    [Field] => qr_token
+                    [Type] => varchar(255)
+                    [Null] => NO
+                    [Key] => UNI
+                    [Default] => 
+                    [Extra] => 
+                )
+
+            [4] => Array
+                (
+                    [Field] => payment_status
+                    [Type] => enum('pending','completed','failed','free')
+                    [Null] => YES
+                    [Key] => 
+                    [Default] => pending
+                    [Extra] => 
+                )
+
+            [5] => Array
+                (
+                    [Field] => base_amount
+                    [Type] => decimal(10,2)
+                    [Null] => YES
+                    [Key] => 
+                    [Default] => 0.00
+                    [Extra] => 
+                )
+
+            [6] => Array
+                (
+                    [Field] => gst_amount
+                    [Type] => decimal(10,2)
+                    [Null] => YES
+                    [Key] => 
+                    [Default] => 0.00
+                    [Extra] => 
+                )
+
+            [7] => Array
+                (
+                    [Field] => total_amount
+                    [Type] => decimal(10,2)
+                    [Null] => YES
+                    [Key] => 
+                    [Default] => 0.00
+                    [Extra] => 
+                )
+
+            [8] => Array
+                (
+                    [Field] => transaction_id
+                    [Type] => varchar(100)
+                    [Null] => YES
+                    [Key] => UNI
+                    [Default] => 
+                    [Extra] => 
+                )
+
+            [9] => Array
+                (
+                    [Field] => qr_code
+                    [Type] => varchar(255)
+                    [Null] => YES
+                    [Key] => UNI
+                    [Default] => 
+                    [Extra] => 
+                )
+
+            [10] => Array
+                (
+                    [Field] => registration_date
+                    [Type] => timestamp
+                    [Null] => NO
+                    [Key] => 
+                    [Default] => current_timestamp()
+                    [Extra] => 
+                )
+
+            [11] => Array
+                (
+                    [Field] => amount_paid
+                    [Type] => decimal(10,2)
+                    [Null] => YES
+                    [Key] => 
+                    [Default] => 0.00
+                    [Extra] => 
+                )
+
+        )
+
+)

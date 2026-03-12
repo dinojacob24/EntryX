@@ -18,6 +18,11 @@ $results = $stmt->fetchAll();
 
 <div class="dashboard-container">
     <div style="text-align: center; margin-bottom: 5rem;" class="reveal">
+        <a href="<?php echo isset($_SESSION['user_id']) ? $dashboardUrl : '../index.php'; ?>" class="btn btn-outline"
+            style="position: absolute; left: 2rem; top: 7rem; border-color: rgba(255,255,255,0.1); color: var(--p-text-muted);">
+            <i class="fa-solid fa-arrow-left"></i> Back to Home
+        </a>
+
         <h1
             style="font-size: 4rem; margin-bottom: 1rem; background: linear-gradient(to right, #fff, #94a3b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
             Hall of <span style="color: var(--p-brand);">Fame</span>
@@ -73,20 +78,23 @@ $results = $stmt->fetchAll();
                                 <span
                                     style="color: white; font-weight: 600;"><?php echo htmlspecialchars($res['event_name']); ?></span>
                             </div>
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <span
-                                    style="color: var(--p-text-muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em;">Runner
-                                    Up</span>
-                                <span
-                                    style="color: var(--p-text-dim);"><?php echo htmlspecialchars($res['runner_up_name']); ?></span>
-                            </div>
-                            <?php if ($res['consolation_prize']): ?>
+                            <?php if (!empty($res['runner_up_name'])): ?>
                                 <div style="display: flex; justify-content: space-between; align-items: center;">
                                     <span
-                                        style="color: var(--p-text-muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em;">Special
-                                        Mention</span>
+                                        style="color: var(--p-text-muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em;">🥈
+                                        Runner Up</span>
                                     <span
-                                        style="color: var(--p-text-dim);"><?php echo htmlspecialchars($res['consolation_prize']); ?></span>
+                                        style="color: var(--p-text-dim); font-weight: 600;"><?php echo htmlspecialchars($res['runner_up_name']); ?></span>
+                                </div>
+                            <?php endif; ?>
+
+                            <?php if (!empty($res['consolation_prize'])): ?>
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span
+                                        style="color: var(--p-text-muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em;">🥉
+                                        Special Mention</span>
+                                    <span
+                                        style="color: var(--p-text-dim); font-weight: 600;"><?php echo htmlspecialchars($res['consolation_prize']); ?></span>
                                 </div>
                             <?php endif; ?>
                         </div>
@@ -103,5 +111,3 @@ $results = $stmt->fetchAll();
         </div>
     <?php endif; ?>
 </div>
-
-<?php require_once '../includes/footer.php'; ?>

@@ -10,17 +10,16 @@ if (!isset($_SESSION['user_id']) || !in_array($_SESSION['role'], ['security', 's
 
 $hideFooter = true;
 $hideHeaderNav = true;
-$useCustomLayout = true; // Use full screen layout without standard containers
+$useCustomLayout = true;
 require_once '../includes/header.php';
 require_once '../config/db_connect.php';
 require_once '../classes/Event.php';
 
 $userName = $_SESSION['name'];
+$userRole = $_SESSION['role'];
 $eventObj = new Event($pdo);
-// Security sees all upcoming/ongoing events
 $events = $eventObj->getAllEvents();
 
-// Initial Event ID for scanner (first one if exists)
 $initialEventId = !empty($events) ? $events[0]['id'] : null;
 
 // Fetch live entry stats
@@ -29,6 +28,24 @@ $totalInside = $stmtTotal->fetchColumn();
 
 $stmtToday = $pdo->query("SELECT COUNT(*) FROM attendance_logs WHERE DATE(entry_time) = CURDATE()");
 $entriesToday = $stmtToday->fetchColumn();
+
+// Fetch internal vs external breakdown
+$stmtInternal = $pdo->query("SELECT COUNT(*) FROM attendance_logs al JOIN registrations r ON al.registration_id = r.id JOIN users u ON r.user_id = u.id WHERE al.status = 'inside' AND u.role = 'internal'");
+$internalInside = $stmtInternal->fetchColumn();
+
+$stmtExternal = $pdo->query("SELECT COUNT(*) FROM attendance_logs al JOIN registrations r ON al.registration_id = r.id JOIN users u ON r.user_id = u.id WHERE al.status = 'inside' AND u.role = 'external'");
+$externalInside = $stmtExternal->fetchColumn();
+
+// Recent activity log
+$stmtRecent = $pdo->query("
+    SELECT al.*, r.qr_token, u.name as user_name, u.role as user_role, e.name as event_name
+    FROM attendance_logs al 
+    JOIN registrations r ON al.registration_id = r.id
+    JOIN users u ON r.user_id = u.id 
+    JOIN events e ON r.event_id = e.id
+    ORDER BY al.entry_time DESC LIMIT 10
+");
+$recentActivity = $stmtRecent->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
 <style>
@@ -36,9 +53,16 @@ $entriesToday = $stmtToday->fetchColumn();
         --sec-brand: #3b82f6;
         --sec-success: #10b981;
         --sec-error: #ef4444;
-        --sec-dark: #020617;
-        --sec-panel: rgba(15, 23, 42, 0.8);
-        --sec-border: rgba(59, 130, 246, 0.2);
+        --sec-warn: #f59e0b;
+        --sec-dark: #04060f;
+        --sec-panel: rgba(10, 15, 35, 0.9);
+        --sec-border: rgba(59, 130, 246, 0.15);
+        --sec-internal: #10b981;
+        --sec-external: #f59e0b;
+    }
+
+    * {
+        box-sizing: border-box;
     }
 
     body {
@@ -46,142 +70,346 @@ $entriesToday = $stmtToday->fetchColumn();
         color: #f8fafc;
         font-family: 'Outfit', sans-serif;
         margin: 0;
-        min-height: 100vh;
+        height: 100vh;
         overflow: hidden;
-        /* Prevent body scroll */
+        background-image:
+            radial-gradient(ellipse at 10% 20%, rgba(59, 130, 246, 0.06) 0%, transparent 50%),
+            radial-gradient(ellipse at 90% 80%, rgba(16, 185, 129, 0.04) 0%, transparent 50%);
     }
 
-    /* Hide standard site header navigation */
     nav,
     .top-nav,
     header:not(.gate-header) {
         display: none !important;
     }
 
-    .unified-terminal {
+    /* ===== MAIN LAYOUT ===== */
+    .gate-terminal {
         display: grid;
-        grid-template-columns: 350px 1fr;
+        grid-template-columns: 300px 1fr 320px;
         height: 100vh;
         overflow: hidden;
     }
 
-    /* Left Sidebar: Stats & Event Control */
-    .sidebar-control {
-        background: rgba(15, 23, 42, 0.95);
+    /* ===== LEFT SIDEBAR ===== */
+    .sidebar-left {
+        background: rgba(8, 12, 30, 0.95);
         border-right: 1px solid var(--sec-border);
-        padding: 2rem;
         display: flex;
         flex-direction: column;
-        gap: 2rem;
-        overflow-y: auto;
+        overflow: hidden;
     }
 
-    .stat-box-term {
+    .sidebar-header {
         padding: 1.5rem;
-        background: rgba(255, 255, 255, 0.03);
-        border: 1px solid var(--sec-border);
-        border-radius: 20px;
+        border-bottom: 1px solid var(--sec-border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
     }
 
-    .stat-label {
-        font-size: 0.75rem;
-        font-weight: 800;
-        color: #94a3b8;
-        text-transform: uppercase;
-        letter-spacing: 0.1em;
-        margin-bottom: 0.5rem;
+    .brand-mark {
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
     }
 
-    .stat-value {
-        font-size: 2rem;
-        font-weight: 800;
+    .brand-icon {
+        width: 38px;
+        height: 38px;
+        background: linear-gradient(135deg, #1d4ed8, #3b82f6);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
         color: white;
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
     }
 
-    .capacity-bar-container {
-        height: 8px;
-        background: rgba(255, 255, 255, 0.05);
-        border-radius: 40px;
+    .brand-text {
+        font-size: 1rem;
+        font-weight: 900;
+        color: white;
+        letter-spacing: -0.02em;
+    }
+
+    .brand-sub {
+        font-size: 0.6rem;
+        color: #3b82f6;
+        text-transform: uppercase;
+        letter-spacing: 0.15em;
+        font-weight: 700;
+        margin-top: -2px;
+    }
+
+    .logout-btn {
+        width: 34px;
+        height: 34px;
+        background: rgba(239, 68, 68, 0.1);
+        border: 1px solid rgba(239, 68, 68, 0.25);
+        border-radius: 8px;
+        color: #ef4444;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.85rem;
+        text-decoration: none;
+        transition: 0.2s;
+    }
+
+    .logout-btn:hover {
+        background: rgba(239, 68, 68, 0.2);
+    }
+
+    .sidebar-body {
+        padding: 1.2rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        overflow-y: auto;
+        flex: 1;
+    }
+
+    /* ===== STAT CARDS ===== */
+    .stat-card {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 14px;
+        padding: 1.2rem;
+        transition: 0.2s;
+    }
+
+    .stat-card:hover {
+        border-color: var(--sec-border);
+    }
+
+    .stat-label-sm {
+        font-size: 0.65rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        color: #64748b;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .stat-value-lg {
+        font-size: 2.5rem;
+        font-weight: 900;
+        color: white;
+        line-height: 1;
+        margin-bottom: 0.3rem;
+    }
+
+    .stat-sub {
+        font-size: 0.75rem;
+        color: #475569;
+        font-weight: 600;
+    }
+
+    .capacity-bar {
+        height: 5px;
+        background: rgba(255, 255, 255, 0.06);
+        border-radius: 99px;
         overflow: hidden;
         margin-top: 0.8rem;
     }
 
     .capacity-fill {
         height: 100%;
-        background: linear-gradient(90deg, var(--sec-brand), var(--sec-success));
-        width: 0%;
-        transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        border-radius: 99px;
+        background: linear-gradient(90deg, #3b82f6, #10b981);
+        transition: width 0.5s ease;
     }
 
-    .recent-profile-card {
-        background: rgba(59, 130, 246, 0.05);
-        border: 1px solid var(--sec-border);
-        border-radius: 20px;
-        padding: 1.5rem;
+    /* Internal / External breakdown */
+    .role-breakdown {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.6rem;
+    }
+
+    .role-card {
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 10px;
+        padding: 0.8rem;
+        text-align: center;
+    }
+
+    .role-count {
+        font-size: 1.6rem;
+        font-weight: 900;
+        margin-bottom: 0.2rem;
+    }
+
+    .role-card.int .role-count {
+        color: var(--sec-internal);
+    }
+
+    .role-card.ext .role-count {
+        color: var(--sec-external);
+    }
+
+    .role-name {
+        font-size: 0.6rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: #475569;
+    }
+
+    /* Mode Indicator */
+    .mode-indicator {
+        padding: 1rem;
+        border-radius: 12px;
         display: flex;
         align-items: center;
         gap: 1rem;
-        margin-top: 1rem;
-        opacity: 0;
-        transform: translateY(10px);
         transition: 0.3s;
     }
 
-    .recent-profile-card.active {
-        opacity: 1;
-        transform: translateY(0);
+    .mode-indicator.entry {
+        background: rgba(16, 185, 129, 0.08);
+        border: 1px solid rgba(16, 185, 129, 0.25);
     }
 
-    .event-selector-list {
+    .mode-indicator.exit {
+        background: rgba(239, 68, 68, 0.08);
+        border: 1px solid rgba(239, 68, 68, 0.25);
+    }
+
+    .mode-indicator.idle {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .mode-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+
+    .mode-indicator.entry .mode-dot {
+        background: #10b981;
+        box-shadow: 0 0 8px #10b981;
+        animation: blink 1.5s infinite;
+    }
+
+    .mode-indicator.exit .mode-dot {
+        background: #ef4444;
+        box-shadow: 0 0 8px #ef4444;
+        animation: blink 1.5s infinite;
+    }
+
+    .mode-indicator.idle .mode-dot {
+        background: #475569;
+    }
+
+    @keyframes blink {
+
+        0%,
+        100% {
+            opacity: 1;
+        }
+
+        50% {
+            opacity: 0.3;
+        }
+    }
+
+    .sidebar-footer {
+        padding: 1rem 1.2rem;
+        border-top: 1px solid var(--sec-border);
         display: flex;
-        flex-direction: column;
+        align-items: center;
         gap: 0.8rem;
     }
 
-    .event-btn-choice {
-        padding: 1rem;
-        background: rgba(255, 255, 255, 0.02);
-        border: 1px solid rgba(255, 255, 255, 0.05);
-        border-radius: 12px;
-        color: #94a3b8;
-        text-align: left;
-        cursor: pointer;
-        transition: 0.3s;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .event-btn-choice.active {
-        background: rgba(59, 130, 246, 0.1);
-        border-color: var(--sec-brand);
-        color: white;
-    }
-
-    /* Right Main: Scanning Hub */
-    .scanning-hub {
-        padding: 2rem;
-        position: relative;
-        display: flex;
-        flex-direction: column;
-        gap: 2rem;
-        background: radial-gradient(circle at top right, rgba(59, 130, 246, 0.05) 0%, transparent 50%);
-    }
-
-    .scanner-chamber {
-        width: 100%;
-        max-width: 600px;
-        aspect-ratio: 1;
-        margin: 0 auto;
-        background: #000;
-        border-radius: 32px;
-        border: 2px solid var(--sec-border);
-        position: relative;
-        overflow: hidden;
+    .officer-avatar {
+        width: 36px;
+        height: 36px;
+        background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+        border-radius: 8px;
         display: flex;
         align-items: center;
         justify-content: center;
-        box-shadow: 0 0 50px rgba(59, 130, 246, 0.1);
+        font-size: 0.75rem;
+        font-weight: 800;
+        color: white;
+        flex-shrink: 0;
+    }
+
+    /* ===== MAIN SCANNER AREA ===== */
+    .scanner-main {
+        display: flex;
+        flex-direction: column;
+        background: #000;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .scanner-main-header {
+        padding: 1.2rem 1.5rem;
+        background: rgba(8, 12, 30, 0.9);
+        border-bottom: 1px solid var(--sec-border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        z-index: 10;
+        backdrop-filter: blur(20px);
+    }
+
+    .mode-tabs {
+        display: flex;
+        gap: 0.5rem;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.07);
+        border-radius: 12px;
+        padding: 0.3rem;
+    }
+
+    .mode-tab {
+        padding: 0.6rem 1.4rem;
+        border-radius: 8px;
+        font-weight: 800;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        cursor: pointer;
+        border: none;
+        background: transparent;
+        color: #475569;
+        transition: 0.25s;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .mode-tab.active-entry {
+        background: rgba(16, 185, 129, 0.2);
+        color: #10b981;
+        border: 1px solid rgba(16, 185, 129, 0.35);
+    }
+
+    .mode-tab.active-exit {
+        background: rgba(239, 68, 68, 0.2);
+        color: #ef4444;
+        border: 1px solid rgba(239, 68, 68, 0.35);
+    }
+
+    .scanner-chamber {
+        flex: 1;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
     }
 
     #reader {
@@ -190,12 +418,13 @@ $entriesToday = $stmtToday->fetchColumn();
         border: none !important;
     }
 
-    #reader__scan_region {
-        background: #000 !important;
+    #reader__dashboard,
+    #reader__header {
+        display: none !important;
     }
 
-    #reader__dashboard {
-        display: none !important;
+    #reader__scan_region {
+        background: #000 !important;
     }
 
     #reader video,
@@ -203,75 +432,338 @@ $entriesToday = $stmtToday->fetchColumn();
         object-fit: cover !important;
         width: 100% !important;
         height: 100% !important;
-        border-radius: 30px;
     }
 
-    .scan-overlay-vanguard {
+    /* Scan overlay */
+    .scan-frame {
         position: absolute;
-        inset: 0;
+        width: 260px;
+        height: 260px;
+        z-index: 20;
         pointer-events: none;
-        z-index: 10;
-        border: 40px solid rgba(2, 6, 23, 0.6);
     }
 
-    .scan-target {
+    .scan-frame::before,
+    .scan-frame::after {
+        content: '';
         position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        width: 300px;
-        height: 300px;
-        border: 2px solid var(--sec-brand);
-        border-radius: 24px;
-        box-shadow: 0 0 0 1000px rgba(2, 6, 23, 0.6);
+        width: 40px;
+        height: 40px;
+        border-color: var(--frame-color, #3b82f6);
+        border-style: solid;
+        border-width: 3px;
     }
 
-    .laser-line {
+    .scan-frame::before {
+        top: 0;
+        left: 0;
+        border-right: none;
+        border-bottom: none;
+        border-radius: 6px 0 0 0;
+    }
+
+    .scan-frame::after {
+        bottom: 0;
+        right: 0;
+        border-left: none;
+        border-top: none;
+        border-radius: 0 0 6px 0;
+    }
+
+    .scan-frame .corner-tr {
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 40px;
+        height: 40px;
+        border-top: 3px solid var(--frame-color, #3b82f6);
+        border-right: 3px solid var(--frame-color, #3b82f6);
+        border-radius: 0 6px 0 0;
+    }
+
+    .scan-frame .corner-bl {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 40px;
+        height: 40px;
+        border-bottom: 3px solid var(--frame-color, #3b82f6);
+        border-left: 3px solid var(--frame-color, #3b82f6);
+        border-radius: 0 0 0 6px;
+    }
+
+    .scan-laser {
         position: absolute;
         width: 100%;
-        height: 4px;
-        background: var(--sec-brand);
-        box-shadow: 0 0 20px var(--sec-brand);
+        height: 2px;
+        background: var(--frame-color, #3b82f6);
+        box-shadow: 0 0 12px 2px var(--frame-color, #3b82f6);
         top: 0;
-        animation: laserMove 4s infinite ease-in-out;
+        animation: laserSweep 2.5s ease-in-out infinite;
+        z-index: 21;
+        pointer-events: none;
     }
 
-    @keyframes laserMove {
+    @keyframes laserSweep {
 
         0%,
         100% {
             top: 0;
+            opacity: 1;
         }
 
         50% {
             top: 100%;
+            opacity: 0.7;
         }
     }
 
-    .live-entry-log {
-        height: 200px;
-        background: var(--sec-panel);
-        backdrop-filter: blur(20px);
-        border: 1px solid var(--sec-border);
-        border-radius: 24px;
-        padding: 1.5rem;
-        overflow-y: auto;
+    /* Start screen overlay */
+    .start-overlay {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(ellipse at center, #08102b 0%, #020617 100%);
+        z-index: 50;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 2rem;
+        transition: opacity 0.5s ease, transform 0.5s ease;
     }
 
-    .log-entry-row {
+    .start-overlay.hidden {
+        opacity: 0;
+        pointer-events: none;
+        transform: scale(1.05);
+    }
+
+    .start-camera-icon {
+        width: 120px;
+        height: 120px;
+        background: rgba(59, 130, 246, 0.08);
+        border: 1px solid rgba(59, 130, 246, 0.2);
+        border-radius: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #3b82f6;
+        animation: iconPulse 3s ease-in-out infinite;
+    }
+
+    @keyframes iconPulse {
+
+        0%,
+        100% {
+            box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.15);
+        }
+
+        50% {
+            box-shadow: 0 0 0 20px rgba(59, 130, 246, 0);
+        }
+    }
+
+    .start-title {
+        font-size: 1.4rem;
+        font-weight: 800;
+        color: white;
+        text-align: center;
+    }
+
+    .start-sub {
+        color: #475569;
+        font-size: 0.9rem;
+        font-weight: 600;
+        text-align: center;
+        max-width: 300px;
+        line-height: 1.5;
+    }
+
+    .start-btn-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.8rem;
+        width: 100%;
+        max-width: 280px;
+    }
+
+    .start-btn {
+        width: 100%;
+        padding: 1rem 1.5rem;
+        border-radius: 14px;
+        font-weight: 800;
+        font-size: 0.95rem;
+        letter-spacing: 0.05em;
+        cursor: pointer;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.7rem;
+        transition: 0.25s;
+    }
+
+    .start-btn:hover {
+        transform: translateY(-2px);
+    }
+
+    .start-btn.entry-btn {
+        background: linear-gradient(135deg, #059669, #10b981);
+        color: white;
+        box-shadow: 0 8px 24px rgba(16, 185, 129, 0.3);
+    }
+
+    .start-btn.exit-btn {
+        background: linear-gradient(135deg, #dc2626, #ef4444);
+        color: white;
+        box-shadow: 0 8px 24px rgba(239, 68, 68, 0.3);
+    }
+
+    /* Scanner footer controls */
+    .scanner-footer {
+        padding: 1rem 1.5rem;
+        background: rgba(8, 12, 30, 0.9);
+        border-top: 1px solid var(--sec-border);
+        display: flex;
+        gap: 0.8rem;
+        align-items: center;
+        justify-content: space-between;
+        backdrop-filter: blur(20px);
+    }
+
+    .ctrl-btn {
+        padding: 0.6rem 1.1rem;
+        border-radius: 9px;
+        font-size: 0.78rem;
+        font-weight: 700;
+        cursor: pointer;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: rgba(255, 255, 255, 0.04);
+        color: #94a3b8;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: 0.2s;
+    }
+
+    .ctrl-btn:hover {
+        background: rgba(255, 255, 255, 0.08);
+        color: white;
+    }
+
+    .ctrl-btn.danger {
+        border-color: rgba(239, 68, 68, 0.3);
+        color: #ef4444;
+        background: rgba(239, 68, 68, 0.06);
+    }
+
+    .ctrl-btn.danger:hover {
+        background: rgba(239, 68, 68, 0.12);
+    }
+
+    /* Manual input */
+    .manual-input-group {
+        display: flex;
+        gap: 0.4rem;
+        flex: 1;
+        max-width: 350px;
+    }
+
+    .manual-input-group input {
+        flex: 1;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 8px;
+        color: white;
+        padding: 0.55rem 0.9rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+        outline: none;
+        transition: 0.2s;
+        font-family: monospace;
+    }
+
+    .manual-input-group input:focus {
+        border-color: var(--sec-brand);
+        background: rgba(59, 130, 246, 0.06);
+    }
+
+    .manual-input-group input::placeholder {
+        color: #334155;
+    }
+
+    /* ===== RIGHT PANEL: ACTIVITY LOG ===== */
+    .sidebar-right {
+        background: rgba(8, 12, 30, 0.95);
+        border-left: 1px solid var(--sec-border);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .log-header {
+        padding: 1.2rem 1.5rem;
+        border-bottom: 1px solid var(--sec-border);
         display: flex;
         justify-content: space-between;
-        padding: 0.8rem 1rem;
-        border-radius: 10px;
-        background: rgba(255, 255, 255, 0.02);
-        margin-bottom: 0.5rem;
-        animation: slideIn 0.3s ease-out;
+        align-items: center;
     }
 
-    @keyframes slideIn {
+    .log-title {
+        font-size: 0.8rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: #94a3b8;
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+    }
+
+    .live-badge {
+        width: 6px;
+        height: 6px;
+        background: #10b981;
+        border-radius: 50%;
+        box-shadow: 0 0 6px #10b981;
+        animation: blink 1.5s infinite;
+    }
+
+    .log-feed {
+        flex: 1;
+        overflow-y: auto;
+        padding: 0.8rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .log-feed::-webkit-scrollbar {
+        width: 3px;
+    }
+
+    .log-feed::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .log-feed::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 99px;
+    }
+
+    .log-item {
+        padding: 0.9rem;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid rgba(255, 255, 255, 0.04);
+        border-left: 3px solid #334155;
+        animation: slideInRight 0.3s ease-out;
+    }
+
+    @keyframes slideInRight {
         from {
             opacity: 0;
-            transform: translateX(20px);
+            transform: translateX(15px);
         }
 
         to {
@@ -280,546 +772,995 @@ $entriesToday = $stmtToday->fetchColumn();
         }
     }
 
-    .status-floating {
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        padding: 4rem;
-        border-radius: 40px;
-        font-size: 4rem;
-        font-weight: 900;
-        z-index: 1000;
-        display: none;
-        box-shadow: 0 0 150px rgba(0, 0, 0, 0.9);
-        text-align: center;
-        width: 80%;
-        max-width: 800px;
-        animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    .log-item.entry {
+        border-left-color: #10b981;
     }
 
-    @keyframes popIn {
-        from {
-            transform: translate(-50%, -50%) scale(0.5);
-            opacity: 0;
-        }
-
-        to {
-            transform: translate(-50%, -50%) scale(1);
-            opacity: 1;
-        }
+    .log-item.exit {
+        border-left-color: #3b82f6;
     }
 
-    .initialize-overlay {
-        position: absolute;
-        inset: 0;
-        background: rgba(2, 6, 23, 0.9);
-        backdrop-filter: blur(10px);
-        z-index: 100;
+    .log-item.denied {
+        border-left-color: #ef4444;
+    }
+
+    .log-item.info {
+        border-left-color: #475569;
+    }
+
+    .log-name {
+        font-weight: 800;
+        font-size: 0.85rem;
+        color: white;
+        margin-bottom: 0.25rem;
+    }
+
+    .log-meta {
+        font-size: 0.7rem;
+        color: #475569;
+        font-weight: 600;
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+    }
+
+    .role-pill {
+        padding: 2px 7px;
+        border-radius: 5px;
+        font-size: 0.65rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .role-pill.internal {
+        background: rgba(16, 185, 129, 0.15);
+        color: #10b981;
+    }
+
+    .role-pill.external {
+        background: rgba(245, 158, 11, 0.15);
+        color: #f59e0b;
+    }
+
+    .action-pill {
+        padding: 2px 7px;
+        border-radius: 5px;
+        font-size: 0.65rem;
+        font-weight: 800;
+        text-transform: uppercase;
+    }
+
+    .action-pill.entry {
+        background: rgba(16, 185, 129, 0.15);
+        color: #10b981;
+    }
+
+    .action-pill.exit {
+        background: rgba(59, 130, 246, 0.15);
+        color: #3b82f6;
+    }
+
+    .action-pill.denied {
+        background: rgba(239, 68, 68, 0.15);
+        color: #ef4444;
+    }
+
+    .empty-log {
+        flex: 1;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        gap: 2rem;
-        border-radius: 30px;
-        transition: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    .initialize-overlay.active {
-        opacity: 0;
-        pointer-events: none;
-        transform: scale(1.1);
-    }
-
-    .manual-entry-bar {
-        background: rgba(255, 255, 255, 0.03);
-        border: 1px solid var(--sec-border);
-        border-radius: 16px;
-        display: flex;
-        padding: 0.5rem;
-        margin-top: 1rem;
-    }
-
-    .manual-entry-bar input {
-        background: transparent;
-        border: none;
-        color: white;
-        padding: 0.8rem 1rem;
-        flex: 1;
-        outline: none;
-        font-weight: 600;
-    }
-
-    .manual-entry-bar button {
-        background: var(--sec-brand);
-        border: none;
-        color: white;
-        padding: 0 1.5rem;
-        border-radius: 12px;
-        cursor: pointer;
-        font-weight: 800;
-        transition: 0.3s;
-    }
-
-    .manual-entry-bar button:hover {
-        background: #2563eb;
-    }
-
-    .camera-controls {
-        display: flex;
         gap: 1rem;
+        color: #1e293b;
+        text-align: center;
+        padding: 2rem;
+    }
+
+    /* ===== FULL SCREEN FLASH OVERLAY ===== */
+    .result-flash {
+        position: fixed;
+        inset: 0;
+        z-index: 999;
+        display: none;
+        flex-direction: column;
+        align-items: center;
         justify-content: center;
-        margin-top: 1rem;
+        backdrop-filter: blur(20px);
+        animation: flashIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
 
-    .cam-btn {
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        color: white;
-        padding: 0.6rem 1rem;
-        border-radius: 10px;
-        cursor: pointer;
+    @keyframes flashIn {
+        from {
+            opacity: 0;
+            transform: scale(0.92);
+        }
+
+        to {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+
+    .result-flash.success {
+        background: rgba(6, 25, 14, 0.97);
+    }
+
+    .result-flash.failure {
+        background: rgba(25, 6, 6, 0.97);
+    }
+
+    .flash-icon {
+        font-size: 5rem;
+        margin-bottom: 1.5rem;
+        animation: iconBounce 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    @keyframes iconBounce {
+        from {
+            transform: scale(0);
+        }
+
+        to {
+            transform: scale(1);
+        }
+    }
+
+    .flash-title {
+        font-size: 2.5rem;
+        font-weight: 900;
+        margin-bottom: 0.5rem;
+        text-align: center;
+    }
+
+    .flash-sub {
+        font-size: 1.1rem;
+        font-weight: 600;
+        opacity: 0.7;
+        text-align: center;
+        margin-bottom: 0.8rem;
+    }
+
+    .flash-user {
+        font-size: 1.8rem;
+        font-weight: 900;
+        text-align: center;
+        margin-bottom: 0.5rem;
+    }
+
+    .flash-role-badge {
+        padding: 0.4rem 1.2rem;
+        border-radius: 99px;
         font-size: 0.8rem;
-        font-weight: 700;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        margin-bottom: 2rem;
     }
 
-    .cam-btn.active {
-        background: var(--sec-brand);
-        border-color: var(--sec-brand);
+    .flash-role-badge.internal {
+        background: rgba(16, 185, 129, 0.2);
+        color: #10b981;
+        border: 1px solid rgba(16, 185, 129, 0.3);
     }
 
-    .header-compact {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
+    .flash-role-badge.external {
+        background: rgba(245, 158, 11, 0.2);
+        color: #f59e0b;
+        border: 1px solid rgba(245, 158, 11, 0.3);
     }
 
-    .btn-exit {
-        color: #94a3b8;
-        text-decoration: none;
-        font-weight: 700;
-        font-size: 0.9rem;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
+    .result-flash.success .flash-title {
+        color: #10b981;
+    }
+
+    .result-flash.failure .flash-title {
+        color: #ef4444;
+    }
+
+    .result-flash.success .flash-icon {
+        color: #10b981;
+    }
+
+    .result-flash.failure .flash-icon {
+        color: #ef4444;
+    }
+
+    /* Time display */
+    .live-clock {
+        font-size: 1rem;
+        font-weight: 800;
+        color: #3b82f6;
+        font-variant-numeric: tabular-nums;
+        letter-spacing: 0.05em;
+    }
+
+    /* Scrollbars for sidebars */
+    .sidebar-body::-webkit-scrollbar {
+        width: 3px;
+    }
+
+    .sidebar-body::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .sidebar-body::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 99px;
+    }
+
+    /* Responsive hide for narrow */
+    @media (max-width: 1100px) {
+        .gate-terminal {
+            grid-template-columns: 250px 1fr 260px;
+        }
     }
 </style>
 
-<div class="unified-terminal">
-    <!-- Sidebar -->
-    <aside class="sidebar-control">
-        <div class="header-compact">
-            <h2 style="font-size: 1.5rem; margin:0;">GATE TERMINAL</h2>
-            <a href="/Project/EntryX/api/auth.php?action=logout" class="btn-exit" style="color: #ef4444;">
-                <i class="fa-solid fa-power-off"></i>
-            </a>
-        </div>
-
-        <div class="stat-box-term">
-            <div style="display: flex; justify-content: space-between; align-items: baseline;">
-                <div class="stat-label">System Load</div>
-                <div id="capacityPercent" style="font-size: 0.75rem; color: var(--sec-brand); font-weight: 800;">0%
+<div class="gate-terminal">
+    <!-- ===== LEFT SIDEBAR ===== -->
+    <aside class="sidebar-left">
+        <div class="sidebar-header">
+            <div class="brand-mark">
+                <div class="brand-icon"><i class="fa-solid fa-shield-halved"></i></div>
+                <div>
+                    <div class="brand-text">Gate Terminal</div>
+                    <div class="brand-sub">EntryX Security</div>
                 </div>
             </div>
-            <div class="stat-value" id="countInside"><?php echo $totalInside; ?></div>
-            <div class="capacity-bar-container">
-                <div id="capacityFill" class="capacity-fill"></div>
+            <button onclick="confirmLogout()" class="logout-btn" title="Logout" style="border: none; background: rgba(239, 68, 68, 0.1);">
+                <i class="fa-solid fa-power-off"></i>
+            </button>
+        </div>
+
+        <div class="sidebar-body">
+            <!-- Live Clock & Status -->
+            <div class="stat-card"
+                style="display:flex;justify-content:space-between;align-items:center;padding:1rem 1.2rem;">
+                <div>
+                    <div class="stat-label-sm"><i class="fa-solid fa-circle"
+                            style="color:#10b981;font-size:0.5rem;"></i> LIVE STATUS</div>
+                    <div id="liveTime" class="live-clock">00:00:00</div>
+                </div>
+                <div id="gateConditionBadge"
+                    style="padding:0.4rem 0.9rem;border-radius:8px;font-size:0.7rem;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;background:rgba(71,85,105,0.2);border:1px solid rgba(71,85,105,0.3);color:#475569;">
+                    SECURE
+                </div>
             </div>
+
+            <!-- People Inside -->
+            <div class="stat-card">
+                <div class="stat-label-sm"><i class="fa-solid fa-users" style="color:#3b82f6;"></i> Currently Inside
+                </div>
+                <div class="stat-value-lg" id="countInside"><?php echo $totalInside; ?></div>
+                <div class="stat-sub">of 500 capacity</div>
+                <div class="capacity-bar">
+                    <div id="capacityFill" class="capacity-fill"
+                        style="width: <?php echo min(($totalInside / 500) * 100, 100); ?>%;"></div>
+                </div>
+            </div>
+
+            <!-- Role Breakdown -->
+            <div>
+                <div class="stat-label-sm" style="margin-bottom:0.6rem;"><i class="fa-solid fa-id-card"
+                        style="color:#3b82f6;"></i> Role Breakdown</div>
+                <div class="role-breakdown">
+                    <div class="role-card int">
+                        <div class="role-count" id="countInternal"><?php echo $internalInside; ?></div>
+                        <div class="role-name">Internal</div>
+                    </div>
+                    <div class="role-card ext">
+                        <div class="role-count" id="countExternal"><?php echo $externalInside; ?></div>
+                        <div class="role-name">External</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Today's Activity -->
+            <div class="stat-card">
+                <div class="stat-label-sm"><i class="fa-solid fa-calendar-day" style="color:#a855f7;"></i> Today's
+                    Entries</div>
+                <div class="stat-value-lg" id="countToday"><?php echo $entriesToday; ?></div>
+                <div class="stat-sub">Total scans today</div>
+            </div>
+
+            <!-- Scan Mode Status -->
+            <div>
+                <div class="stat-label-sm" style="margin-bottom:0.6rem;"><i class="fa-solid fa-radar"
+                        style="color:#3b82f6;"></i> Scan Mode</div>
+                <div id="modeIndicator" class="mode-indicator idle">
+                    <div class="mode-dot"></div>
+                    <div>
+                        <div style="font-size:0.8rem;font-weight:800;color:#475569;" id="modeText">SCANNER IDLE</div>
+                        <div style="font-size:0.65rem;color:#334155;margin-top:2px;">Awaiting initialization</div>
+                    </div>
+                </div>
+            </div>
+
+            <input type="hidden" id="activeEventId" value="<?php echo $initialEventId; ?>">
         </div>
 
-        <div class="stat-box-term">
-            <div class="stat-label">Daily Cycle</div>
-            <div class="stat-value" id="countToday"><?php echo $entriesToday; ?></div>
-        </div>
-
-        <input type="hidden" id="activeEventId" value="<?php echo $initialEventId; ?>">
-
-
-        <div style="margin-top: auto; padding-top: 2rem; border-top: 1px solid rgba(255,255,255,0.05);">
-            <div style="font-size: 0.8rem; color: #475569;">
-                <i class="fa-solid fa-user-shield"></i> Officer: <?php echo htmlspecialchars($userName); ?>
+        <div class="sidebar-footer">
+            <div class="officer-avatar"><?php echo strtoupper(substr($userName, 0, 1)); ?></div>
+            <div style="flex:1;overflow:hidden;">
+                <div
+                    style="font-size:0.8rem;font-weight:700;color:white;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                    <?php echo htmlspecialchars($userName); ?>
+                </div>
+                <div style="font-size:0.65rem;color:#475569;text-transform:uppercase;letter-spacing:0.08em;">
+                    <?php echo str_replace('_', ' ', $userRole); ?>
+                </div>
             </div>
         </div>
     </aside>
 
-    <!-- Main Scanning Area -->
-    <main class="scanning-hub">
-        <div style="display: flex; justify-content: space-between; align-items: baseline;">
-            <h1 style="font-size: 2.2rem; margin: 0; letter-spacing: -0.02em;">Vanguard Optical Sensor</h1>
-            <div style="display: flex; align-items: center; gap: 1.5rem;">
-                <button class="cam-btn" onclick="toggleFullScreen()"><i class="fa-solid fa-expand"></i>
-                    FULLSCREEN</button>
-                <div id="liveTime" style="font-weight: 800; font-size: 1.2rem; color: var(--sec-brand);">00:00:00</div>
+    <!-- ===== MAIN SCANNER ===== -->
+    <main class="scanner-main">
+        <div class="scanner-main-header">
+            <div style="display:flex;align-items:center;gap:1rem;">
+                <div style="font-size:1rem;font-weight:800;color:white;letter-spacing:-0.01em;">Security Scanner</div>
+                <div id="scannerModeBadge"
+                    style="display:none;padding:0.3rem 0.9rem;border-radius:7px;font-size:0.7rem;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;">
+                </div>
+            </div>
+            <div style="display:flex;gap:0.7rem;align-items:center;">
+                <div id="cameraControls" style="display:none;gap:0.5rem;display:none;">
+                    <button class="ctrl-btn" onclick="switchCamera()"><i class="fa-solid fa-camera-rotate"></i>
+                        Flip</button>
+                    <button class="ctrl-btn danger" onclick="stopScanner()"><i class="fa-solid fa-stop"></i>
+                        Stop</button>
+                </div>
+                <button class="ctrl-btn" onclick="toggleFullScreen()"><i class="fa-solid fa-expand"></i>
+                    Fullscreen</button>
+            </div>
+        </div>
+
+        <!-- Mode Tabs (shown when scanner is running) -->
+        <div id="modeTabs"
+            style="display:none;padding:0.8rem 1.5rem;background:rgba(4,6,15,0.8);border-bottom:1px solid var(--sec-border);">
+            <div class="mode-tabs">
+                <button class="mode-tab active-entry" id="tabEntry" onclick="switchMode('entry')">
+                    <i class="fa-solid fa-right-to-bracket"></i> Entry Scan
+                </button>
+                <button class="mode-tab" id="tabExit" onclick="switchMode('exit')">
+                    <i class="fa-solid fa-right-from-bracket"></i> Exit Scan
+                </button>
             </div>
         </div>
 
         <div class="scanner-chamber">
-            <div id="initOverlay" class="initialize-overlay">
-                <div
-                    style="width: 100px; height: 100px; background: rgba(59, 130, 246, 0.1); border-radius: 30px; display: flex; align-items: center; justify-content: center; color: var(--sec-brand);">
-                    <i class="fa-solid fa-camera fa-3x"></i>
-                </div>
-                <div style="text-align: center;">
-                    <h3 style="margin-bottom: 0.5rem;">Vanguard Optical Sensor</h3>
-                    <p style="color: #94a3b8; font-size: 0.9rem;">Hardware initialization required to proceed</p>
-                </div>
-                <div style="display: flex; flex-direction: column; gap: 1rem; width: 100%; max-width: 300px;">
-                    <button class="btn btn-primary"
-                        style="padding: 1.2rem; border-radius: 16px; width: 100%; font-weight: 800; background: #10b981; border: none;"
-                        onclick="startScanner('entry')">
-                        <i class="fa-solid fa-right-to-bracket"></i> START ENTRY SCAN
-                    </button>
-                    <button class="btn btn-primary"
-                        style="padding: 1.2rem; border-radius: 16px; width: 100%; font-weight: 800; background: #ef4444; border: none;"
-                        onclick="startScanner('exit')">
-                        <i class="fa-solid fa-right-from-bracket"></i> START EXIT SCAN
-                    </button>
-                </div>
-            </div>
-            <div class="scan-overlay-vanguard" id="vanguardGrid" style="display: none;">
-                <div class="scan-target">
-                    <div class="laser-line"></div>
-                </div>
-            </div>
-            <div id="reader"></div>
-        </div>
-
-        <div id="cameraControls" class="camera-controls" style="display: none;">
-            <button class="cam-btn" onclick="toggleFlash()"><i class="fa-solid fa-bolt"></i> Flashlight</button>
-            <button class="cam-btn" onclick="switchCamera()"><i class="fa-solid fa-camera-rotate"></i> Switch
-                Camera</button>
-            <button class="cam-btn"
-                style="background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.3); color: #ef4444;"
-                onclick="stopScanner()">
-                <i class="fa-solid fa-video-slash"></i> OFF SENSOR
-            </button>
-        </div>
-
-        <div style="display: flex; gap: 1rem; align-items: stretch;">
-            <div id="recentClearance" class="recent-profile-card" style="flex: 2; margin-top: 0;">
-                <div
-                    style="width: 50px; height: 50px; background: var(--sec-brand); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white;">
-                    <i class="fa-solid fa-user-check fa-lg"></i>
+            <!-- Start Overlay -->
+            <div class="start-overlay" id="startOverlay">
+                <div class="start-camera-icon">
+                    <i class="fa-solid fa-camera" style="font-size:3rem;"></i>
                 </div>
                 <div>
-                    <div id="clearanceName" style="font-weight: 800; font-size: 1.1rem; color: white;">Awaiting Scan...
-                    </div>
-                    <div id="clearanceDetails" style="font-size: 0.8rem; color: var(--sec-brand); font-weight: 700;">No
-                        active participant</div>
+                    <div class="start-title">Gate Security Terminal</div>
+                    <div class="start-sub" style="margin-top:0.5rem;">Select a scan mode to initialize the camera and
+                        begin scanning participant QR codes.</div>
+                </div>
+                <div class="start-btn-group">
+                    <button class="start-btn entry-btn" onclick="startScanner('entry')">
+                        <i class="fa-solid fa-right-to-bracket fa-lg"></i>
+                        START ENTRY SCAN
+                    </button>
+                    <button class="start-btn exit-btn" onclick="startScanner('exit')">
+                        <i class="fa-solid fa-right-from-bracket fa-lg"></i>
+                        START EXIT SCAN
+                    </button>
+                    <button onclick="forceRelease()"
+                        style="background:transparent;border:1px solid rgba(255,255,255,0.08);color:#475569;border-radius:10px;padding:0.6rem 1rem;font-size:0.75rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:0.5rem;transition:0.2s;"
+                        onmouseover="this.style.color='white'" onmouseout="this.style.color='#475569'">
+                        <i class="fa-solid fa-rotate"></i> Force Release Camera
+                    </button>
                 </div>
             </div>
 
-            <button id="nextScanBtn" class="btn"
-                style="flex: 1; display: none; background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid #10b981; border-radius: 20px; font-weight: 800;"
-                onclick="manualReset()">
-                <i class="fa-solid fa-forward"></i> NEXT SCAN
+            <!-- Direct camera video feed -->
+            <video id="cameraFeed" autoplay playsinline muted
+                style="width:100%;height:100%;object-fit:cover;display:none;position:absolute;inset:0;"></video>
+
+            <!-- Hidden canvas for QR decoding -->
+            <canvas id="qrCanvas" style="display:none;"></canvas>
+
+            <!-- Scan Frame Overlay (shown when active) -->
+            <div id="scanFrame" style="display:none;" class="scan-frame">
+                <div class="corner-tr"></div>
+                <div class="corner-bl"></div>
+                <div class="scan-laser" id="scanLaser"></div>
+            </div>
+
+            <!-- Scanning status badge over video -->
+            <div id="scanStatusBadge"
+                style="display:none;position:absolute;bottom:1rem;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.7);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.1);border-radius:99px;padding:0.4rem 1.2rem;font-size:0.75rem;font-weight:700;color:#94a3b8;z-index:30;white-space:nowrap;">
+                <i class="fa-solid fa-circle-notch fa-spin"></i> Scanning for QR code...
+            </div>
+        </div>
+
+        <!-- Footer: manual entry + cam controls -->
+        <div class="scanner-footer">
+            <div class="manual-input-group">
+                <input type="text" id="manualTicketId" placeholder="Paste QR token for manual entry..."
+                    style="font-size:0.75rem;">
+                <button class="ctrl-btn" onclick="processManualEntry()" style="white-space:nowrap;"><i
+                        class="fa-solid fa-paper-plane"></i> Submit</button>
+            </div>
+            <div style="display:flex;gap:0.5rem;" id="cameraControlsFooter" style="display:none;">
+                <button class="ctrl-btn" onclick="switchCamera()"><i class="fa-solid fa-camera-rotate"></i>
+                    Flip</button>
+                <button class="ctrl-btn danger" onclick="stopScanner()"><i class="fa-solid fa-video-slash"></i>
+                    Off</button>
+            </div>
+            <button class="ctrl-btn" onclick="toggleFullScreen()" style="margin-left:auto;"><i
+                    class="fa-solid fa-expand"></i></button>
+        </div>
+    </main>
+
+    <!-- ===== RIGHT: ACTIVITY LOG ===== -->
+    <aside class="sidebar-right">
+        <div class="log-header">
+            <div class="log-title">
+                <div class="live-badge"></div>
+                Activity Log
+            </div>
+            <button onclick="clearLog()" class="ctrl-btn" style="font-size:0.7rem;padding:0.35rem 0.7rem;">
+                <i class="fa-solid fa-xmark"></i> Clear
             </button>
         </div>
 
-        <div class="live-entry-log" id="terminalLog">
-            <div style="color: #475569; text-align: center; padding: 2rem;">
-                <i class="fa-solid fa-wifi fa-fade"></i> Terminal Ready. Waiting for participant signal...
-            </div>
+        <div class="log-feed" id="logFeed">
+            <?php if (empty($recentActivity)): ?>
+                <div class="empty-log" id="emptyLogMsg">
+                    <i class="fa-solid fa-fingerprint" style="font-size:2.5rem;opacity:0.15;"></i>
+                    <div style="font-size:0.85rem;font-weight:600;">Waiting for scan events...</div>
+                </div>
+            <?php else: ?>
+                <?php foreach ($recentActivity as $act): ?>
+                    <div class="log-item <?php echo $act['status'] === 'inside' ? 'entry' : 'exit'; ?>">
+                        <div class="log-name"><?php echo htmlspecialchars($act['user_name']); ?></div>
+                        <div class="log-meta">
+                            <span class="action-pill <?php echo $act['status'] === 'inside' ? 'entry' : 'exit'; ?>">
+                                <?php echo $act['status'] === 'inside' ? 'ENTRY' : 'EXIT'; ?>
+                            </span>
+                            <span class="role-pill <?php echo $act['user_role']; ?>">
+                                <?php echo strtoupper($act['user_role']); ?>
+                            </span>
+                            <span><?php echo date('H:i', strtotime($act['entry_time'])); ?></span>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            <?php endif; ?>
         </div>
-    </main>
+    </aside>
 </div>
 
-<div id="floatStatus" class="status-floating"></div>
+<!-- ===== FULL-SCREEN RESULT FLASH ===== -->
+<div id="resultFlash" class="result-flash">
+    <div class="flash-icon" id="flashIcon"></div>
+    <div class="flash-title" id="flashTitle"></div>
+    <div class="flash-user" id="flashUser"></div>
+    <div class="flash-role-badge" id="flashRoleBadge"></div>
+    <div class="flash-sub" id="flashSub"></div>
+</div>
 
-<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+<!-- Direct Camera Dependencies -->
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
 <script>
-    // Sound effects
-    const successSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3');
-    const errorSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3');
-
+    // ============================================
+    // STATE
+    // ============================================
+    let videoStream = null;
+    let scanInterval = null;
     let isInitializing = false;
-    let currentScanMode = 'entry'; // 'entry' or 'exit'
+    let isProcessing = false;
+    let currentScanMode = 'entry';
+    let entriesToday = <?php echo $entriesToday; ?>;
+    let insideNow = <?php echo $totalInside; ?>;
+    let internalNow = <?php echo $internalInside; ?>;
+    let externalNow = <?php echo $externalInside; ?>;
+    let lastScannedToken = null;
+    let lastScannedTime = 0;
 
+    // Elements
+    const video = document.getElementById('cameraFeed');
+    const canvas = document.getElementById('qrCanvas');
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    const statusBadge = document.getElementById('scanStatusBadge');
+    const startOverlay = document.getElementById('startOverlay');
+    const scanFrame = document.getElementById('scanFrame');
+    const modeTabs = document.getElementById('modeTabs');
+    const cameraControls = document.getElementById('cameraControls');
+    const cameraControlsFooter = document.getElementById('cameraControlsFooter');
+
+    // Sound effects (simple beeps via oscillator - no external audio files needed)
+    function playBeep(frequency = 880, duration = 120, type = 'sine') {
+        try {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.frequency.value = frequency;
+            osc.type = type;
+            gain.gain.setValueAtTime(0.3, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration / 1000);
+            osc.start(ctx.currentTime);
+            osc.stop(ctx.currentTime + duration / 1000);
+        } catch (e) { }
+    }
+
+    // ============================================
+    // FORCE RELEASE ALL CAMERA STREAMS
+    // This is the key fix for "Camera in use" errors.
+    // It kills every active video track at the browser MediaStream level.
+    // ============================================
+    // ============================================
+    // DIRECT CAMERA SCANNER (RAW getUserMedia)
+    // ============================================
     async function startScanner(mode = 'entry') {
         if (isInitializing) return;
         currentScanMode = mode;
-
-        const actionText = mode === 'entry' ? 'scan entry tickets' : 'scan exit passes';
-        const titleText = mode === 'entry' ? 'Enable Entry Optical Sensor?' : 'Enable Exit Optical Sensor?';
-        const confirmColor = mode === 'entry' ? '#10b981' : '#ef4444';
-
-        // 1. User Intent Confirmation (UI Alert)
-        const confirm = await Swal.fire({
-            title: titleText,
-            text: `System needs camera access to ${actionText}.`,
-            icon: 'info',
-            showCancelButton: true,
-            confirmButtonText: 'Start Camera',
-            cancelButtonText: 'Cancel',
-            background: '#0a0a0a',
-            color: '#fff',
-            confirmButtonColor: confirmColor,
-            cancelButtonColor: 'rgba(255,255,255,0.1)'
-        });
-
-        if (!confirm.isConfirmed) return;
-
         isInitializing = true;
-        const initOverlay = document.getElementById('initOverlay');
-        const scannerGrid = document.getElementById('vanguardGrid');
-        const cameraControls = document.getElementById('cameraControls');
-        const gateCondition = document.getElementById('gateCondition');
+        updateModeUI(mode);
 
-        // Visual Feedback for Mode
-        if (mode === 'exit') {
-            document.querySelector('.scan-target').style.borderColor = '#ef4444';
-            document.querySelector('.laser-line').style.background = '#ef4444';
-            document.querySelector('.laser-line').style.boxShadow = '0 0 20px #ef4444';
-        } else {
-            document.querySelector('.scan-target').style.borderColor = '#3b82f6';
-            document.querySelector('.laser-line').style.background = '#3b82f6';
-            document.querySelector('.laser-line').style.boxShadow = '0 0 20px #3b82f6';
+        // Define a helper to try starting the camera with specific constraints
+        async function tryStream(facingMode) {
+            const constraints = {
+                video: {
+                    facingMode: facingMode,
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 }
+                },
+                audio: false
+            };
+            return await navigator.mediaDevices.getUserMedia(constraints);
         }
 
         try {
-            // 2. Clear existing scanner session
-            if (html5QrCode) {
-                try {
-                     // Check if scanning
-                     if(html5QrCode.isScanning) {
-                         await html5QrCode.stop();
-                     }
-                     html5QrCode.clear();
-                } catch (e) { console.log(e); }
-            }
+            // Stop any existing stream first
+            await forceRelease();
 
-            // 3. Request Camera - DIRECT BROWSER API FIRST
-            html5QrCode = new Html5Qrcode("reader");
-            const config = { fps: 20, qrbox: { width: 300, height: 300 } };
-            
             try {
-                // First, verify we can even touch the camera via browser API
-                // This bypasses the library to confirm hardware access
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                
-                // If we get here, browser has granted access!
-                // Stop this test stream immediately so library can use it
-                stream.getTracks().forEach(track => track.stop());
-                
-                // Now get the specific device ID we want to use
-                const devices = await Html5Qrcode.getCameras();
-                if (devices && devices.length) {
-                    // Filter: Try to find 'back' or 'environment' camera if desired, else 'user'
-                    // For now, let's just grab the first available one to GUARANTEE it works
-                    const cameraId = devices[0].id; // Simply take the first valid one
-
-                    await html5QrCode.start(cameraId, config, onScanSuccess);
-                } else {
-                    throw new Error("Browser granted permission but no camera devices found.");
-                }
-
-            } catch (cameraErr) {
-                console.error("Direct Access Failed:", cameraErr);
-                
-                // Fallback: Last ditch effort, let library try its own magic blindly
-                // This handles cases where getUserMedia behaves oddly on some OS/Browsers
-                console.warn("Retrying with blind library start...");
-                await html5QrCode.start({ facingMode: "user" }, config, onScanSuccess);
+                // Try preferred mode
+                videoStream = await tryStream(usingFacingMode);
+            } catch (pErr) {
+                console.warn(`Failed to start with ${usingFacingMode}, trying fallback...`, pErr);
+                // Fallback: Try ANY camera if the specific one fails
+                videoStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
             }
 
-            // 4. Success State
-            initOverlay.classList.add('active');
-            scannerGrid.style.display = 'block';
+            video.srcObject = videoStream;
+
+            // Wait for video to be ready
+            await new Promise((resolve, reject) => {
+                const timeout = setTimeout(() => reject(new Error('Camera timeout')), 10000);
+                video.onloadedmetadata = () => {
+                    clearTimeout(timeout);
+                    video.play().then(resolve).catch(reject);
+                };
+            });
+
+            // Step 2: Show UI
+            video.style.display = 'block';
+            startOverlay.classList.add('hidden');
+            scanFrame.style.display = 'block';
+            modeTabs.style.display = 'block';
+            statusBadge.style.display = 'block';
             cameraControls.style.display = 'flex';
-            addToLog(`Sensor: ${mode.toUpperCase()} MODE initialized`, "info");
+            if (cameraControlsFooter) cameraControlsFooter.style.display = 'flex';
 
-            if (gateCondition) {
-                gateCondition.textContent = mode === 'entry' ? 'ENTRY ACTIVE' : 'EXIT ACTIVE';
-                gateCondition.style.color = mode === 'entry' ? '#10b981' : '#ef4444';
-            }
+            // Step 3: Start decoding loop (jsQR)
+            startDecodingLoop();
+
+            addToLog('Camera active — ' + mode.toUpperCase() + ' mode', 'info');
 
         } catch (err) {
-            console.error("Scanner Error:", err);
-            
-            // Specific Error Handling for Permissions
-            let errorMsg = 'Could not access camera.';
+            console.error('Camera Error:', err);
+            let msg = 'Could not access camera.';
+            let hint = 'Please ensure you have allowed camera permissions and no other app is using it.';
+
             if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-                errorMsg = 'Camera permission was denied. Please allow camera access in your browser address bar.';
-            } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
-                errorMsg = 'No camera device found on this system.';
-            } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
-                 errorMsg = 'Camera is already in use by another application.';
+                msg = 'Camera permission denied.';
+                hint = 'Click the LOCK icon 🔒 in the address bar → Reset Permission → Refresh page.';
+            } else if (err.name === 'NotFoundError') {
+                msg = 'No camera found.';
+                hint = 'Please connect a webcam or ensure your camera is not disabled.';
+            } else if (err.name === 'NotReadableError' || err.message.includes('busy')) {
+                msg = 'Camera is busy or disconnected.';
+                hint = 'Close other apps like Teams, Zoom, or other browser tabs using the camera.';
             }
 
             Swal.fire({
-                title: 'Sensor Error',
-                text: errorMsg,
+                title: '<span style="color:#ef4444">Camera Error</span>',
+                html: `<div style="color:#94a3b8;margin-bottom:1rem;">${msg}</div>
+                       <div style="color:#64748b;font-size:0.85rem;line-height:1.5;">${hint}</div>`,
                 icon: 'error',
                 background: '#0a0a0a',
-                color: '#fff',
-                confirmButtonText: 'Retry'
+                color: '#fff'
             });
-            addToLog("Error: " + errorMsg, "error");
+            addToLog('Error: ' + msg, 'denied');
+            updateModeUI('idle');
         } finally {
             isInitializing = false;
         }
     }
 
-    async function stopScanner() {
-        if (!html5QrCode) return;
+    function startDecodingLoop() {
+        if (scanInterval) clearInterval(scanInterval);
 
-        try {
-            await html5QrCode.stop();
-            html5QrCode = null;
+        scanInterval = setInterval(() => {
+            if (isProcessing) return;
 
-            document.getElementById('initOverlay').classList.remove('active');
-            document.getElementById('vanguardGrid').style.display = 'none';
-            document.getElementById('cameraControls').style.display = 'none';
-            document.getElementById('gateCondition').textContent = 'SECURE';
-            addToLog("Sensor: Hardware decommissioned", "info");
-        } catch (err) {
-            console.error("Stop error:", err);
-            // Forced reset if stop fails
-            location.reload();
-        }
-    }
+            // Capture frame from video to canvas
+            if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-    let currentCamera = 'user';
-    async function switchCamera() {
-        currentCamera = currentCamera === 'environment' ? 'user' : 'environment';
-        await stopScanner(); // Stop first
-        await startScanner(currentScanMode); // Restart with new mode
-    }
+                // Try decoding with jsQR
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                    inversionAttempts: "dontInvert",
+                });
 
-    async function resetTerminal() {
-        if (html5QrCode) {
-            try {
-                await html5QrCode.stop();
-            } catch (e) { }
-        }
-        location.reload();
-    }
-
-    function manualReset() {
-        isProcessing = false;
-        document.getElementById('nextScanBtn').style.display = 'none';
-        document.getElementById('gateCondition').style.color = '#10b981';
-        document.getElementById('gateCondition').textContent = 'ACTIVE';
-        addToLog("System: Manual unlock triggered", "info");
-    }
-
-    // Removed showEventList as requested
-
-
-    function processManualEntry() {
-        const id = document.getElementById('manualTicketId').value.trim();
-        if (!id) return;
-
-        onScanSuccess(id);
-        document.getElementById('manualTicketId').value = '';
-    }
-
-    function toggleFlash() {
-        if (!html5QrCode) return;
-        const state = html5QrCode.getState();
-        if (state !== Html5QrcodeScannerState.SCANNING) return;
-
-        // This is a browser-dependent feature, might not work on all devices
-        html5QrCode.applyVideoConstraints({
-            advanced: [{ torch: true }]
-        }).catch(() => {
-            addToLog("Sensor: Flashlight not supported on this device", "error");
-        });
-    }
-
-    function updateCapacity() {
-        const total = 500; // Expected capacity, can be dynamic
-        const percent = Math.min((insideNow / total) * 100, 100);
-        document.getElementById('capacityFill').style.width = percent + '%';
-        document.getElementById('capacityPercent').textContent = Math.round(percent) + '%';
-    }
-
-    function toggleFullScreen() {
-        if (!document.fullscreenElement) {
-            document.documentElement.requestFullscreen();
-        } else {
-            if (document.exitFullscreen) {
-                document.exitFullscreen();
+                if (code) {
+                    onScanSuccess(code.data);
+                }
             }
+        }, 200); // Check every 200ms
+    }
+
+    async function stopScanner() {
+        await forceRelease();
+
+        video.style.display = 'none';
+        startOverlay.classList.remove('hidden');
+        scanFrame.style.display = 'none';
+        modeTabs.style.display = 'none';
+        statusBadge.style.display = 'none';
+        cameraControls.style.display = 'none';
+        if (cameraControlsFooter) cameraControlsFooter.style.display = 'none';
+
+        updateModeUI('idle');
+        addToLog('Scanner stopped', 'info');
+    }
+
+    async function forceRelease() {
+        if (scanInterval) {
+            clearInterval(scanInterval);
+            scanInterval = null;
+        }
+
+        if (videoStream) {
+            videoStream.getTracks().forEach(track => {
+                track.stop();
+                videoStream.removeTrack(track);
+            });
+            videoStream = null;
+        }
+
+        if (video) {
+            video.srcObject = null;
+            video.pause();
+            video.load(); // Force reset video element
+        }
+
+        // Broad cleanup: ensure NO tracks are left active
+        try {
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            // This is just a placeholder for potential future device-specific cleanup
+        } catch (e) { }
+    }
+
+    async function switchMode(mode) {
+        currentScanMode = mode;
+        updateModeUI(mode);
+        addToLog('Mode switched to: ' + mode.toUpperCase(), 'info');
+    }
+
+    let usingFacingMode = 'user'; // Default to front camera for laptops
+    async function switchCamera() {
+        usingFacingMode = usingFacingMode === 'environment' ? 'user' : 'environment';
+        await stopScanner();
+        await startScanner(currentScanMode);
+    }
+
+    function updateModeUI(mode) {
+        const indicator = document.getElementById('modeIndicator');
+        const modeText = document.getElementById('modeText');
+        const badge = document.getElementById('gateConditionBadge');
+        const scannerBadge = document.getElementById('scannerModeBadge');
+        const laser = document.getElementById('scanLaser');
+        const frame = document.getElementById('scanFrame');
+
+        indicator.className = 'mode-indicator ' + (mode === 'idle' ? 'idle' : mode);
+
+        // Tab styling
+        const tabEntry = document.getElementById('tabEntry');
+        const tabExit = document.getElementById('tabExit');
+        if (tabEntry && tabExit) {
+            tabEntry.className = 'mode-tab' + (mode === 'entry' ? ' active-entry' : '');
+            tabExit.className = 'mode-tab' + (mode === 'exit' ? ' active-exit' : '');
+        }
+
+        if (mode === 'entry') {
+            modeText.textContent = 'ENTRY SCAN ACTIVE';
+            modeText.style.color = '#10b981';
+            badge.textContent = 'ENTRY';
+            badge.style.background = 'rgba(16,185,129,0.15)';
+            badge.style.borderColor = 'rgba(16,185,129,0.3)';
+            badge.style.color = '#10b981';
+            if (laser) { laser.style.background = '#10b981'; laser.style.boxShadow = '0 0 12px 2px #10b981'; }
+            if (frame) { frame.style.setProperty('--frame-color', '#10b981'); }
+            scannerBadge.textContent = '⬤ ENTRY MODE';
+            scannerBadge.style.background = 'rgba(16,185,129,0.15)';
+            scannerBadge.style.color = '#10b981';
+            scannerBadge.style.border = '1px solid rgba(16,185,129,0.3)';
+            scannerBadge.style.display = 'block';
+        } else if (mode === 'exit') {
+            modeText.textContent = 'EXIT SCAN ACTIVE';
+            modeText.style.color = '#ef4444';
+            badge.textContent = 'EXIT';
+            badge.style.background = 'rgba(239,68,68,0.15)';
+            badge.style.borderColor = 'rgba(239,68,68,0.3)';
+            badge.style.color = '#ef4444';
+            if (laser) { laser.style.background = '#ef4444'; laser.style.boxShadow = '0 0 12px 2px #ef4444'; }
+            if (frame) { frame.style.setProperty('--frame-color', '#ef4444'); }
+            scannerBadge.textContent = '⬤ EXIT MODE';
+            scannerBadge.style.background = 'rgba(239,68,68,0.15)';
+            scannerBadge.style.color = '#ef4444';
+            scannerBadge.style.border = '1px solid rgba(239,68,68,0.3)';
+            scannerBadge.style.display = 'block';
+        } else {
+            modeText.textContent = 'SCANNER IDLE';
+            modeText.style.color = '#475569';
+            badge.textContent = 'SECURE';
+            badge.style.background = 'rgba(71,85,105,0.2)';
+            badge.style.borderColor = 'rgba(71,85,105,0.3)';
+            badge.style.color = '#475569';
+            scannerBadge.style.display = 'none';
         }
     }
 
+    // ============================================
+    // SCAN SUCCESS HANDLER
+    // ============================================
     function onScanSuccess(decodedText) {
         if (isProcessing) return;
 
+        // Debounce: prevent double-firing same code within 3s
+        const now = Date.now();
+        if (decodedText === lastScannedToken && (now - lastScannedTime) < 3000) return;
+        lastScannedToken = decodedText;
+        lastScannedTime = now;
+
         const eId = document.getElementById('activeEventId').value;
         if (!eId || eId == 0) {
-            addToLog("Error: No active event found in system.", "error");
-            Swal.fire('Configuration Error', 'No active event found. Please contact Administrator to create an event first.', 'error');
+            addToLog('Error: No active event configured', 'denied');
+            showResultFlash(false, 'NO EVENT', 'Contact admin to create an event', '', '');
             return;
         }
 
         isProcessing = true;
-        document.getElementById('nextScanBtn').style.display = 'flex';
-        document.getElementById('gateCondition').textContent = 'PROCESSING';
+
+        if (navigator.vibrate) navigator.vibrate(80);
 
         fetch('../api/attendance.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ qr_token: decodedText, event_id: eId, mode: currentScanMode })
         })
-            .then(res => res.json())
+            .then(r => r.json())
             .then(data => {
-                const profile = document.getElementById('recentClearance');
-
                 if (data.success) {
-                    successSound.play().catch(e => { });
-                    showFeedback(data.type.toUpperCase() + ' GRANTED');
-                    addToLog(`${data.user_name} - ${data.message}`, data.type);
-
-                    document.getElementById('clearanceName').textContent = data.user_name;
-                    document.getElementById('clearanceDetails').textContent = `${data.type.toUpperCase()} • ${new Date().toLocaleTimeString()}`;
-                    profile.classList.add('active');
-
-                    document.getElementById('gateCondition').style.color = '#10b981';
-                    document.getElementById('gateCondition').textContent = 'CLEAR';
+                    playBeep(1200, 120);
+                    if (navigator.vibrate) navigator.vibrate(80);
+                    showResultFlash(true, data.type.toUpperCase() + ' GRANTED', data.user_name, data.user_role, data.time);
+                    addToLog(data.user_name, data.type, data.user_role, data.time);
 
                     if (data.type === 'entry') {
                         entriesToday++;
                         insideNow++;
-                    } else if (data.type === 'exit') {
-                        insideNow--;
+                        if (data.user_role === 'internal') internalNow++;
+                        else externalNow++;
+                    } else {
+                        insideNow = Math.max(0, insideNow - 1);
+                        if (data.user_role === 'internal') internalNow = Math.max(0, internalNow - 1);
+                        else externalNow = Math.max(0, externalNow - 1);
                     }
 
-                    document.getElementById('countToday').textContent = entriesToday;
-                    document.getElementById('countInside').textContent = insideNow;
-                    updateCapacity();
+                    updateStats();
                 } else {
-                    errorSound.play().catch(e => { });
-                    showFeedback('DENIED', true);
-                    addToLog(`Failed: ${data.error}`, 'error');
-
-                    document.getElementById('gateCondition').style.color = '#ef4444';
-                    document.getElementById('gateCondition').textContent = 'BLOCKED!';
-                    profile.classList.remove('active');
+                    playBeep(300, 300, 'square');
+                    if (navigator.vibrate) navigator.vibrate([150, 80, 150]);
+                    showResultFlash(false, 'ACCESS DENIED', data.error || 'Unknown error', '', '');
+                    addToLog(data.error || 'Scan failed', 'denied', '', '');
                 }
-
-                // Auto-reset after 3 seconds, or manual override available
-                setTimeout(() => {
-                    if (isProcessing) manualReset();
-                }, 3000);
             })
             .catch(err => {
                 console.error(err);
-                manualReset();
+                isProcessing = false;
+                addToLog('Network error during scan', 'denied');
             });
     }
 
-    // Initialize UI
-    updateCapacity();
+    // ============================================
+    // RESULT FLASH
+    // ============================================
+    function showResultFlash(success, title, userName, userRole, time) {
+        const flash = document.getElementById('resultFlash');
+        const icon = document.getElementById('flashIcon');
+        const titleEl = document.getElementById('flashTitle');
+        const userEl = document.getElementById('flashUser');
+        const roleEl = document.getElementById('flashRoleBadge');
+        const subEl = document.getElementById('flashSub');
 
-    // Live Clock
-    setInterval(() => {
-        document.getElementById('liveTime').textContent = new Date().toLocaleTimeString('en-US', { hour12: false });
-    }, 1000);
+        flash.className = 'result-flash ' + (success ? 'success' : 'failure');
+        icon.innerHTML = success
+            ? '<i class="fa-solid fa-circle-check"></i>'
+            : '<i class="fa-solid fa-circle-xmark"></i>';
+        titleEl.textContent = title;
+        userEl.textContent = userName || '';
+        subEl.textContent = time ? 'Recorded at ' + time : '';
+
+        if (userRole) {
+            roleEl.textContent = userRole.toUpperCase();
+            roleEl.className = 'flash-role-badge ' + userRole;
+            roleEl.style.display = 'inline-block';
+        } else {
+            roleEl.style.display = 'none';
+        }
+
+        flash.style.display = 'flex';
+
+        setTimeout(() => {
+            flash.style.display = 'none';
+            isProcessing = false;
+        }, success ? 2500 : 3000);
+    }
+
+    // ============================================
+    // LOG
+    // ============================================
+    function addToLog(name, type, role, time) {
+        const feed = document.getElementById('logFeed');
+        const empty = document.getElementById('emptyLogMsg');
+        if (empty) empty.remove();
+
+        const item = document.createElement('div');
+        item.className = 'log-item ' + (type || 'info');
+
+        const rolePill = role
+            ? `<span class="role-pill ${role}">${role.toUpperCase()}</span>`
+            : '';
+
+        const actionPill = type && type !== 'info'
+            ? `<span class="action-pill ${type}">${type.toUpperCase()}</span>`
+            : `<span style="font-size:0.65rem;color:#475569;font-weight:600;">SYSTEM</span>`;
+
+        const timeStr = time || new Date().toLocaleTimeString('en-US', { hour12: false });
+
+        item.innerHTML = `
+            <div class="log-name">${name}</div>
+            <div class="log-meta">
+                ${actionPill}
+                ${rolePill}
+                <span>${timeStr}</span>
+            </div>
+        `;
+
+        feed.insertBefore(item, feed.firstChild);
+
+        // Keep log manageable
+        while (feed.children.length > 20) {
+            feed.removeChild(feed.lastChild);
+        }
+    }
+
+    function clearLog() {
+        const feed = document.getElementById('logFeed');
+        feed.innerHTML = `
+            <div class="empty-log" id="emptyLogMsg">
+                <i class="fa-solid fa-fingerprint" style="font-size:2.5rem;opacity:0.15;"></i>
+                <div style="font-size:0.85rem;font-weight:600;">Waiting for scan events...</div>
+            </div>
+        `;
+    }
+
+    // ============================================
+    // STATS UPDATE
+    // ============================================
+    function updateStats() {
+        document.getElementById('countInside').textContent = insideNow;
+        document.getElementById('countToday').textContent = entriesToday;
+        document.getElementById('countInternal').textContent = internalNow;
+        document.getElementById('countExternal').textContent = externalNow;
+
+        const pct = Math.min((insideNow / 500) * 100, 100);
+        document.getElementById('capacityFill').style.width = pct + '%';
+    }
+
+    // ============================================
+    // MANUAL ENTRY
+    // ============================================
+    function processManualEntry() {
+        const input = document.getElementById('manualTicketId');
+        const token = input.value.trim();
+        if (!token) return;
+        onScanSuccess(token);
+        input.value = '';
+    }
+
+    document.getElementById('manualTicketId').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') processManualEntry();
+    });
+
+    // ============================================
+    // FULLSCREEN
+    // ============================================
+    function toggleFullScreen() {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen();
+        } else {
+            document.exitFullscreen && document.exitFullscreen();
+        }
+    }
+
+    // ============================================
+    // Professional Logout with Confirmation
+    async function confirmLogout() {
+        if (typeof Swal === 'undefined') {
+            if (confirm("Are you sure you want to end your security shift?")) {
+                window.location.href = '/Project/EntryX/api/auth.php?action=logout';
+            }
+            return;
+        }
+
+        const confirmResult = await Swal.fire({
+            title: 'End Shift?',
+            text: 'Are you sure you want to log out of the security terminal?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: 'rgba(255,255,255,0.1)',
+            confirmButtonText: '<i class="fa-solid fa-power-off"></i> Logout',
+            cancelButtonText: 'Cancel',
+            background: '#0a0a0a',
+            color: '#fff',
+            customClass: {
+                popup: 'glass-panel'
+            }
+        });
+
+        if (confirmResult.isConfirmed) {
+            Swal.fire({
+                title: 'Logging Out...',
+                text: 'Ending Session...',
+                icon: 'info',
+                background: '#0a0a0a',
+                color: '#fff',
+                showConfirmButton: false,
+                timer: 1500,
+                timerProgressBar: true,
+                willClose: () => {
+                    window.location.href = '/Project/EntryX/api/auth.php?action=logout';
+                }
+            });
+        }
+    }
+
+    // CLOCK
+    // ============================================
+    function updateClock() {
+        document.getElementById('liveTime').textContent =
+            new Date().toLocaleTimeString('en-US', { hour12: false });
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+
+    // Initialize mode UI
+    updateModeUI('idle');
 </script>
 
 <?php require_once '../includes/footer.php'; ?>

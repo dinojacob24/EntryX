@@ -26,7 +26,7 @@ require_once '../includes/header.php';
     <div class="glass-panel reveal"
         style="width: 100%; max-width: 500px; padding: 4rem; border-color: rgba(255, 31, 31, 0.15); box-shadow: 0 30px 60px rgba(255,31,31,0.1); position: relative;">
         <!-- Back Link -->
-        <a href="../index.php"
+        <a href="<?php echo isset($_SESSION['user_id']) ? 'admin_dashboard.php' : '../index.php'; ?>"
             style="position: absolute; top: 1.5rem; left: 1.5rem; color: var(--p-text-muted); text-decoration: none; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; display: flex; align-items: center; gap: 0.5rem; transition: 0.3s;"
             onmouseover="this.style.color='white'; this.style.transform='translateX(-5px)';"
             onmouseout="this.style.color='var(--p-text-muted)'; this.style.transform='translateX(0)';">
@@ -54,7 +54,7 @@ require_once '../includes/header.php';
                 <div style="position: relative;">
                     <i class="fa-solid fa-user-shield"
                         style="position: absolute; left: 1.5rem; top: 50%; transform: translateY(-50%); color: var(--p-brand);"></i>
-                    <input type="email" name="email" required placeholder="admin@entryx.system" autocomplete="off"
+                    <input type="email" name="email" required placeholder="Enter Administrative Email" autocomplete="off"
                         style="width: 100%; padding: 1.2rem 1.5rem 1.2rem 4rem; background: rgba(255,255,255,0.03); border: 1px solid var(--p-border); border-radius: 16px; color: white; transition: 0.3s;"
                         onfocus="this.style.borderColor='var(--p-brand)'; this.style.background='rgba(255,31,31,0.05)';"
                         onblur="this.style.borderColor='var(--p-border)'; this.style.background='rgba(255,255,255,0.03)';">
@@ -68,10 +68,13 @@ require_once '../includes/header.php';
                 <div style="position: relative;">
                     <i class="fa-solid fa-key"
                         style="position: absolute; left: 1.5rem; top: 50%; transform: translateY(-50%); color: var(--p-brand);"></i>
-                    <input type="password" name="password" required placeholder="••••••••" autocomplete="new-password"
-                        style="width: 100%; padding: 1.2rem 1.5rem 1.2rem 4rem; background: rgba(255,255,255,0.03); border: 1px solid var(--p-border); border-radius: 16px; color: white; transition: 0.3s;"
+                    <input type="password" id="adminPassword" name="password" required placeholder="••••••••" autocomplete="new-password"
+                        style="width: 100%; padding: 1.2rem 4rem 1.2rem 4rem; background: rgba(255,255,255,0.03); border: 1px solid var(--p-border); border-radius: 16px; color: white; transition: 0.3s;"
                         onfocus="this.style.borderColor='var(--p-brand)'; this.style.background='rgba(255,31,31,0.05)';"
                         onblur="this.style.borderColor='var(--p-border)'; this.style.background='rgba(255,255,255,0.03)';">
+                    <i class="fa-solid fa-eye-slash toggle-password" data-target="adminPassword"
+                        style="position: absolute; right: 1.5rem; top: 50%; transform: translateY(-50%); color: var(--p-text-muted); cursor: pointer; transition: 0.3s;"
+                        onmouseover="this.style.color='white'" onmouseout="this.style.color='var(--p-text-muted)'"></i>
                 </div>
             </div>
 
@@ -105,13 +108,42 @@ require_once '../includes/header.php';
         const adminLoginForm = document.getElementById('adminLoginForm');
         const loginBtn = adminLoginForm.querySelector('button[type="submit"]');
 
+        // Toggle Password Visibility
+        const toggles = document.querySelectorAll('.toggle-password');
+        toggles.forEach(toggle => {
+            toggle.addEventListener('click', function() {
+                const targetId = this.getAttribute('data-target');
+                const targetInput = document.getElementById(targetId);
+                
+                if (targetInput.type === 'password') {
+                    targetInput.type = 'text';
+                    this.classList.remove('fa-eye-slash');
+                    this.classList.add('fa-eye');
+                } else {
+                    targetInput.type = 'password';
+                    this.classList.remove('fa-eye');
+                    this.classList.add('fa-eye-slash');
+                }
+            });
+        });
+
         adminLoginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
 
             const email = e.target.email.value.trim();
             const password = e.target.password.value;
 
-            if (!email || !password) return;
+            if (!email || !password) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Missing Fields',
+                    text: 'Please enter both email and password to continue.',
+                    background: '#0a0a0a',
+                    color: '#fff',
+                    confirmButtonColor: '#ff1f1f'
+                });
+                return;
+            }
 
             // Show loading state
             const originalBtnHtml = loginBtn.innerHTML;

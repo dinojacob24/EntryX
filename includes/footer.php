@@ -14,7 +14,8 @@ if (
     strpos($currentPage, 'admin_dashboard.php') !== false ||
     strpos($currentPage, 'coordinator_dashboard.php') !== false ||
     strpos($currentPage, 'publish_result.php') !== false ||
-    strpos($currentPage, 'student_dashboard.php') !== false
+    strpos($currentPage, 'student_dashboard.php') !== false ||
+    strpos($currentPage, 'external_dashboard.php') !== false
 ) {
     $hideExpandedFooter = true;
 }
@@ -38,7 +39,8 @@ if (
                 <div>
                     <h4 style="margin-bottom: 1rem;">Quick Links</h4>
                     <ul style="list-style: none; display: flex; flex-direction: column; gap: 0.5rem;">
-                        <li><a href="/Project/EntryX/" style="color: var(--text-muted); font-size: 0.9rem;">Home</a></li>
+                        <li><a href="<?php echo isset($_SESSION['user_id']) ? ($dashboardUrl ?? '/Project/EntryX/') : '/Project/EntryX/'; ?>"
+                                style="color: var(--text-muted); font-size: 0.9rem;">Home</a></li>
                         <li><a href="/Project/EntryX/pages/results.php"
                                 style="color: var(--text-muted); font-size: 0.9rem;">Results</a></li>
                         <li><a href="/Project/EntryX/pages/user_login.php"

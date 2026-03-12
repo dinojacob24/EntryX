@@ -28,7 +28,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'create') {
 
     try {
         $transactionId = $input['transaction_id'] ?? null;
-        $result = $regObj->registerUser($_SESSION['user_id'], $eventId, $transactionId);
+        $teamName = $input['team_name'] ?? null;
+        $teamMembers = $input['team_members'] ?? null;
+        $result = $regObj->registerUser($_SESSION['user_id'], $eventId, $transactionId, $teamName, $teamMembers);
         echo json_encode($result);
     } catch (Exception $e) {
         echo json_encode(['success' => false, 'error' => 'System error: ' . $e->getMessage()]);

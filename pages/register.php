@@ -49,7 +49,7 @@ require_once '../includes/header.php';
     <div class="glass-panel reveal"
         style="width: 100%; max-width: 800px; padding: 4rem; border-color: rgba(255, 31, 31, 0.1); position: relative;">
         <!-- Back Link -->
-        <a href="../index.php"
+        <a href="<?php echo isset($_SESSION['user_id']) ? 'student_dashboard.php' : '../index.php'; ?>"
             style="position: absolute; top: 1.5rem; left: 1.5rem; color: var(--p-text-muted); text-decoration: none; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; display: flex; align-items: center; gap: 0.5rem; transition: 0.3s;"
             onmouseover="this.style.color='white'; this.style.transform='translateX(-5px)';"
             onmouseout="this.style.color='var(--p-text-muted)'; this.style.transform='translateX(0)';">
@@ -83,8 +83,12 @@ require_once '../includes/header.php';
                 <label
                     style="display: block; color: var(--p-text-muted); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; margin-bottom: 0.8rem;">Full
                     Name <span style="color: var(--p-brand);">*</span></label>
-                <input type="text" name="name" required placeholder="Enter your full name" autocomplete="off"
+                <input type="text" name="name" id="nameInput" required minlength="2" maxlength="100"
+                    pattern="^[A-Za-z\s]+$" title="Name should only contain letters and spaces"
+                    placeholder="Enter your full name" autocomplete="off"
                     style="width: 100%; padding: 1.1rem 1.4rem; background: rgba(255,255,255,0.02); border: 1px solid var(--p-border); border-radius: 12px; color: white;">
+                <small id="nameError" style="color:#ef4444; font-size:0.75rem; display:none; margin-top:0.3rem;">⚠️ Name
+                    must be at least 2 characters and contain only letters.</small>
             </div>
 
             <!-- Email Address & Password -->
@@ -96,6 +100,8 @@ require_once '../includes/header.php';
                     <input type="email" name="email" id="emailInput" required placeholder="john@gmail.com"
                         autocomplete="new-email"
                         style="width: 100%; padding: 1.1rem 1.4rem; background: rgba(255,255,255,0.02); border: 1px solid var(--p-border); border-radius: 12px; color: white;">
+                    <small id="emailError" style="color:#ef4444; font-size:0.75rem; display:none; margin-top:0.3rem;">⚠️
+                        Please enter a valid email address.</small>
                     <small style="color: var(--p-text-dim); font-size: 0.7rem; display: block; margin-top: 0.5rem;">Use
                         your Gmail for Google Sign-in after registration</small>
                 </div>
@@ -104,13 +110,19 @@ require_once '../includes/header.php';
                         style="display: block; color: var(--p-text-muted); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; margin-bottom: 0.8rem;">Password
                         <span style="color: var(--p-brand);">*</span></label>
                     <div style="position: relative;">
-                        <input type="password" name="password" id="password" required placeholder="Create a password"
-                            autocomplete="new-password"
+                        <input type="password" name="password" id="password" required minlength="8"
+                            placeholder="Min 8 characters" autocomplete="new-password"
                             style="width: 100%; padding: 1.1rem 1.4rem; background: rgba(255,255,255,0.02); border: 1px solid var(--p-border); border-radius: 12px; color: white; padding-right: 3rem;">
                         <i class="fa-solid fa-eye" id="togglePassword"
                             style="position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); color: var(--p-text-muted); cursor: pointer;"
                             onclick="togglePasswordVisibility()"></i>
                     </div>
+                    <small id="passwordLengthHint"
+                        style="color:var(--p-text-dim); font-size:0.72rem; display:block; margin-top:0.3rem;">Min 8
+                        characters required</small>
+                    <small id="passwordLengthError"
+                        style="color:#ef4444; font-size:0.72rem; display:none; margin-top:0.3rem;">⚠️ Password must be
+                        at least 8 characters.</small>
                 </div>
             </div>
 
@@ -127,16 +139,22 @@ require_once '../includes/header.php';
                     <label
                         style="display: block; color: var(--p-text-muted); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; margin-bottom: 0.8rem;">Contact
                         Number <span style="color: var(--p-brand);">*</span></label>
-                    <input type="tel" name="phone" id="phoneInput" required placeholder="+91 0000000000"
-                        autocomplete="off"
+                    <input type="tel" name="phone" id="phoneInput" required placeholder="10-digit mobile number"
+                        autocomplete="off" maxlength="10" pattern="[0-9]{10}"
                         style="width: 100%; padding: 1.1rem 1.4rem; background: rgba(255,255,255,0.02); border: 1px solid var(--p-border); border-radius: 12px; color: white;">
+                    <small id="phoneError" style="color:#ef4444; font-size:0.75rem; display:none; margin-top:0.3rem;">⚠️
+                        Please enter a valid 10-digit phone number.</small>
                 </div>
                 <div>
                     <label
                         style="display: block; color: var(--p-text-muted); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; margin-bottom: 0.8rem;">WhatsApp
                         Number <span style="color: var(--p-brand);">*</span></label>
-                    <input type="tel" name="whatsapp" required placeholder="+91 0000000000" autocomplete="off"
+                    <input type="tel" name="whatsapp" id="whatsappInput" required placeholder="10-digit WhatsApp number"
+                        autocomplete="off" maxlength="10" pattern="[0-9]{10}"
                         style="width: 100%; padding: 1.1rem 1.4rem; background: rgba(255,255,255,0.02); border: 1px solid var(--p-border); border-radius: 12px; color: white;">
+                    <small id="whatsappError"
+                        style="color:#ef4444; font-size:0.75rem; display:none; margin-top:0.3rem;">⚠️ Please enter a
+                        valid 10-digit WhatsApp number.</small>
                 </div>
             </div>
 
@@ -180,54 +198,16 @@ require_once '../includes/header.php';
                         </div>
                     </div>
 
-                    <!-- UPI QR Display Area -->
-                    <?php if (!empty($activeProgram['payment_upi'])): ?>
-                        <div id="upiQrSection"
-                            style="display:none; text-align: center; margin-bottom: 2rem; background: white; padding: 1.5rem; border-radius: 16px;">
-                            <h4 style="color: #333; margin-bottom: 1rem; font-size: 0.9rem; font-weight: 700;">Scan to Pay</h4>
-                            <div id="paymentQr" style="display: inline-block;"></div>
-                            <div style="color: #666; font-size: 0.8rem; margin-top: 0.5rem; margin-bottom: 1.5rem;">UPI ID:
-                                <strong><?php echo htmlspecialchars($activeProgram['payment_upi']); ?></strong>
-                            </div>
-
-                            <div style="text-align: left; margin-top: 1rem;">
-                                <label
-                                    style="display: block; color: var(--p-text-muted); font-size: 0.8rem; font-weight: 700; margin-bottom: 0.5rem;">Transaction
-                                    / Reference ID <span style="color:red">*</span></label>
-                                <input type="text" name="transaction_id" id="transactionIdInput"
-                                    placeholder="Enter 12-digit UPI Reference No." autocomplete="off"
-                                    style="width: 100%; padding: 10px; border: 1px solid #333; border-radius: 8px; font-size: 0.9rem; background: white; color: #000;"
-                                    title="Please enter the correct Transaction/UTR Number">
-                                <small style="display: block; color: #666; font-size: 0.75rem; margin-top: 5px;">Required for
-                                    payment verification.</small>
-                            </div>
+                    <div style="text-align: center; margin-bottom: 1rem;">
+                        <div
+                            style="display: inline-block; padding: 1rem 2rem; background: rgba(255,255,255,0.05); border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);">
+                            <i class="fa-solid fa-shield-halved"
+                                style="color: #10b981; margin-bottom: 0.5rem; font-size: 1.5rem;"></i>
+                            <p style="color: white; font-size: 0.9rem; margin: 0; font-weight: 600;">Secure Payment via
+                                Razorpay</p>
+                            <p style="color: var(--p-text-dim); font-size: 0.75rem; margin-top: 0.3rem;">You will be
+                                redirected to pay after signing up.</p>
                         </div>
-                    <?php endif; ?>
-
-                    <label
-                        style="display: block; color: var(--p-text-muted); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; margin-bottom: 1rem; letter-spacing: 0.05em;">Select
-                        Payment Method</label>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                        <label style="cursor: pointer; position: relative;">
-                            <input type="radio" name="payment_method" value="upi" checked style="display: none;"
-                                onchange="updatePaymentSelect(this)">
-                            <div style="padding: 1.2rem; background: rgba(255,255,255,0.03); border: 1px solid var(--p-border); border-radius: 14px; text-align: center; transition: 0.3s;"
-                                class="pay-method-card active">
-                                <i class="fa-solid fa-mobile-screen-button"
-                                    style="font-size: 1.5rem; margin-bottom: 0.5rem; color: #10b981;"></i>
-                                <div style="color: white; font-size: 0.85rem; font-weight: 700;">UPI / QR</div>
-                            </div>
-                        </label>
-                        <label style="cursor: pointer; position: relative;">
-                            <input type="radio" name="payment_method" value="card" style="display: none;"
-                                onchange="updatePaymentSelect(this)">
-                            <div style="padding: 1.2rem; background: rgba(255,255,255,0.03); border: 1px solid var(--p-border); border-radius: 14px; text-align: center; transition: 0.3s;"
-                                class="pay-method-card">
-                                <i class="fa-solid fa-credit-card"
-                                    style="font-size: 1.5rem; margin-bottom: 0.5rem; color: #3b82f6;"></i>
-                                <div style="color: white; font-size: 0.85rem; font-weight: 700;">Card / Net</div>
-                            </div>
-                        </label>
                     </div>
                 </div>
             <?php endif; ?>
@@ -253,18 +233,6 @@ require_once '../includes/header.php';
 
 
 <script>
-    function updatePaymentSelect(el) {
-        // Remove active class from all method cards
-        document.querySelectorAll('.pay-method-card').forEach(card => card.classList.remove('active'));
-        // Add active class to parent's card
-        el.nextElementSibling.classList.add('active');
-
-        // Toggle UPI QR
-        const upiSection = document.getElementById('upiQrSection');
-        if (upiSection) {
-            upiSection.style.display = (el.value === 'upi' ? 'block' : 'none');
-        }
-    }
 
     // Password Toggle Visibility
     function togglePasswordVisibility() {
@@ -292,39 +260,64 @@ require_once '../includes/header.php';
         const whatsapp = formData.get('whatsapp');
         const password = formData.get('password');
         const email = formData.get('email');
+        const name = formData.get('name');
+
+        // ===== FRONTEND VALIDATION =====
+        // Name check: letters and spaces only, min 2 chars
+        const nameRegex = /^[A-Za-z\s]{2,100}$/;
+        if (!name || !nameRegex.test(name.trim())) {
+            document.getElementById('nameError').style.display = 'block';
+            Swal.fire('Invalid Name', 'Full name must be at least 2 characters and contain only letters.', 'warning');
+            return;
+        }
+        document.getElementById('nameError').style.display = 'none';
+
+        // Email check: basic regex to catch obviously invalid formats
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        if (!email || !emailRegex.test(email.trim())) {
+            document.getElementById('emailError').style.display = 'block';
+            Swal.fire('Invalid Email', 'Please enter a valid email address.', 'warning');
+            return;
+        }
+        document.getElementById('emailError').style.display = 'none';
+
+        // Password length check
+        if (!password || password.length < 8) {
+            document.getElementById('passwordLengthError').style.display = 'block';
+            document.getElementById('passwordLengthHint').style.display = 'none';
+            Swal.fire('Weak Password', 'Password must be at least 8 characters long.', 'warning');
+            return;
+        }
+        document.getElementById('passwordLengthError').style.display = 'none';
+
+        // Phone number: must be exactly 10 digits
+        const phoneRegex = /^[0-9]{10}$/;
+        if (!phoneRegex.test(phone)) {
+            document.getElementById('phoneError').style.display = 'block';
+            Swal.fire('Invalid Phone Number', 'Please enter a valid 10-digit mobile number (digits only).', 'warning');
+            document.getElementById('phoneInput').focus();
+            return;
+        }
+        document.getElementById('phoneError').style.display = 'none';
+
+        // WhatsApp number: must be exactly 10 digits
+        if (!phoneRegex.test(whatsapp)) {
+            document.getElementById('whatsappError').style.display = 'block';
+            Swal.fire('Invalid WhatsApp Number', 'Please enter a valid 10-digit WhatsApp number (digits only).', 'warning');
+            return;
+        }
+        document.getElementById('whatsappError').style.display = 'none';
+        // ===== END VALIDATION =====
 
         // Set confirm_password to match password
         formData.set('confirm_password', password);
 
-        // 4. Payment Verification
+        // 4. Payment Preparation
         const isPaid = <?php echo ($activeProgram['is_paid'] ? 'true' : 'false'); ?>;
-        const paymentMethod = formData.get('payment_method');
-        const transactionInput = document.getElementById('transactionIdInput');
-
-        if (isPaid && paymentMethod === 'upi') {
-            const transId = transactionInput.value.trim();
-            if (!transId) {
-                Swal.fire('Payment Verification Required', 'Please enter the Transaction ID / Reference Number.', 'warning');
-                transactionInput.focus();
-                return;
-            }
-            if (transId.length < 10) {
-                Swal.fire('Invalid Transaction ID', 'Please enter a valid Transaction/UTR Number.', 'warning');
-                return;
-            }
-        }
 
         if (isPaid) {
-            const confirmPay = await Swal.fire({
-                title: 'Confirm Registration',
-                text: "Proceed to pay ₹<?php echo number_format($activeProgram['total_amount_with_gst'], 2); ?> for registration?",
-                icon: 'info',
-                showCancelButton: true,
-                confirmButtonColor: '#10b981',
-                confirmButtonText: 'Yes, Proceed'
-            });
-            if (!confirmPay.isConfirmed) return;
-            formData.append('payment_status', 'paid');
+            formData.append('payment_status', 'pending');
+            // We NO LONGER append payment_method or transaction_id (Razorpay handles this post-registration)
         }
 
         // Show loading
@@ -340,13 +333,100 @@ require_once '../includes/header.php';
             const result = await res.json();
 
             if (result.success) {
-                await Swal.fire({
-                    icon: 'success',
-                    title: 'Registration Successful!',
-                    text: 'Welcome! Your credentials are now active.',
-                    confirmButtonColor: '#10b981'
-                });
-                window.location.href = (result.role === 'external') ? 'external_dashboard.php' : 'student_dashboard.php';
+                if (result.requires_payment) {
+                    Swal.fire({
+                        title: 'Preparing Payment...',
+                        didOpen: () => Swal.showLoading(),
+                        background: '#0a0a0a',
+                        color: '#fff',
+                        allowOutsideClick: false
+                    });
+
+                    try {
+                        const rzpRes = await fetch('../api/payment_gateway.php', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ type: 'program', id: formData.get('external_program_id') })
+                        });
+                        const order = await rzpRes.json();
+
+                        if (!order.success) throw new Error(order.error || 'Could not create payment order');
+
+                        Swal.close();
+
+                        const options = {
+                            key: order.key,
+                            amount: order.amount,
+                            currency: 'INR',
+                            name: 'EntryX',
+                            description: order.item_name,
+                            order_id: order.order_id,
+                            prefill: {
+                                name: order.user_name,
+                                email: order.user_email,
+                                contact: order.user_contact
+                            },
+                            theme: { color: '#ff1f1f' },
+                            handler: async function (response) {
+                                Swal.fire({
+                                    title: 'Verifying Payment...',
+                                    didOpen: () => Swal.showLoading(),
+                                    background: '#0a0a0a',
+                                    color: '#fff',
+                                    allowOutsideClick: false
+                                });
+
+                                try {
+                                    const vRes = await fetch('../api/payment_verify.php', {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({
+                                            razorpay_order_id: response.razorpay_order_id,
+                                            razorpay_payment_id: response.razorpay_payment_id,
+                                            razorpay_signature: response.razorpay_signature
+                                        })
+                                    });
+                                    const vResult = await vRes.json();
+
+                                    if (vResult.success) {
+                                        await Swal.fire({
+                                            icon: 'success',
+                                            title: 'Registration & Payment Successful!',
+                                            text: 'Welcome! Your credentials are now active.',
+                                            confirmButtonColor: '#10b981', background: '#0a0a0a', color: '#fff'
+                                        });
+                                        window.location.href = (result.role === 'external') ? 'external_dashboard.php' : 'student_dashboard.php';
+                                    } else {
+                                        throw new Error(vResult.error || 'Verification failed');
+                                    }
+                                } catch (err) {
+                                    Swal.fire({ icon: 'error', title: 'Verification Error', text: err.message, confirmButtonColor: '#ff1f1f', background: '#0a0a0a', color: '#fff' })
+                                        .then(() => { window.location.href = (result.role === 'external') ? 'external_dashboard.php' : 'student_dashboard.php'; });
+                                }
+                            },
+                            modal: {
+                                ondismiss: function () {
+                                    Swal.fire({ icon: 'info', title: 'Payment Pending', text: 'You can complete your payment later from your dashboard.', confirmButtonColor: '#ff1f1f', background: '#0a0a0a', color: '#fff' })
+                                        .then(() => { window.location.href = (result.role === 'external') ? 'external_dashboard.php' : 'student_dashboard.php'; });
+                                }
+                            }
+                        };
+
+                        const rzp = new Razorpay(options);
+                        rzp.open();
+                    } catch (err) {
+                        Swal.fire({ icon: 'error', title: 'Payment Initialization Error', text: err.message, confirmButtonColor: '#ff1f1f', background: '#0a0a0a', color: '#fff' })
+                            .then(() => { window.location.href = (result.role === 'external') ? 'external_dashboard.php' : 'student_dashboard.php'; });
+                    }
+                } else {
+                    await Swal.fire({
+                        icon: 'success',
+                        title: 'Registration Successful!',
+                        text: 'Welcome! Your credentials are now active.',
+                        confirmButtonColor: '#10b981'
+                    });
+                    window.location.href = (result.role === 'external') ? 'external_dashboard.php' : 'student_dashboard.php';
+                }
             } else {
                 Swal.fire('Failed', result.error || 'Registration failed', 'error');
                 submitBtn.disabled = false;
@@ -360,21 +440,88 @@ require_once '../includes/header.php';
         }
     });
 
-    // Real-time password match check
-    document.getElementById('confirm_password').addEventListener('input', function (e) {
-        const password = document.getElementById('password').value;
-        const confirm = e.target.value;
-        const error = document.getElementById('passwordMatchError');
-
-        if (confirm !== password && confirm.length > 0) {
-            error.style.display = 'block';
+    // Real-time password length indicator
+    document.getElementById('password').addEventListener('input', function () {
+        const hintEl = document.getElementById('passwordLengthHint');
+        const errEl = document.getElementById('passwordLengthError');
+        if (this.value.length > 0 && this.value.length < 8) {
+            errEl.style.display = 'block';
+            hintEl.style.display = 'none';
+            this.style.borderColor = '#ef4444';
+        } else if (this.value.length >= 8) {
+            errEl.style.display = 'none';
+            hintEl.style.display = 'none';
+            this.style.borderColor = '#10b981';
         } else {
-            error.style.display = 'none';
+            hintEl.style.display = 'block';
+            errEl.style.display = 'none';
+            this.style.borderColor = '';
         }
     });
 
-    // Initialize correct state
-    toggleFields();
+    // Real-time phone validation (digits only)
+    document.getElementById('phoneInput').addEventListener('input', function () {
+        this.value = this.value.replace(/[^0-9]/g, '').substring(0, 10);
+        const errEl = document.getElementById('phoneError');
+        if (this.value.length > 0 && this.value.length < 10) {
+            errEl.style.display = 'block';
+            this.style.borderColor = '#ef4444';
+        } else if (this.value.length === 10) {
+            errEl.style.display = 'none';
+            this.style.borderColor = '#10b981';
+        } else {
+            errEl.style.display = 'none';
+            this.style.borderColor = '';
+        }
+    });
+
+    // Real-time WhatsApp validation (digits only)
+    document.getElementById('whatsappInput').addEventListener('input', function () {
+        this.value = this.value.replace(/[^0-9]/g, '').substring(0, 10);
+        const errEl = document.getElementById('whatsappError');
+        if (this.value.length > 0 && this.value.length < 10) {
+            errEl.style.display = 'block';
+            this.style.borderColor = '#ef4444';
+        } else if (this.value.length === 10) {
+            errEl.style.display = 'none';
+            this.style.borderColor = '#10b981';
+        } else {
+            errEl.style.display = 'none';
+            this.style.borderColor = '';
+        }
+    });
+
+    // Real-time Name validation
+    document.getElementById('nameInput').addEventListener('input', function () {
+        const nameRegex = /^[A-Za-z\s]+$/;
+        const errEl = document.getElementById('nameError');
+        if (this.value.length > 0 && (!nameRegex.test(this.value) || this.value.trim().length < 2)) {
+            errEl.style.display = 'block';
+            this.style.borderColor = '#ef4444';
+        } else if (this.value.trim().length >= 2) {
+            errEl.style.display = 'none';
+            this.style.borderColor = '#10b981';
+        } else {
+            errEl.style.display = 'none';
+            this.style.borderColor = '';
+        }
+    });
+
+    // Real-time Email validation
+    document.getElementById('emailInput').addEventListener('input', function () {
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        const errEl = document.getElementById('emailError');
+        if (this.value.length > 0 && !emailRegex.test(this.value)) {
+            errEl.style.display = 'block';
+            this.style.borderColor = '#ef4444';
+        } else if (this.value.length > 0) {
+            errEl.style.display = 'none';
+            this.style.borderColor = '#10b981';
+        } else {
+            errEl.style.display = 'none';
+            this.style.borderColor = '';
+        }
+    });
 
     // Check for Google Login Redirection Error
     const urlParams = new URLSearchParams(window.location.search);
@@ -410,32 +557,6 @@ require_once '../includes/header.php';
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-<script src="../assets/js/qrcode.min.js"></script>
-<script>
-    // Initialize UPI QR if available
-    <?php if ($activeProgram && !empty($activeProgram['payment_upi'])): ?>
-        const upiId = "<?php echo $activeProgram['payment_upi']; ?>";
-        const amount = "<?php echo $activeProgram['total_amount_with_gst']; ?>";
-        const name = "<?php echo htmlspecialchars($activeProgram['program_name']); ?>";
-
-        console.log("UPI Config:", { upiId, amount }); // Debug log
-
-        // UPI Link Format: upi://pay?pa=UPI_ID&pn=NAME&am=AMOUNT&cu=INR
-        const upiLink = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(name)}&am=${amount}&cu=INR`;
-
-        const qrContainer = document.getElementById('paymentQr');
-        if (qrContainer) {
-            new QRCode(qrContainer, {
-                text: upiLink,
-                width: 180,
-                height: 180,
-                colorDark: "#000000",
-                colorLight: "#ffffff",
-                correctLevel: QRCode.CorrectLevel.M
-            });
-            // Show initially if default is UPI
-            document.getElementById('upiQrSection').style.display = 'block';
-        }
-    <?php endif; ?>
-</script>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <?php require_once '../includes/footer.php'; ?>

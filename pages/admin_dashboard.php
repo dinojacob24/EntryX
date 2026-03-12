@@ -372,298 +372,364 @@ $insideCount = $stmtInside->fetchColumn();
                         </td>
                         <td
                             style="text-align: right; padding: 1.5rem; border-radius: 0 16px 16px 0; border-top: 1px solid rgba(255,255,255,0.03); border-bottom: 1px solid rgba(255,255,255,0.03);">
-                            <div style="display: flex; gap: 0.8rem; justify-content: flex-end;">
-                                <button class="user-avatar-nav" style="width: 36px; height: 36px; border-radius: 10px;"
-                                    onclick="editEvent(<?php echo $event['id']; ?>)">
-                                    <i class="fa-solid fa-pen-nib"></i>
-                                </button>
-                                <button class="user-avatar-nav"
-                                    style="width: 36px; height: 36px; border-radius: 10px; color: #ef4444; border-color: rgba(239, 68, 68, 0.1);"
-                                    onclick="deleteEvent(<?php echo $event['id']; ?>)">
-                                    <i class="fa-solid fa-trash-can"></i>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
-    </div>
-
-    <!-- Admin Management -->
-    <div class="glass-panel reveal"
-        style="padding: 3rem; margin-top: 4rem; border-color: rgba(255,31,31,0.1); box-shadow: 0 40px 80px rgba(0,0,0,0.4); border-radius: 32px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2.5rem;">
-            <h2 style="display: flex; align-items: center; gap: 1rem; font-size: 1.8rem; color: white; margin: 0;">
-                <i class="fa-solid fa-user-shield" style="color: var(--p-brand);"></i> Admin Management
-            </h2>
-            <button class="btn btn-primary" style="padding: 0.8rem 1.5rem; font-size: 0.9rem;"
-                onclick="document.getElementById('adminModal').style.display='flex'">
-                <i class="fa-solid fa-user-plus"></i> Add New Admin
-            </button>
-        </div>
-
-        <table style="width: 100%; border-collapse: separate; border-spacing: 0 1rem;">
-            <thead>
-                <tr
-                    style="text-align: left; color: var(--p-text-muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.15em;">
-                    <th style="padding: 0 1.5rem;">Admin Details</th>
-                    <th>Admin Role</th>
-                    <th>Joined Date</th>
-                    <th style="text-align: right; padding: 0 1.5rem;">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($subAdmins as $admin): ?>
-                    <tr style="background: rgba(255,255,255,0.02); transition: all 0.3s; border-radius: 16px;">
-                        <td
-                            style="padding: 1.5rem; border-radius: 16px 0 0 16px; border-top: 1px solid rgba(255,255,255,0.03); border-bottom: 1px solid rgba(255,255,255,0.03);">
-                            <div style="color: white; font-weight: 700;"><?php echo htmlspecialchars($admin['name']); ?>
-                            </div>
-                            <div style="color: var(--p-text-dim); font-size: 0.85rem;">
-                                <?php echo htmlspecialchars($admin['email']); ?>
-                            </div>
-                        </td>
-                        <td
-                            style="border-top: 1px solid rgba(255,255,255,0.03); border-bottom: 1px solid rgba(255,255,255,0.03);">
-                            <span class="role-badge-admin"
-                                style="background: <?php echo $admin['role'] === 'event_admin' ? 'rgba(79, 70, 229, 0.2)' : 'rgba(234, 179, 8, 0.2)'; ?>; color: <?php echo $admin['role'] === 'event_admin' ? '#818cf8' : '#eab308'; ?>;">
-                                <?php echo str_replace('_', ' ', strtoupper($admin['role'])); ?>
-                            </span>
-                        </td>
-                        <td
-                            style="color: var(--p-text-dim); border-top: 1px solid rgba(255,255,255,0.03); border-bottom: 1px solid rgba(255,255,255,0.03);">
-                            <?php echo date('M d, Y', strtotime($admin['created_at'])); ?>
-                        </td>
-                        <td
-                            style="text-align: right; padding: 1.5rem; border-radius: 0 16px 16px 0; border-top: 1px solid rgba(255,255,255,0.03); border-bottom: 1px solid rgba(255,255,255,0.03);">
+                            <button class="user-avatar-nav"
+                                style="width: 36px; height: 36px; border-radius: 10px; color: #3b82f6; border-color: rgba(59, 130, 246, 0.1);"
+                                title="View Registrations"
+                                onclick="viewRegistrations(<?php echo $event['id']; ?>, '<?php echo addslashes($event['name']); ?>')">
+                                <i class="fa-solid fa-users"></i>
+                            </button>
+                            <button class="user-avatar-nav" style="width: 36px; height: 36px; border-radius: 10px;"
+                                title="Edit Event" onclick="editEvent(<?php echo $event['id']; ?>)">
+                                <i class="fa-solid fa-pen-nib"></i>
+                            </button>
                             <button class="user-avatar-nav"
                                 style="width: 36px; height: 36px; border-radius: 10px; color: #ef4444; border-color: rgba(239, 68, 68, 0.1);"
-                                onclick="deleteUser(<?php echo $admin['id']; ?>, '<?php echo addslashes($admin['name']); ?>')">
-                                <i class="fa-solid fa-user-minus"></i>
+                                title="Delete Event" onclick="deleteEvent(<?php echo $event['id']; ?>)">
+                                <i class="fa-solid fa-trash-can"></i>
                             </button>
-                        </td>
-                    </tr>
-                <?php endforeach; ?>
-                <?php if (empty($subAdmins)): ?>
-                    <tr>
-                        <td colspan="4" style="text-align: center; padding: 3rem; color: var(--p-text-muted);">
-                            No admins found in the records.
-                        </td>
-                    </tr>
-                <?php endif; ?>
-            </tbody>
-        </table>
+        </div>
+        </td>
+        </tr>
+    <?php endforeach; ?>
+    </tbody>
+    </table>
+</div>
+
+<!-- Admin Management -->
+<div class="glass-panel reveal"
+    style="padding: 3rem; margin-top: 4rem; border-color: rgba(255,31,31,0.1); box-shadow: 0 40px 80px rgba(0,0,0,0.4); border-radius: 32px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2.5rem;">
+        <h2 style="display: flex; align-items: center; gap: 1rem; font-size: 1.8rem; color: white; margin: 0;">
+            <i class="fa-solid fa-user-shield" style="color: var(--p-brand);"></i> Admin Management
+        </h2>
+        <button class="btn btn-primary" style="padding: 0.8rem 1.5rem; font-size: 0.9rem;"
+            onclick="document.getElementById('adminModal').style.display='flex'">
+            <i class="fa-solid fa-user-plus"></i> Add New Admin
+        </button>
     </div>
 
-    <!-- External Programs Management -->
-    <div class="glass-panel reveal"
-        style="padding: 3rem; margin-top: 4rem; border-color: rgba(16, 185, 129, 0.2); box-shadow: 0 40px 80px rgba(0,0,0,0.4); border-radius: 32px;">
+    <table style="width: 100%; border-collapse: separate; border-spacing: 0 1rem;">
+        <thead>
+            <tr
+                style="text-align: left; color: var(--p-text-muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.15em;">
+                <th style="padding: 0 1.5rem;">Admin Details</th>
+                <th>Admin Role</th>
+                <th>Joined Date</th>
+                <th style="text-align: right; padding: 0 1.5rem;">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php foreach ($subAdmins as $admin): ?>
+                <tr style="background: rgba(255,255,255,0.02); transition: all 0.3s; border-radius: 16px;">
+                    <td
+                        style="padding: 1.5rem; border-radius: 16px 0 0 16px; border-top: 1px solid rgba(255,255,255,0.03); border-bottom: 1px solid rgba(255,255,255,0.03);">
+                        <div style="color: white; font-weight: 700;"><?php echo htmlspecialchars($admin['name']); ?>
+                        </div>
+                        <div style="color: var(--p-text-dim); font-size: 0.85rem;">
+                            <?php echo htmlspecialchars($admin['email']); ?>
+                        </div>
+                    </td>
+                    <td
+                        style="border-top: 1px solid rgba(255,255,255,0.03); border-bottom: 1px solid rgba(255,255,255,0.03);">
+                        <span class="role-badge-admin"
+                            style="background: <?php echo $admin['role'] === 'event_admin' ? 'rgba(79, 70, 229, 0.2)' : 'rgba(234, 179, 8, 0.2)'; ?>; color: <?php echo $admin['role'] === 'event_admin' ? '#818cf8' : '#eab308'; ?>;">
+                            <?php echo str_replace('_', ' ', strtoupper($admin['role'])); ?>
+                        </span>
+                    </td>
+                    <td
+                        style="color: var(--p-text-dim); border-top: 1px solid rgba(255,255,255,0.03); border-bottom: 1px solid rgba(255,255,255,0.03);">
+                        <?php echo date('M d, Y', strtotime($admin['created_at'])); ?>
+                    </td>
+                    <td
+                        style="text-align: right; padding: 1.5rem; border-radius: 0 16px 16px 0; border-top: 1px solid rgba(255,255,255,0.03); border-bottom: 1px solid rgba(255,255,255,0.03);">
+                        <button class="user-avatar-nav"
+                            style="width: 36px; height: 36px; border-radius: 10px; color: #ef4444; border-color: rgba(239, 68, 68, 0.1);"
+                            onclick="deleteUser(<?php echo $admin['id']; ?>, '<?php echo addslashes($admin['name']); ?>')">
+                            <i class="fa-solid fa-user-minus"></i>
+                        </button>
+                    </td>
+                </tr>
+            <?php endforeach; ?>
+            <?php if (empty($subAdmins)): ?>
+                <tr>
+                    <td colspan="4" style="text-align: center; padding: 3rem; color: var(--p-text-muted);">
+                        No admins found in the records.
+                    </td>
+                </tr>
+            <?php endif; ?>
+        </tbody>
+    </table>
+</div>
+
+<!-- External Programs Management -->
+<div class="glass-panel reveal"
+    style="padding: 3rem; margin-top: 4rem; border-color: rgba(16, 185, 129, 0.2); box-shadow: 0 40px 80px rgba(0,0,0,0.4); border-radius: 32px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2.5rem;">
+        <div>
+            <h2
+                style="display: flex; align-items: center; gap: 1rem; font-size: 1.8rem; color: white; margin: 0 0 0.5rem 0;">
+                <i class="fa-solid fa-globe" style="color: #10b981;"></i> External Programs
+            </h2>
+            <p style="color: var(--p-text-dim); font-size: 0.9rem; margin: 0;">
+                Control public registration visibility and manage external participant programs
+            </p>
+        </div>
+        <button class="btn btn-primary"
+            style="padding: 0.8rem 1.5rem; font-size: 0.9rem; background: linear-gradient(135deg, #10b981 0%, #059669 100%);"
+            onclick="openExternalProgramModal()">
+            <i class="fa-solid fa-plus-circle"></i> Create Program
+        </button>
+    </div>
+
+    <!-- Current Status Banner -->
+    <div id="externalRegStatus"
+        style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 16px; padding: 1.5rem; margin-bottom: 2rem; display: flex; align-items: center; justify-content: space-between;">
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <i class="fa-solid fa-circle-xmark" style="color: #ef4444; font-size: 1.5rem;"></i>
+            <div>
+                <div style="font-weight: 700; color: white; margin-bottom: 0.3rem;">External Registration: DISABLED
+                </div>
+                <div style="color: var(--p-text-dim); font-size: 0.85rem;">Public registration is currently not
+                    visible on the landing page</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Programs Table -->
+    <div id="programsTableContainer">
+        <p style="text-align: center; color: var(--p-text-muted); padding: 2rem;">
+            <i class="fa-solid fa-spinner fa-spin"></i> Loading programs...
+        </p>
+    </div>
+</div>
+
+<!-- Payment Verification Section -->
+<div class="glass-panel reveal"
+    style="padding: 3rem; margin-top: 4rem; border-color: rgba(234, 179, 8, 0.2); box-shadow: 0 40px 80px rgba(0,0,0,0.4); border-radius: 32px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2.5rem;">
+        <div>
+            <h2
+                style="display: flex; align-items: center; gap: 1rem; font-size: 1.8rem; color: white; margin: 0 0 0.5rem 0;">
+                <i class="fa-solid fa-receipt" style="color: #eab308;"></i> Payment Verification
+            </h2>
+            <p style="color: var(--p-text-dim); font-size: 0.9rem; margin: 0;">
+                Review and confirm pending registrations against bank transaction records
+            </p>
+        </div>
+        <button class="btn btn-outline"
+            style="padding: 0.8rem 1.5rem; font-size: 0.9rem; border-color: rgba(234, 179, 8, 0.4); color: #eab308;"
+            onclick="loadPendingPayments()">
+            <i class="fa-solid fa-rotate"></i> Refresh List
+        </button>
+    </div>
+
+    <div id="pendingPaymentsTableContainer">
+        <p style="text-align: center; color: var(--p-text-muted); padding: 2rem;">
+            <i class="fa-solid fa-spinner fa-spin"></i> Checking for pending payments...
+        </p>
+    </div>
+</div>
+
+<!-- Registration View Modal -->
+<div id="regViewModal"
+    style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 2500; justify-content: center; align-items: center; backdrop-filter: blur(15px); padding: 2rem;">
+    <div class="glass-panel"
+        style="width: 100%; max-width: 900px; padding: 3rem; position: relative; max-height: 85vh; overflow-y: auto; border-color: rgba(59, 130, 246, 0.2);">
+        <button onclick="document.getElementById('regViewModal').style.display='none'"
+            style="position: absolute; top: 1.5rem; right: 1.5rem; background: rgba(255,255,255,0.05); border: none; width: 40px; height: 40px; border-radius: 50%; color: white; cursor: pointer;">&times;</button>
+
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2.5rem;">
             <div>
-                <h2
-                    style="display: flex; align-items: center; gap: 1rem; font-size: 1.8rem; color: white; margin: 0 0 0.5rem 0;">
-                    <i class="fa-solid fa-globe" style="color: #10b981;"></i> External Programs
-                </h2>
-                <p style="color: var(--p-text-dim); font-size: 0.9rem; margin: 0;">
-                    Control public registration visibility and manage external participant programs
-                </p>
+                <h2 id="regViewTitle" style="color: white; margin: 0 0 0.5rem 0;">Event Registrations</h2>
+                <p id="regViewSub" style="color: var(--p-text-dim); margin: 0; font-size: 0.9rem;"></p>
             </div>
-            <button class="btn btn-primary"
-                style="padding: 0.8rem 1.5rem; font-size: 0.9rem; background: linear-gradient(135deg, #10b981 0%, #059669 100%);"
-                onclick="openExternalProgramModal()">
-                <i class="fa-solid fa-plus-circle"></i> Create Program
+            <button onclick="exportRegistrations()" class="btn btn-outline"
+                style="border-color: rgba(16, 185, 129, 0.3); color: #10b981;">
+                <i class="fa-solid fa-file-export"></i> Export CSV
             </button>
         </div>
 
-        <!-- Current Status Banner -->
-        <div id="externalRegStatus"
-            style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 16px; padding: 1.5rem; margin-bottom: 2rem; display: flex; align-items: center; justify-content: space-between;">
-            <div style="display: flex; align-items: center; gap: 1rem;">
-                <i class="fa-solid fa-circle-xmark" style="color: #ef4444; font-size: 1.5rem;"></i>
+        <div id="regListContainer">
+            <!-- Loaded via JS -->
+        </div>
+    </div>
+</div>
+
+<!-- High-Performance Modal System -->
+<div id="eventModal"
+    style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 2000; justify-content: center; align-items: center; backdrop-filter: blur(15px);">
+    <div class="glass-panel"
+        style="width: 100%; max-width: 650px; padding: 4rem; position: relative; max-height: 90vh; overflow-y: auto; border-color: rgba(255,31,31,0.2);">
+        <button onclick="closeModal()"
+            style="position: absolute; top: 2rem; right: 2rem; background: rgba(255,255,255,0.05); border: none; width: 44px; height: 44px; border-radius: 50%; color: white; cursor: pointer; transition: 0.3s;"
+            onmouseover="this.style.background='var(--p-brand)'"
+            onmouseout="this.style.background='rgba(255,255,255,0.05)'">&times;</button>
+        <h2 id="modalTitle" style="margin-bottom: 3rem; font-size: 2rem; color: white;">Add New Event</h2>
+        <form id="eventForm">
+            <input type="hidden" name="id" id="eventId">
+            <div style="margin-bottom: 2rem;">
+                <label>Event Name</label>
+                <input type="text" name="name" id="eventName" required placeholder="Name of the event">
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
+                <div style="position: relative;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                        <label style="margin: 0;">Date and Time</label>
+                        <button type="button" onclick="setEventToNow()"
+                            style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: var(--p-brand); padding: 0.2rem 0.8rem; border-radius: 6px; font-size: 0.75rem; cursor: pointer; font-weight: 700;">
+                            <i class="fa-solid fa-clock"></i> SET NOW
+                        </button>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 1rem;">
+                        <input type="date" name="event_date_only" id="eventDateOnly" required
+                            style="padding: 0.8rem; border-radius: 8px;">
+                        <input type="time" name="event_time_only" id="eventTimeOnly" required
+                            style="padding: 0.8rem; border-radius: 8px;">
+                    </div>
+                    <small id="eventDateError"
+                        style="color:#ef4444; font-size:0.75rem; display:none; margin-top:0.3rem;">⚠️ Event date
+                        cannot be in the past.</small>
+                </div>
                 <div>
-                    <div style="font-weight: 700; color: white; margin-bottom: 0.3rem;">External Registration: DISABLED
+                    <label>Event Location</label>
+                    <input type="text" name="venue" id="eventVenue" required placeholder="Where is it happening?">
+                </div>
+            </div>
+            <div style="margin-bottom: 2rem;">
+                <label>Event Details</label>
+                <textarea name="description" id="eventDescription" rows="3"
+                    placeholder="Tell students more about the event..."></textarea>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
+                <div>
+                    <label>Maximum Attendees</label>
+                    <input type="number" name="capacity" id="eventCapacity" value="100" min="1">
+                </div>
+                <div>
+                    <label>Who can attend?</label>
+                    <select name="type" id="eventType">
+                        <option value="both">Everyone (Internal & External)</option>
+                        <option value="internal">Internals Only</option>
+                        <option value="external">Outside Participants Only</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Event Status Section (Required for edit mode) -->
+            <div id="statusSection" style="margin-bottom: 2rem; display: none;">
+                <label>Event Status</label>
+                <select name="status" id="eventStatus">
+                    <option value="active">Active / Operational</option>
+                    <option value="pending">Pending / Upcoming</option>
+                    <option value="cancelled">Cancelled / Hidden</option>
+                </select>
+            </div>
+
+            <div
+                style="background: rgba(255,152,0,0.03); padding: 2rem; border-radius: 20px; margin-bottom: 2rem; border: 1px solid rgba(255,152,0,0.1);">
+                <div style="display: flex; gap: 1.2rem; align-items: center; margin-bottom: 1rem;">
+                    <input type="checkbox" id="isGroupEvent" name="is_group_event"
+                        style="width: 24px; height: 24px; cursor: pointer;">
+                    <label for="isGroupEvent"
+                        style="margin: 0; cursor: pointer; text-transform: none; color: white; font-weight: 700;">
+                        <i class="fa-solid fa-users"></i> This is a Team/Group Event
+                    </label>
+                </div>
+                <div id="groupSettings"
+                    style="display: none; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 1.5rem;">
+                    <div>
+                        <label>Min Team Size</label>
+                        <input type="number" name="min_team_size" id="minTeamSize" value="1" min="1">
                     </div>
-                    <div style="color: var(--p-text-dim); font-size: 0.85rem;">Public registration is currently not
-                        visible on the landing page</div>
+                    <div>
+                        <label>Max Team Size</label>
+                        <input type="number" name="max_team_size" id="maxTeamSize" value="1" min="1">
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Programs Table -->
-        <div id="programsTableContainer">
-            <p style="text-align: center; color: var(--p-text-muted); padding: 2rem;">
-                <i class="fa-solid fa-spinner fa-spin"></i> Loading programs...
-            </p>
-        </div>
-    </div>
-
-    <!-- Payment Verification Section -->
-    <div class="glass-panel reveal"
-        style="padding: 3rem; margin-top: 4rem; border-color: rgba(234, 179, 8, 0.2); box-shadow: 0 40px 80px rgba(0,0,0,0.4); border-radius: 32px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2.5rem;">
-            <div>
-                <h2
-                    style="display: flex; align-items: center; gap: 1rem; font-size: 1.8rem; color: white; margin: 0 0 0.5rem 0;">
-                    <i class="fa-solid fa-receipt" style="color: #eab308;"></i> Payment Verification
-                </h2>
-                <p style="color: var(--p-text-dim); font-size: 0.9rem; margin: 0;">
-                    Review and confirm pending registrations against bank transaction records
-                </p>
-            </div>
-            <button class="btn btn-outline"
-                style="padding: 0.8rem 1.5rem; font-size: 0.9rem; border-color: rgba(234, 179, 8, 0.4); color: #eab308;"
-                onclick="loadPendingPayments()">
-                <i class="fa-solid fa-rotate"></i> Refresh List
-            </button>
-        </div>
-
-        <div id="pendingPaymentsTableContainer">
-            <p style="text-align: center; color: var(--p-text-muted); padding: 2rem;">
-                <i class="fa-solid fa-spinner fa-spin"></i> Checking for pending payments...
-            </p>
-        </div>
-    </div>
-
-    <!-- High-Performance Modal System -->
-    <div id="eventModal"
-        style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 2000; justify-content: center; align-items: center; backdrop-filter: blur(15px);">
-        <div class="glass-panel"
-            style="width: 100%; max-width: 650px; padding: 4rem; position: relative; max-height: 90vh; overflow-y: auto; border-color: rgba(255,31,31,0.2);">
-            <button onclick="closeModal()"
-                style="position: absolute; top: 2rem; right: 2rem; background: rgba(255,255,255,0.05); border: none; width: 44px; height: 44px; border-radius: 50%; color: white; cursor: pointer; transition: 0.3s;"
-                onmouseover="this.style.background='var(--p-brand)'"
-                onmouseout="this.style.background='rgba(255,255,255,0.05)'">&times;</button>
-            <h2 id="modalTitle" style="margin-bottom: 3rem; font-size: 2rem; color: white;">Add New Event</h2>
-            <form id="eventForm">
-                <input type="hidden" name="id" id="eventId">
-                <div style="margin-bottom: 2rem;">
-                    <label>Event Name</label>
-                    <input type="text" name="name" id="eventName" required placeholder="Name of the event">
+            <div
+                style="background: rgba(255,255,255,0.03); padding: 2.5rem; border-radius: 24px; margin-bottom: 3rem; border: 1px solid rgba(255,255,255,0.08);">
+                <h4
+                    style="margin-bottom: 1.5rem; color: var(--p-brand); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.1em;">
+                    Pricing & Fees</h4>
+                <div style="display: flex; gap: 1.2rem; align-items: center; margin-bottom: 1.5rem;">
+                    <input type="checkbox" id="isPaid" name="is_paid"
+                        style="width: 24px; height: 24px; cursor: pointer;">
+                    <label for="isPaid" style="margin: 0; cursor: pointer; text-transform: none; color: white;">This
+                        is a Paid Event</label>
                 </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
-                    <div style="position: relative;">
+                <div id="paidSettings" style="display: none;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 1.5rem;">
+                        <div>
+                            <label>Registration Fee (₹)</label>
+                            <input type="number" step="0.01" name="base_price" id="eventPrice" placeholder="0.00"
+                                min="0.01">
+                            <small id="eventPriceError" style="color:#ef4444; font-size:0.75rem; display:none;">⚠️
+                                Fee must be greater than 0.</small>
+                        </div>
+                        <div>
+                            <label>Apply GST for:</label>
+                            <select name="gst_target" id="eventGstTarget">
+                                <option value="both" selected>Both (Local & Guest)</option>
+                                <option value="externals_only">Outside Guests Only</option>
+                                <option value="internals_only">Internals Only</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 1.5rem;">
+                        <div>
+                            <label>GST Rate (%)</label>
+                            <input type="number" step="0.01" name="gst_rate" id="eventGst" value="18.00" min="0"
+                                max="100">
+                        </div>
+                        <div>
+                            <label>Total Amount (Inc. GST)</label>
+                            <input type="text" id="eventTotalAmount" readonly
+                                style="background: rgba(255,255,255,0.05); cursor: not-allowed;" placeholder="₹0.00">
+                        </div>
+                    </div>
+
+                    <!-- UPI ID Field (Hidden as we use Razorpay) -->
+                    <div style="margin-bottom: 1.5rem; display: none;">
+                        <label>UPI ID (for Payment QR)</label>
+                        <input type="text" name="payment_upi" id="eventPaymentUpi" placeholder="e.g. username@okaxis">
+                        <small style="color: var(--p-text-dim); font-size: 0.75rem;">Used to generate registration
+                            QR code</small>
+                    </div>
+
+                    <!-- GST Breakdown Preview -->
+                    <div id="eventGstBreakdown"
+                        style="background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.1); border-radius: 12px; padding: 1.2rem; display: none;">
+                        <div style="font-size: 0.85rem; color: var(--p-text-dim); margin-bottom: 0.5rem;">
+                            <strong style="color: #10b981;">Pricing Summary:</strong>
+                        </div>
                         <div
-                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                            <label style="margin: 0;">Date and Time</label>
-                            <button type="button" onclick="setEventToNow()"
-                                style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: var(--p-brand); padding: 0.2rem 0.8rem; border-radius: 6px; font-size: 0.75rem; cursor: pointer; font-weight: 700;">
-                                <i class="fa-solid fa-clock"></i> SET NOW
-                            </button>
+                            style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.3rem;">
+                            <span>Base Registration Fee:</span>
+                            <span id="eventBreakdownBase" style="color: white; font-weight: 600;">₹0.00</span>
                         </div>
-                        <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 1rem;">
-                            <input type="date" name="event_date_only" id="eventDateOnly" required
-                                style="padding: 0.8rem; border-radius: 8px;">
-                            <input type="time" name="event_time_only" id="eventTimeOnly" required
-                                style="padding: 0.8rem; border-radius: 8px;">
+                        <div
+                            style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.3rem;">
+                            <span>GST (<span id="eventBreakdownRate">18</span>%):</span>
+                            <span id="eventBreakdownGst" style="color: white; font-weight: 600;">₹0.00</span>
                         </div>
-                    </div>
-                    <div>
-                        <label>Event Location</label>
-                        <input type="text" name="venue" id="eventVenue" required placeholder="Where is it happening?">
-                    </div>
-                </div>
-                <div style="margin-bottom: 2rem;">
-                    <label>Event Details</label>
-                    <textarea name="description" id="eventDescription" rows="3"
-                        placeholder="Tell students more about the event..."></textarea>
-                </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
-                    <div>
-                        <label>Maximum Attendees</label>
-                        <input type="number" name="capacity" id="eventCapacity" value="100">
-                    </div>
-                    <div>
-                        <label>Who can attend?</label>
-                        <select name="type" id="eventType">
-                            <option value="both">Everyone (Internal & External)</option>
-                            <option value="internal">Internals Only</option>
-                            <option value="external">Outside Participants Only</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div
-                    style="background: rgba(255,255,255,0.03); padding: 2.5rem; border-radius: 24px; margin-bottom: 3rem; border: 1px solid rgba(255,255,255,0.08);">
-                    <h4
-                        style="margin-bottom: 1.5rem; color: var(--p-brand); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.1em;">
-                        Pricing & Fees</h4>
-                    <div style="display: flex; gap: 1.2rem; align-items: center; margin-bottom: 1.5rem;">
-                        <input type="checkbox" id="isPaid" name="is_paid"
-                            style="width: 24px; height: 24px; cursor: pointer;">
-                        <label for="isPaid" style="margin: 0; cursor: pointer; text-transform: none; color: white;">This
-                            is a Paid Event</label>
-                    </div>
-                    <div id="paidSettings" style="display: none;">
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 1.5rem;">
-                            <div>
-                                <label>Registration Fee (₹)</label>
-                                <input type="number" step="0.01" name="base_price" id="eventPrice" placeholder="0.00">
-                            </div>
-                            <div>
-                                <label>Apply GST for:</label>
-                                <select name="gst_target" id="eventGstTarget">
-                                    <option value="both" selected>Both (Local & Guest)</option>
-                                    <option value="externals_only">Outside Guests Only</option>
-                                    <option value="internals_only">Internals Only</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 1.5rem;">
-                            <div>
-                                <label>GST Rate (%)</label>
-                                <input type="number" step="0.01" name="gst_rate" id="eventGst" value="18.00">
-                            </div>
-                            <div>
-                                <label>Total Amount (Inc. GST)</label>
-                                <input type="text" id="eventTotalAmount" readonly
-                                    style="background: rgba(255,255,255,0.05); cursor: not-allowed;"
-                                    placeholder="₹0.00">
-                            </div>
-                        </div>
-
-                        <!-- UPI ID Field (Same as external event) -->
-                        <div style="margin-bottom: 1.5rem;">
-                            <label>UPI ID (for Payment QR)</label>
-                            <input type="text" name="payment_upi" id="eventPaymentUpi"
-                                placeholder="e.g. username@okaxis">
-                            <small style="color: var(--p-text-dim); font-size: 0.75rem;">Used to generate registration
-                                QR code</small>
-                        </div>
-
-                        <!-- GST Breakdown Preview -->
-                        <div id="eventGstBreakdown"
-                            style="background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.1); border-radius: 12px; padding: 1.2rem; display: none;">
-                            <div style="font-size: 0.85rem; color: var(--p-text-dim); margin-bottom: 0.5rem;">
-                                <strong style="color: #10b981;">Pricing Summary:</strong>
-                            </div>
-                            <div
-                                style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.3rem;">
-                                <span>Base Registration Fee:</span>
-                                <span id="eventBreakdownBase" style="color: white; font-weight: 600;">₹0.00</span>
-                            </div>
-                            <div
-                                style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.3rem;">
-                                <span>GST (<span id="eventBreakdownRate">18</span>%):</span>
-                                <span id="eventBreakdownGst" style="color: white; font-weight: 600;">₹0.00</span>
-                            </div>
-                            <div
-                                style="border-top: 1px solid rgba(16, 185, 129, 0.1); margin: 0.5rem 0; padding-top: 0.5rem; display: flex; justify-content: space-between;">
-                                <strong style="color: white;">Effective Total:</strong>
-                                <strong id="eventBreakdownTotal"
-                                    style="color: #10b981; font-size: 1.1rem;">₹0.00</strong>
-                            </div>
+                        <div
+                            style="border-top: 1px solid rgba(16, 185, 129, 0.1); margin: 0.5rem 0; padding-top: 0.5rem; display: flex; justify-content: space-between;">
+                            <strong style="color: white;">Effective Total:</strong>
+                            <strong id="eventBreakdownTotal" style="color: #10b981; font-size: 1.1rem;">₹0.00</strong>
                         </div>
                     </div>
                 </div>
-                <div style="display: flex; gap: 2rem;">
-                    <button type="button" class="btn btn-outline" style="flex: 1;"
-                        onclick="closeModal()">Cancel</button>
-                    <button type="submit" class="btn btn-primary" style="flex: 2;" id="saveBtn">Publish Event</button>
-                </div>
-            </form>
-        </div>
+            </div>
+            <div style="display: flex; gap: 2rem;">
+                <button type="button" class="btn btn-outline" style="flex: 1;" onclick="closeModal()">Cancel</button>
+                <button type="submit" class="btn btn-primary" style="flex: 2;" id="saveBtn">Publish Event</button>
+            </div>
+        </form>
     </div>
+</div>
 </div>
 
 <style>
@@ -687,15 +753,17 @@ $insideCount = $stmtInside->fetchColumn();
         <form id="createAdminForm">
             <div>
                 <label>Name</label>
-                <input type="text" name="name" required>
+                <input type="text" name="name" required minlength="2" placeholder="Full name">
             </div>
             <div>
                 <label>Email</label>
-                <input type="email" name="email" required>
+                <input type="email" name="email" required placeholder="admin@example.com">
             </div>
             <div>
                 <label>Password</label>
-                <input type="password" name="password" required>
+                <input type="password" name="password" required minlength="6" placeholder="Min 6 characters">
+                <small style="color:var(--p-text-dim); font-size:0.72rem; display:block; margin-top:0.3rem;">Minimum 6
+                    characters</small>
             </div>
             <div>
                 <label>Access Role</label>
@@ -741,12 +809,18 @@ $insideCount = $stmtInside->fetchColumn();
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
                 <div>
-                    <label>Start Date</label>
-                    <input type="date" name="start_date" id="programStartDate">
+                    <label>Start Date <span style="color:#ef4444;">*</span></label>
+                    <input type="date" name="start_date" id="programStartDate" required>
+                    <small id="programStartDateError"
+                        style="color:#ef4444; font-size:0.75rem; display:none; margin-top:0.3rem;">⚠️ Start date cannot
+                        be in the past.</small>
                 </div>
                 <div>
-                    <label>End Date</label>
-                    <input type="date" name="end_date" id="programEndDate">
+                    <label>End Date <span style="color:#ef4444;">*</span></label>
+                    <input type="date" name="end_date" id="programEndDate" required>
+                    <small id="programEndDateError"
+                        style="color:#ef4444; font-size:0.75rem; display:none; margin-top:0.3rem;">⚠️ End date must be
+                        on or after start date.</small>
                 </div>
             </div>
 
@@ -781,8 +855,11 @@ $insideCount = $stmtInside->fetchColumn();
                         <div>
                             <label>Registration Fee (₹) <span style="color: #ef4444;">*</span></label>
                             <input type="number" step="0.01" name="registration_fee" id="programRegistrationFee"
-                                placeholder="0.00" min="0">
-                            <small
+                                placeholder="0.01" min="0.01">
+                            <small id="programFeeError"
+                                style="color:#ef4444; font-size:0.75rem; display:none; margin-top:0.3rem;">⚠️ Fee must
+                                be greater than 0.</small>
+                            <small id="programFeeHint"
                                 style="color: var(--p-text-dim); font-size: 0.75rem; display: block; margin-top: 0.3rem;">
                                 Base amount before GST
                             </small>
@@ -873,8 +950,8 @@ $insideCount = $stmtInside->fetchColumn();
                         </small>
                     </div>
 
-                    <!-- UPI ID Configuration -->
-                    <div style="margin-top: 1rem;">
+                    <!-- UPI ID Configuration (Hidden as we use Razorpay) -->
+                    <div style="margin-top: 1rem; display: none;">
                         <label>UPI ID (for QR Code) <span style="color: #ef4444;">*</span></label>
                         <input type="text" name="payment_upi" id="programPaymentUpi" placeholder="e.g. username@okaxis"
                             style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 0.8rem; border-radius: 8px; width: 100%;">
@@ -955,6 +1032,8 @@ $insideCount = $stmtInside->fetchColumn();
     const eventForm = document.getElementById('eventForm');
     const isPaid = document.getElementById('isPaid');
     const paidSettings = document.getElementById('paidSettings');
+    const isGroupEvent = document.getElementById('isGroupEvent');
+    const groupSettings = document.getElementById('groupSettings');
 
     function openModal(isEdit = false) {
         modal.style.display = 'flex';
@@ -965,7 +1044,11 @@ $insideCount = $stmtInside->fetchColumn();
             eventForm.reset();
             document.getElementById('eventId').value = '';
             paidSettings.style.display = 'none';
+            groupSettings.style.display = 'none';
         }
+        // Set minimum date to today
+        const todayStr = new Date().toISOString().split('T')[0];
+        document.getElementById('eventDateOnly').min = todayStr;
     }
 
     function setEventToNow() {
@@ -975,6 +1058,19 @@ $insideCount = $stmtInside->fetchColumn();
         document.getElementById('eventDateOnly').value = dateStr;
         document.getElementById('eventTimeOnly').value = timeStr;
     }
+
+    // Real-time event date validation
+    document.getElementById('eventDateOnly').addEventListener('change', function () {
+        const today = new Date().toISOString().split('T')[0];
+        const errEl = document.getElementById('eventDateError');
+        if (this.value && this.value < today) {
+            errEl.style.display = 'block';
+            this.style.borderColor = '#ef4444';
+        } else {
+            errEl.style.display = 'none';
+            this.style.borderColor = '';
+        }
+    });
 
 
     function closeModal() {
@@ -1009,6 +1105,11 @@ $insideCount = $stmtInside->fetchColumn();
                 document.getElementById('eventGst').value = event.gst_rate;
                 document.getElementById('eventGstTarget').value = event.gst_target || 'both';
                 document.getElementById('eventPaymentUpi').value = event.payment_upi || '';
+
+                isGroupEvent.checked = parseInt(event.is_group_event) === 1;
+                groupSettings.style.display = isGroupEvent.checked ? 'grid' : 'none';
+                document.getElementById('minTeamSize').value = event.min_team_size || 1;
+                document.getElementById('maxTeamSize').value = event.max_team_size || 1;
 
                 if (isPaid.checked) {
                     calculateEventGST();
@@ -1087,6 +1188,10 @@ $insideCount = $stmtInside->fetchColumn();
         if (e.target.checked) calculateEventGST();
     });
 
+    isGroupEvent.addEventListener('change', (e) => {
+        groupSettings.style.display = e.target.checked ? 'grid' : 'none';
+    });
+
     // GST Calculation for Events
     function calculateEventGST() {
         const baseFee = parseFloat(document.getElementById('eventPrice').value) || 0;
@@ -1117,14 +1222,52 @@ $insideCount = $stmtInside->fetchColumn();
         const formData = new FormData(e.target);
         const data = Object.fromEntries(formData.entries());
 
+        // ===== FRONTEND VALIDATION =====
+        const today = new Date().toISOString().split('T')[0];
         const dateOnly = document.getElementById('eventDateOnly').value;
         const timeOnly = document.getElementById('eventTimeOnly').value;
+
+        if (!dateOnly) {
+            Swal.fire('Missing Date', 'Please select a date for the event.', 'warning');
+            return;
+        }
+        if (dateOnly < today) {
+            document.getElementById('eventDateError').style.display = 'block';
+            Swal.fire('Invalid Date', 'Event date cannot be in the past. Please select today or a future date.', 'warning');
+            return;
+        }
+
+        const capacity = parseInt(document.getElementById('eventCapacity').value);
+        if (isNaN(capacity) || capacity < 1) {
+            Swal.fire('Invalid Capacity', 'Maximum attendees must be at least 1.', 'warning');
+            return;
+        }
+
+        if (isPaid.checked) {
+            const price = parseFloat(document.getElementById('eventPrice').value);
+            if (isNaN(price) || price <= 0) {
+                document.getElementById('eventPriceError').style.display = 'block';
+                Swal.fire('Invalid Fee', 'Registration fee must be greater than ₹0 for a paid event.', 'warning');
+                return;
+            }
+            document.getElementById('eventPriceError').style.display = 'none';
+            const gstRate = parseFloat(document.getElementById('eventGst').value);
+            if (isNaN(gstRate) || gstRate < 0 || gstRate > 100) {
+                Swal.fire('Invalid GST', 'GST rate must be between 0% and 100%.', 'warning');
+                return;
+            }
+        }
+        // ===== END VALIDATION =====
+
         data.event_date = `${dateOnly} ${timeOnly}:00`;
 
         data.is_paid = isPaid.checked ? 1 : 0;
         data.is_gst_enabled = isPaid.checked ? 1 : 0;
         data.gst_target = data.gst_target || 'both';
         data.payment_upi = data.payment_upi || '';
+        data.is_group_event = isGroupEvent.checked ? 1 : 0;
+        data.min_team_size = data.min_team_size || 1;
+        data.max_team_size = data.max_team_size || 1;
 
         const id = document.getElementById('eventId').value;
         const action = id ? 'update' : 'create';
@@ -1362,6 +1505,11 @@ $insideCount = $stmtInside->fetchColumn();
         document.getElementById('externalProgramModalTitle').innerText = isEdit ? 'Edit External Program' : 'Create External Program';
         document.getElementById('saveProgramBtn').innerHTML = isEdit ? '<i class="fa-solid fa-save"></i> Save Changes' : '<i class="fa-solid fa-check-circle"></i> Create Program';
 
+        // Set minimum date to today for start date
+        const todayStr = new Date().toISOString().split('T')[0];
+        document.getElementById('programStartDate').min = todayStr;
+        document.getElementById('programEndDate').min = todayStr;
+
         if (!isEdit) {
             document.getElementById('externalProgramForm').reset();
             document.getElementById('externalProgramId').value = '';
@@ -1373,6 +1521,56 @@ $insideCount = $stmtInside->fetchColumn();
             document.getElementById('programPaymentUpi').value = '';
         }
     }
+
+    // Update end date min when start date changes
+    document.getElementById('programStartDate').addEventListener('change', function () {
+        const today = new Date().toISOString().split('T')[0];
+        const startErrEl = document.getElementById('programStartDateError');
+        if (this.value && this.value < today) {
+            startErrEl.style.display = 'block';
+            this.style.borderColor = '#ef4444';
+        } else {
+            startErrEl.style.display = 'none';
+            this.style.borderColor = '';
+        }
+        // Update end date minimum
+        if (this.value) {
+            document.getElementById('programEndDate').min = this.value;
+            const endDate = document.getElementById('programEndDate').value;
+            if (endDate && endDate < this.value) {
+                document.getElementById('programEndDate').value = '';
+                document.getElementById('programEndDateError').style.display = 'block';
+            }
+        }
+    });
+
+    document.getElementById('programEndDate').addEventListener('change', function () {
+        const startDate = document.getElementById('programStartDate').value;
+        const endErrEl = document.getElementById('programEndDateError');
+        if (startDate && this.value && this.value < startDate) {
+            endErrEl.style.display = 'block';
+            this.style.borderColor = '#ef4444';
+        } else {
+            endErrEl.style.display = 'none';
+            this.style.borderColor = '';
+        }
+    });
+
+    // Real-time fee validation for external program
+    document.getElementById('programRegistrationFee').addEventListener('input', function () {
+        const feeErrEl = document.getElementById('programFeeError');
+        const feeHintEl = document.getElementById('programFeeHint');
+        if (this.value !== '' && parseFloat(this.value) <= 0) {
+            feeErrEl.style.display = 'block';
+            feeHintEl.style.display = 'none';
+            this.style.borderColor = '#ef4444';
+        } else {
+            feeErrEl.style.display = 'none';
+            feeHintEl.style.display = 'block';
+            this.style.borderColor = '';
+        }
+        calculateGST();
+    });
 
     function closeExternalProgramModal() {
         document.getElementById('externalProgramModal').style.display = 'none';
@@ -1624,16 +1822,76 @@ $insideCount = $stmtInside->fetchColumn();
     document.getElementById('externalProgramForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         const formData = new FormData(e.target);
+
+        // ===== FRONTEND VALIDATION =====
+        const today = new Date().toISOString().split('T')[0];
+        const startDate = formData.get('start_date');
+        const endDate = formData.get('end_date');
+        const isPaidProgram = document.getElementById('programIsPaid').checked;
+        const regFee = parseFloat(formData.get('registration_fee'));
+        const maxPart = parseInt(formData.get('max_participants'));
+        const progName = formData.get('program_name');
+
+        if (!progName || progName.trim().length < 2) {
+            Swal.fire('Missing Name', 'Program name must be at least 2 characters.', 'warning');
+            return;
+        }
+        if (!startDate) {
+            Swal.fire('Missing Start Date', 'Please select a start date for the program.', 'warning');
+            return;
+        }
+        if (startDate < today) {
+            document.getElementById('programStartDateError').style.display = 'block';
+            Swal.fire('Invalid Start Date', 'Program start date cannot be in the past.', 'warning');
+            return;
+        }
+        if (!endDate) {
+            Swal.fire('Missing End Date', 'Please select an end date for the program.', 'warning');
+            return;
+        }
+        if (endDate < startDate) {
+            document.getElementById('programEndDateError').style.display = 'block';
+            Swal.fire('Invalid End Date', 'End date must be on or after the start date.', 'warning');
+            return;
+        }
+        if (isNaN(maxPart) || maxPart < 1) {
+            Swal.fire('Invalid Capacity', 'Maximum participants must be at least 1.', 'warning');
+            return;
+        }
+        if (isPaidProgram) {
+            if (isNaN(regFee) || regFee <= 0) {
+                document.getElementById('programFeeError').style.display = 'block';
+                Swal.fire('Invalid Fee', 'Registration fee must be greater than ₹0 for a paid program.', 'warning');
+                return;
+            }
+            const gateway = formData.get('payment_gateway');
+            if (gateway === 'manual') {
+                const upiId = formData.get('payment_upi') || '';
+                if (!upiId.trim()) {
+                    Swal.fire('UPI ID Required', 'Please enter a UPI ID to generate the payment QR code for paid programs.', 'warning');
+                    document.getElementById('programPaymentUpi').focus();
+                    return;
+                }
+                if (!upiId.includes('@')) {
+                    Swal.fire('Invalid UPI ID', 'Please enter a valid UPI ID (e.g. name@okaxis).', 'warning');
+                    document.getElementById('programPaymentUpi').focus();
+                    return;
+                }
+            }
+
+        }
+        // ===== END VALIDATION =====
+
         const data = {
-            program_name: formData.get('program_name'),
+            program_name: progName,
             program_description: formData.get('program_description'),
-            start_date: formData.get('start_date'),
-            end_date: formData.get('end_date'),
-            max_participants: formData.get('max_participants'),
+            start_date: startDate,
+            end_date: endDate,
+            max_participants: maxPart,
             is_active: document.getElementById('programIsActive').checked ? 1 : 0,
             // Payment fields
-            is_paid: document.getElementById('programIsPaid').checked ? 1 : 0,
-            registration_fee: formData.get('registration_fee') || 0,
+            is_paid: isPaidProgram ? 1 : 0,
+            registration_fee: isPaidProgram ? regFee : 0,
             currency: formData.get('currency') || 'INR',
             is_gst_enabled: document.getElementById('programGstEnabled').checked ? 1 : 0,
             gst_rate: formData.get('gst_rate') || 18,
@@ -1670,6 +1928,100 @@ $insideCount = $stmtInside->fetchColumn();
             Swal.fire('Error', 'Request processing failed', 'error');
         }
     });
+
+    // ========== REGISTRATION LIST SYSTEM ==========
+    let currentViewEventId = null;
+
+    async function viewRegistrations(eventId, eventName) {
+        currentViewEventId = eventId;
+        document.getElementById('regViewTitle').innerText = eventName;
+        document.getElementById('regViewModal').style.display = 'flex';
+        const container = document.getElementById('regListContainer');
+        container.innerHTML = '<p style="text-align: center; color: var(--p-text-muted); padding: 3rem;"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading attendees...</p>';
+
+        try {
+            const res = await fetch(`../api/results.php?action=get_candidates&event_id=${eventId}&all=1`);
+            const data = await res.json();
+
+            if (data.success && data.candidates) {
+                // Using candidates but here we want more info like date
+                // Actually the API currently returns only name and email
+                // I should update the API to return all fields if all=1 is requested
+
+                if (data.candidates.length === 0) {
+                    container.innerHTML = '<p style="text-align: center; color: var(--p-text-muted); padding: 3rem;">No registrations found for this event yet.</p>';
+                } else {
+                    let html = '<table style="width: 100%; border-collapse: separate; border-spacing: 0 0.8rem;">';
+                    html += `
+                        <thead>
+                            <tr style="text-align: left; color: var(--p-text-muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em;">
+                                <th style="padding: 0.5rem 1rem;">Participant Details</th>
+                                <th>Status</th>
+                                <th>Registration Info</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                    `;
+                    data.candidates.forEach(reg => {
+                        const isGroup = reg.team_name ? true : false;
+                        html += `
+                            <tr style="background: rgba(255,255,255,0.02);">
+                                <td style="padding: 1.2rem; border-radius: 12px 0 0 12px;">
+                                    <div style="font-weight: 700; color: white;">${reg.name}</div>
+                                    <div style="font-size: 0.8rem; color: var(--p-text-dim);">${reg.email}</div>
+                                    ${reg.team_name ? `
+                                        <div style="margin-top: 0.8rem; padding: 0.8rem; background: rgba(16, 185, 129, 0.05); border-radius: 10px; border: 1px solid rgba(16, 185, 129, 0.1);">
+                                            <div style="color: #10b981; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; margin-bottom: 0.3rem;">Team Structure</div>
+                                            <div style="color: white; font-size: 0.8rem; font-weight: 600; margin-bottom: 0.4rem;">${reg.team_name}</div>
+                                            <div style="display: flex; flex-direction: column; gap: 0.3rem;">
+                                                ${JSON.parse(reg.team_members || '[]').map((m, i) => `
+                                                    <div style="color: var(--p-text-dim); font-size: 0.75rem; display: flex; align-items: flex-start; gap: 0.4rem;">
+                                                        <span style="color: #10b981; opacity: 0.7;">•</span>
+                                                        <span>${m.includes('|') ? m.split('|').map(s => s.trim()).join(' — ') : m}</span>
+                                                    </div>
+                                                `).join('')}
+                                            </div>
+                                        </div>
+                                    ` : ''}
+                                </td>
+                                <td>
+                                    <span class="status-badge ${reg.payment_status === 'completed' || reg.payment_status === 'free' ? 'status-inside' : 'status-pending'}">
+                                        ${reg.payment_status ? reg.payment_status.toUpperCase() : 'CONFIRMED'}
+                                    </span>
+                                </td>
+                                <td style="color: var(--p-text-dim); border-radius: 0 12px 12px 0;">
+                                    <div style="font-size: 0.8rem;">${reg.registration_date || ''}</div>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    html += '</tbody></table>';
+                    container.innerHTML = html;
+                }
+            } else {
+                container.innerHTML = `<p style="text-align: center; color: #ef4444; padding: 3rem;">Error: ${data.error || 'Failed to load'}</p>`;
+            }
+        } catch (e) {
+            container.innerHTML = '<p style="text-align: center; color: #ef4444; padding: 3rem;">Connection failed</p>';
+        }
+    }
+
+    function exportRegistrations() {
+        if (!currentViewEventId) {
+            Swal.fire('Error', 'No event selected for export', 'error');
+            return;
+        }
+
+        Swal.fire({
+            title: 'Exporting...',
+            text: 'Preparing registration data for download',
+            didOpen: () => Swal.showLoading(),
+            timer: 1000,
+            showConfirmButton: false
+        }).then(() => {
+            window.location.href = `../api/export_registrations.php?event_id=${currentViewEventId}`;
+        });
+    }
 
     // ========== PAYMENT VERIFICATION SYSTEM ==========
 
@@ -1721,6 +2073,16 @@ $insideCount = $stmtInside->fetchColumn();
                     <td style="padding: 1.5rem; border-radius: 0 0 0 0; border-top: 1px solid rgba(234, 179, 8, 0.1); border-bottom: 1px solid rgba(234, 179, 8, 0.1);">
                         <div style="font-weight: 700; color: white;">${reg.user_name}</div>
                         <div style="font-size: 0.8rem; color: var(--p-text-dim);">${reg.user_email}</div>
+                    ${reg.team_name ? `
+                            <div style="margin-top: 0.8rem; padding: 0.5rem; background: rgba(16, 185, 129, 0.1); border-radius: 8px; border: 1px solid rgba(16, 185, 129, 0.2);">
+                                <div style="color: #10b981; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; margin-bottom: 0.3rem;">Team: ${reg.team_name}</div>
+                                <div style="display: flex; flex-direction: column; gap: 0.2rem;">
+                                    ${JSON.parse(reg.team_members || '[]').map(m => `
+                                        <div style="color: white; font-size: 0.7rem;">• ${m.includes('|') ? m.split('|').map(s => s.trim()).join(' — ') : m}</div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        ` : ''}
                     </td>
                     <td style="color: white; border-top: 1px solid rgba(234, 179, 8, 0.1); border-bottom: 1px solid rgba(234, 179, 8, 0.1);">
                         ${reg.event_name}

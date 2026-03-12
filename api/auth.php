@@ -57,7 +57,19 @@ if ($action === 'register') {
 
     // 2. Email Format Validation
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        echo json_encode(['success' => false, 'error' => 'Invalid email format.']);
+        echo json_encode(['success' => false, 'error' => 'Invalid email address format.']);
+        exit;
+    }
+
+    // 3. Name Content Validation (Letters and Spaces only)
+    if (!preg_match("/^[a-zA-Z\s]+$/", $name)) {
+        echo json_encode(['success' => false, 'error' => 'Full name should only contain letters and spaces.']);
+        exit;
+    }
+
+    // 4. Phone/WhatsApp Number Length Validation (Exactly 10 digits)
+    if (!preg_match("/^[0-9]{10}$/", $phone)) {
+        echo json_encode(['success' => false, 'error' => 'Please enter a valid 10-digit mobile number.']);
         exit;
     }
 
@@ -156,6 +168,9 @@ if ($action === 'register') {
             $_SESSION['role'] = $newUser['role'];
             $_SESSION['name'] = $newUser['name'];
             $_SESSION['email'] = $newUser['email'];
+
+            $result['role'] = $newUser['role'];
+            $result['requires_payment'] = ($payment_status === 'pending');
         }
     }
 

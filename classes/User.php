@@ -313,4 +313,26 @@ class User
         $_SESSION['email'] = $user['email'];
         return true;
     }
+
+    public function deleteUser($userId)
+    {
+        try {
+            // First, potentially delete file if exists
+            $stmt = $this->pdo->prepare("SELECT id_proof FROM users WHERE id = ?");
+            $stmt->execute([$userId]);
+            $proof = $stmt->fetchColumn();
+
+            if ($proof && file_exists(__DIR__ . '/../' . $proof)) {
+                unlink(__DIR__ . '/../' . $proof);
+            }
+
+            $stmt = $this->pdo->prepare("DELETE FROM users WHERE id = ?");
+            if ($stmt->execute([$userId])) {
+                return ['success' => true];
+            }
+            return ['success' => false, 'error' => 'Delete failed'];
+        } catch (PDOException $e) {
+            return ['success' => false, 'error' => $e->getMessage()];
+        }
+    }
 }

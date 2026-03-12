@@ -573,104 +573,105 @@ $upcomingEventsCount = count($availableEvents);
                             <i class="fa-regular fa-calendar"></i>
                             <span><?php echo date('D, M d | h:i A', strtotime($reg['event_date'])); ?></span>
                         </div>
-                        <div class="event-meta-item">
-                            <i class="fa-solid fa-location-dot"></i>
-                            <span><?php echo htmlspecialchars($reg['venue']); ?></span>
-                        </div>
-                        <div style="display: flex; gap: 1rem; margin-top: 2rem;">
-                            <button class="btn btn-primary" style="flex: 2;"
-                                onclick="showTicket('<?php echo $reg['qr_token']; ?>', '<?php echo htmlspecialchars($reg['event_name']); ?>')">
-                                <i class="fa-solid fa-qrcode"></i> View Ticket
-                            </button>
-                            <button class="btn btn-outline"
-                                style="flex: 1; border-color: rgba(239, 68, 68, 0.3); color: #ef4444;"
-                                onclick="cancelRegistration(<?php echo $reg['id']; ?>, '<?php echo htmlspecialchars($reg['event_name']); ?>')">
-                                <i class="fa-solid fa-xmark"></i>
-                            </button>
-                        </div>
+                        <span><?php echo htmlspecialchars($reg['venue']); ?></span>
                     </div>
-                </div>
-            <?php endforeach; ?>
-        </div>
-    <?php endif; ?>
-
-    <!-- Explore Events -->
-    <h2 id="explore" class="section-title reveal"><i class="fa-solid fa-sparkles" style="color: #a855f7;"></i>
-        Discover Upcoming Events</h2>
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 2.5rem;">
-        <?php foreach ($availableEvents as $idx => $event): ?>
-            <div class="event-card-glass reveal" style="animation-delay: <?php echo $idx * 0.1; ?>s;">
-                <div class="card-banner"
-                    style="background: linear-gradient(135deg, rgba(255, 31, 31, 0.1) 0%, rgba(10, 10, 10, 0.5) 100%);">
-                    <div style="width: 100%; display: flex; justify-content: space-between; align-items: center;">
-                        <?php if ($event['capacity'] < 10): ?>
-                            <span
-                                style="background: #ef4444; color: white; padding: 0.4rem 1rem; border-radius: 99px; font-size: 0.75rem; font-weight: 800; animation: pulse 2s infinite;">
-                                <i class="fa-solid fa-fire"></i> ONLY <?php echo $event['capacity']; ?> LEFT
-                            </span>
-                        <?php else: ?>
-                            <span></span>
-                        <?php endif; ?>
-
-                        <?php if ($event['is_paid']): ?>
-                            <span class="price-badge">
-                                ₹<?php echo number_format($event['base_price'], 2); ?>
-                            </span>
-                        <?php else: ?>
-                            <span class="price-badge free">FREE ACCESS</span>
-                        <?php endif; ?>
+                    <?php if (!empty($reg['team_name'])): ?>
+                        <div class="event-meta-item" style="color: #10b981; font-weight: 700;">
+                            <i class="fa-solid fa-users"></i>
+                            <span>Team: <?php echo htmlspecialchars($reg['team_name']); ?></span>
+                        </div>
+                    <?php endif; ?>
+                    <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                        <button class="btn btn-primary" style="flex: 2;"
+                            onclick="showTicket('<?php echo $reg['qr_token']; ?>', '<?php echo htmlspecialchars($reg['event_name']); ?>')">
+                            <i class="fa-solid fa-qrcode"></i> View Ticket
+                        </button>
+                        <button class="btn btn-outline" style="flex: 1; border-color: rgba(239, 68, 68, 0.3); color: #ef4444;"
+                            onclick="cancelRegistration(<?php echo $reg['id']; ?>, '<?php echo htmlspecialchars($reg['event_name']); ?>')">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
                     </div>
-                </div>
-                <div class="card-content">
-                    <div
-                        style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
-                        <h3 style="font-size: 1.6rem; color: white; font-weight: 800; flex: 1;">
-                            <?php echo htmlspecialchars($event['name']); ?>
-                        </h3>
-                        <div
-                            style="background: rgba(255,255,255,0.05); padding: 0.4rem 0.8rem; border-radius: 12px; font-size: 0.7rem; color: var(--p-text-dim); border: 1px solid rgba(255,255,255,0.1);">
-                            <i class="fa-solid fa-user-group"></i> <?php echo $event['capacity']; ?> Slots
-                        </div>
-                    </div>
-                    <p
-                        style="color: var(--p-text-dim); font-size: 1.05rem; line-height: 1.7; margin-bottom: 2.5rem; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">
-                        <?php echo htmlspecialchars($event['description']); ?>
-                    </p>
-                    <div
-                        style="background: rgba(255,255,255,0.02); padding: 1.5rem; border-radius: 20px; margin-bottom: 2rem; border: 1px solid rgba(255,255,255,0.03);">
-                        <div class="event-meta-item" style="margin-bottom: 1.2rem;">
-                            <i class="fa-regular fa-calendar-check"></i>
-                            <span
-                                style="font-weight: 600;"><?php echo date('l, M d, Y', strtotime($event['event_date'])); ?></span>
-                        </div>
-                        <div class="event-meta-item" style="margin-bottom: 1.2rem;">
-                            <i class="fa-regular fa-clock"></i>
-                            <span
-                                style="font-weight: 600;"><?php echo date('h:i A', strtotime($event['event_date'])); ?></span>
-                        </div>
-                        <div class="event-meta-item" style="margin: 0;">
-                            <i class="fa-solid fa-location-dot"></i>
-                            <span style="font-weight: 600;"><?php echo htmlspecialchars($event['venue']); ?></span>
-                        </div>
-                    </div>
-                    <button class="btn btn-primary"
-                        style="width: 100%; padding: 1.2rem; border-radius: 18px; font-weight: 800; font-size: 1rem; box-shadow: 0 15px 30px rgba(255,31,31,0.2);"
-                        onclick="registerEvent(<?php echo htmlspecialchars(json_encode($event)); ?>)">
-                        Register <i class="fa-solid fa-arrow-right-long"
-                            style="margin-left: 0.8rem; transition: transform 0.3s ease;"></i>
-                    </button>
                 </div>
             </div>
         <?php endforeach; ?>
     </div>
+<?php endif; ?>
+
+<!-- Explore Events -->
+<h2 id="explore" class="section-title reveal"><i class="fa-solid fa-sparkles" style="color: #a855f7;"></i>
+    Discover Upcoming Events</h2>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 2.5rem;">
+    <?php foreach ($availableEvents as $idx => $event): ?>
+        <div class="event-card-glass reveal" style="animation-delay: <?php echo $idx * 0.1; ?>s;">
+            <div class="card-banner"
+                style="background: linear-gradient(135deg, rgba(255, 31, 31, 0.1) 0%, rgba(10, 10, 10, 0.5) 100%);">
+                <div style="width: 100%; display: flex; justify-content: space-between; align-items: center;">
+                    <?php if ($event['capacity'] < 10): ?>
+                        <span
+                            style="background: #ef4444; color: white; padding: 0.4rem 1rem; border-radius: 99px; font-size: 0.75rem; font-weight: 800; animation: pulse 2s infinite;">
+                            <i class="fa-solid fa-fire"></i> ONLY <?php echo $event['capacity']; ?> LEFT
+                        </span>
+                    <?php else: ?>
+                        <span></span>
+                    <?php endif; ?>
+
+                    <?php if ($event['is_paid']): ?>
+                        <span class="price-badge">
+                            ₹<?php echo number_format($event['base_price'], 2); ?>
+                        </span>
+                    <?php else: ?>
+                        <span class="price-badge free">FREE ACCESS</span>
+                    <?php endif; ?>
+                </div>
+            </div>
+            <div class="card-content">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                    <h3 style="font-size: 1.6rem; color: white; font-weight: 800; flex: 1;">
+                        <?php echo htmlspecialchars($event['name']); ?>
+                    </h3>
+                    <div
+                        style="background: rgba(255,255,255,0.05); padding: 0.4rem 0.8rem; border-radius: 12px; font-size: 0.7rem; color: var(--p-text-dim); border: 1px solid rgba(255,255,255,0.1);">
+                        <i class="fa-solid fa-user-group"></i> <?php echo $event['capacity']; ?> Slots
+                    </div>
+                </div>
+                <p
+                    style="color: var(--p-text-dim); font-size: 1.05rem; line-height: 1.7; margin-bottom: 2.5rem; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">
+                    <?php echo htmlspecialchars($event['description']); ?>
+                </p>
+                <div
+                    style="background: rgba(255,255,255,0.02); padding: 1.5rem; border-radius: 20px; margin-bottom: 2rem; border: 1px solid rgba(255,255,255,0.03);">
+                    <div class="event-meta-item" style="margin-bottom: 1.2rem;">
+                        <i class="fa-regular fa-calendar-check"></i>
+                        <span
+                            style="font-weight: 600;"><?php echo date('l, M d, Y', strtotime($event['event_date'])); ?></span>
+                    </div>
+                    <div class="event-meta-item" style="margin-bottom: 1.2rem;">
+                        <i class="fa-regular fa-clock"></i>
+                        <span style="font-weight: 600;"><?php echo date('h:i A', strtotime($event['event_date'])); ?></span>
+                    </div>
+                    <div class="event-meta-item" style="margin: 0;">
+                        <i class="fa-solid fa-location-dot"></i>
+                        <span style="font-weight: 600;"><?php echo htmlspecialchars($event['venue']); ?></span>
+                    </div>
+                </div>
+                <button class="btn btn-primary"
+                    style="width: 100%; padding: 1.2rem; border-radius: 18px; font-weight: 800; font-size: 1rem; box-shadow: 0 15px 30px rgba(255,31,31,0.2);"
+                    onclick="registerEvent(<?php echo htmlspecialchars(json_encode($event)); ?>)">
+                    Register <i class="fa-solid fa-arrow-right-long"
+                        style="margin-left: 0.8rem; transition: transform 0.3s ease;"></i>
+                </button>
+            </div>
+        </div>
+    <?php endforeach; ?>
+</div>
 </div>
 
 
 <!-- Premium Ticket Modal -->
 <div id="ticketModal"
-    style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); backdrop-filter: blur(15px); z-index: 2000; justify-content: center; align-items: center; padding: 1rem;">
+    style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); backdrop-filter: blur(15px); z-index: 2000; justify-content: center; align-items: flex-start; padding: 2rem 1rem; overflow-y: auto;">
     <div class="glass-panel"
-        style="max-width: 480px; width: 100%; padding: 0; border-radius: 40px; border-color: rgba(255,31,31,0.3); position: relative; overflow: visible;">
+        style="max-width: 480px; width: 100%; padding: 0; border-radius: 40px; border-color: rgba(255,31,31,0.3); position: relative; overflow: visible; margin: auto;">
 
         <!-- Ticket Header -->
         <div
@@ -744,39 +745,9 @@ $upcomingEventsCount = count($availableEvents);
 </div>
 
 
+<!-- Razorpay Checkout Script -->
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
-<!-- Manual Payment Modal (Restored) -->
-<div id="paymentModal"
-    style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); backdrop-filter: blur(10px); z-index: 3000; justify-content: center; align-items: center; padding: 1rem;">
-    <div class="glass-panel"
-        style="max-width: 450px; width: 100%; border-radius: 30px; border-color: rgba(255,165,0,0.3); background: #0a0a0a; color: #fff; position: relative; padding: 2rem;">
-        <h3 id="payEventName" style="color: #fff; font-weight: 800; margin-bottom: 0.5rem; text-align: center;">Event
-            Payment</h3>
-
-        <div
-            style="background: #fff; padding: 1.5rem; border-radius: 20px; text-align: center; margin-bottom: 2rem; color: #000;">
-            <div id="payQr" style="display: inline-block; margin-bottom: 1rem;"></div>
-            <div style="font-size: 2rem; font-weight: 900; color: #10b981;" id="payAmount">₹0.00</div>
-            <div style="color: #64748b; font-size: 0.8rem; font-weight: 600;">UPI: <span id="payUpiId"
-                    style="color: #0f172a;"></span></div>
-        </div>
-
-        <div style="margin-bottom: 2rem;">
-            <label
-                style="color: #94a3b8; font-size: 0.8rem; font-weight: 600; display: block; margin-bottom: 0.5rem;">TRANSACTION
-                ID / UTR</label>
-            <input type="text" id="payTransactionId" placeholder="Enter 12-digit UTR..."
-                style="width: 100%; padding: 1rem; border-radius: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; font-family: monospace;">
-        </div>
-
-        <div style="display: flex; gap: 1rem;">
-            <button onclick="document.getElementById('paymentModal').style.display='none'" class="btn btn-outline"
-                style="flex: 1; border-color: rgba(255,255,255,0.1); color: #94a3b8;">Cancel</button>
-            <button onclick="submitPayment()" class="btn btn-primary"
-                style="flex: 2; background: #eab308; color: #000; border: none;">Verify & Register</button>
-        </div>
-    </div>
-</div>
 <script>
     let eventQrInstance = null;
     function showTicket(token, name) {
@@ -796,56 +767,212 @@ $upcomingEventsCount = count($availableEvents);
         document.getElementById('ticketModal').style.display = 'flex';
     }
 
-    // Event Registration Logic
+    // Event Registration Logic — Razorpay Checkout
     let currentEventId = null;
 
     async function registerEvent(event) {
         const eventId = typeof event === 'object' ? event.id : event;
         const isPaid = (typeof event === 'object' && event.is_paid == '1');
+        const isGroup = (typeof event === 'object' && event.is_group_event == '1');
+
+        let teamData = null;
+        if (isGroup) {
+            teamData = await collectTeamDetails(event);
+            if (!teamData) return; // User cancelled
+        }
 
         if (isPaid) {
-            currentEventId = eventId;
-            const upiId = event.payment_upi || 'admin@upi';
-            const amount = event.base_price || 0;
-
-            document.getElementById('payEventName').innerText = event.name || 'Event';
-            document.getElementById('payAmount').innerText = '₹' + parseFloat(amount).toFixed(2);
-            document.getElementById('payUpiId').innerText = upiId;
-            document.getElementById('payTransactionId').value = '';
-
-            // Generate QR
-            const qrContainer = document.getElementById('payQr');
-            qrContainer.innerHTML = '';
-            const qrUrl = `upi://pay?pa=${upiId}&pn=EntryX&am=${amount}&tn=Reg ${eventId}`;
-
-            new QRCode(qrContainer, {
-                text: qrUrl,
-                width: 160,
-                height: 160,
-                colorDark: "#000000",
-                colorLight: "#ffffff",
-                correctLevel: QRCode.CorrectLevel.M
+            Swal.fire({
+                title: 'Preparing Payment...',
+                didOpen: () => Swal.showLoading(),
+                background: '#0a0a0a',
+                color: '#fff',
+                allowOutsideClick: false
             });
 
-            document.getElementById('paymentModal').style.display = 'flex';
+            try {
+                const res = await fetch('../api/payment_gateway.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type: 'event', id: eventId })
+                });
+                const order = await res.json();
+
+                if (!order.success) throw new Error(order.error || 'Could not create payment order');
+
+                Swal.close();
+
+                const options = {
+                    key: order.key,
+                    amount: order.amount,
+                    currency: 'INR',
+                    name: 'EntryX',
+                    description: order.item_name,
+                    order_id: order.order_id,
+                    prefill: {
+                        name: order.user_name,
+                        email: order.user_email,
+                        contact: order.user_contact
+                    },
+                    theme: { color: '#ff1f1f' },
+                    handler: async function (response) {
+                        Swal.fire({
+                            title: 'Verifying Payment...',
+                            didOpen: () => Swal.showLoading(),
+                            background: '#0a0a0a',
+                            color: '#fff',
+                            allowOutsideClick: false
+                        });
+
+                        try {
+                            const vRes = await fetch('../api/payment_verify.php', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    razorpay_order_id: response.razorpay_order_id,
+                                    razorpay_payment_id: response.razorpay_payment_id,
+                                    razorpay_signature: response.razorpay_signature,
+                                    team_name: teamData ? teamData.team_name : null,
+                                    team_members: teamData ? teamData.team_members : null
+                                })
+                            });
+                            const result = await vRes.json();
+
+                            if (result.success) {
+                                await Swal.fire({
+                                    icon: 'success',
+                                    title: 'Payment Successful!',
+                                    text: 'You are now registered for the event.',
+                                    confirmButtonColor: '#ff1f1f',
+                                    background: '#0a0a0a',
+                                    color: '#fff',
+                                    timer: 3000,
+                                    timerProgressBar: true
+                                });
+                                window.location.href = 'student_dashboard.php?registered=1';
+                            } else {
+                                throw new Error(result.error || 'Verification failed');
+                            }
+                        } catch (err) {
+                            Swal.fire({ icon: 'error', title: 'Verification Error', text: err.message, confirmButtonColor: '#ff1f1f', background: '#0a0a0a', color: '#fff' });
+                        }
+                    },
+                    modal: {
+                        ondismiss: function () {
+                            Swal.fire({ icon: 'info', title: 'Payment Cancelled', text: 'You can try again anytime.', confirmButtonColor: '#ff1f1f', background: '#0a0a0a', color: '#fff' });
+                        }
+                    }
+                };
+
+                const rzp = new Razorpay(options);
+                rzp.open();
+
+            } catch (err) {
+                Swal.fire({ icon: 'error', title: 'Payment Error', text: err.message, confirmButtonColor: '#ff1f1f', background: '#0a0a0a', color: '#fff' });
+            }
             return;
         }
 
-        proceedWithRegistration(eventId);
+        proceedWithRegistration(eventId, null, teamData ? teamData.team_name : null, teamData ? teamData.team_members : null);
     }
 
-    // Confirm Payment
-    function submitPayment() {
-        const txId = document.getElementById('payTransactionId').value.trim();
-        if (!txId || txId.length < 5) {
-            Swal.fire('Error', 'Invalid Transaction ID', 'error');
-            return;
+    async function collectTeamDetails(event) {
+        const min = parseInt(event.min_team_size) || 1;
+        const max = parseInt(event.max_team_size) || 1;
+
+        // Step 1: Ask for Member Count
+        const { value: memberCount } = await Swal.fire({
+            title: 'Team Size',
+            text: `How many members are in your team? (Min: ${min}, Max: ${max})`,
+            input: 'number',
+            inputAttributes: {
+                min: min,
+                max: max,
+                step: 1
+            },
+            inputValue: min,
+            showCancelButton: true,
+            confirmButtonText: 'Next',
+            confirmButtonColor: '#ff1f1f',
+            background: '#0a0a0a',
+            color: '#fff',
+            inputValidator: (value) => {
+                if (!value || value < min || value > max) {
+                    return `Please enter a count between ${min} and ${max}`;
+                }
+            }
+        });
+
+        if (!memberCount) return null;
+
+        // Step 2: Collect Team Details
+        let membersHtml = '';
+        for (let i = 1; i <= memberCount; i++) {
+            membersHtml += `
+                <div style="margin-bottom: 1.5rem; padding: 1rem; background: rgba(255,255,255,0.03); border-radius: 12px; border: 1px solid rgba(255,255,255,0.08);">
+                    <div style="color: #ff1f1f; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; margin-bottom: 0.8rem; letter-spacing: 0.1em;">
+                        ${i === 1 ? '⭐ Member 1 (Team Leader)' : `👤 Member ${i}`}
+                    </div>
+                    <input id="swal-member-name-${i}" class="swal2-input" placeholder="Full Name *" 
+                        style="margin: 0 0 0.6rem 0; width: 100%; height: 2.8rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 8px;">
+                    <div style="display: flex; gap: 0.5rem;">
+                        <input id="swal-member-dept-${i}" class="swal2-input" placeholder="Department (e.g. MCA, BCA)" 
+                            style="margin: 0; flex: 1; height: 2.5rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 8px; font-size: 0.85rem;">
+                        <input id="swal-member-year-${i}" class="swal2-input" placeholder="Year / Sem" 
+                            style="margin: 0; width: 110px; height: 2.5rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 8px; font-size: 0.85rem;">
+                    </div>
+                </div>
+            `;
         }
-        document.getElementById('paymentModal').style.display = 'none';
-        proceedWithRegistration(currentEventId, txId);
+
+        const { value: teamData } = await Swal.fire({
+            title: 'Team Details',
+            html: `
+                <div style="text-align: left; margin-top: 1rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; color: #94a3b8; font-size: 0.8rem; font-weight: 700; text-transform: uppercase;">Team Name *</label>
+                    <input id="swal-team-name" class="swal2-input" placeholder="Enter Team Name" style="margin: 0 0 1.5rem 0; width: 100%; height: 3.5rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 10px;">
+                    
+                    <div style="margin-bottom: 1rem;">
+                        <span style="color: #94a3b8; font-size: 0.8rem; font-weight: 700; text-transform: uppercase;">Member Information</span>
+                    </div>
+                    ${membersHtml}
+                </div>
+            `,
+            focusConfirm: false,
+            showCancelButton: true,
+            confirmButtonText: 'Proceed to Payment',
+            confirmButtonColor: '#ff1f1f',
+            background: '#0a0a0a',
+            color: '#fff',
+            preConfirm: () => {
+                const teamName = document.getElementById('swal-team-name').value.trim();
+                if (!teamName) {
+                    Swal.showValidationMessage('Please enter a team name');
+                    return false;
+                }
+                const members = [];
+                for (let i = 1; i <= memberCount; i++) {
+                    const name = document.getElementById(`swal-member-name-${i}`).value.trim();
+                    const dept = document.getElementById(`swal-member-dept-${i}`).value.trim();
+                    const year = document.getElementById(`swal-member-year-${i}`).value.trim();
+                    if (!name) {
+                        Swal.showValidationMessage(`Please enter the full name for Member ${i}`);
+                        return false;
+                    }
+                    // Build a rich readable string: "Name | Dept | Year/Sem"
+                    let memberStr = name;
+                    if (dept) memberStr += ` | ${dept}`;
+                    if (year) memberStr += ` | ${year}`;
+                    members.push(memberStr);
+                }
+                return { team_name: teamName, team_members: members };
+            }
+        });
+
+        return teamData;
     }
 
-    async function proceedWithRegistration(eventId, transactionId = null) {
+    async function proceedWithRegistration(eventId, transactionId = null, teamName = null, teamMembers = null) {
         // Fallback if Swal is not loaded
         if (typeof Swal === 'undefined') {
             if (confirm('Confirm Registration: Secure your spot now?')) {
@@ -901,7 +1028,9 @@ $upcomingEventsCount = count($availableEvents);
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         event_id: eventId,
-                        transaction_id: transactionId
+                        transaction_id: transactionId,
+                        team_name: teamName,
+                        team_members: teamMembers
                     })
                 });
 

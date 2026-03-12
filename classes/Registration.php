@@ -8,7 +8,7 @@ class Registration
         $this->pdo = $pdo;
     }
 
-    public function registerUser($userId, $eventId, $transactionId = null)
+    public function registerUser($userId, $eventId, $transactionId = null, $teamName = null, $teamMembers = null)
     {
         // 1. Get Event Details
         $stmt = $this->pdo->prepare("SELECT * FROM events WHERE id = ?");
@@ -79,12 +79,24 @@ class Registration
         }
 
         // 7. Insert Registration
-        $sql = "INSERT INTO registrations (user_id, event_id, amount_paid, qr_token, transaction_id, payment_status, base_amount, gst_amount, total_amount) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        $sql = "INSERT INTO registrations (user_id, event_id, team_name, team_members, amount_paid, qr_token, transaction_id, payment_status, base_amount, gst_amount, total_amount) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try {
             $stmt = $this->pdo->prepare($sql);
-            $stmt->execute([$userId, $eventId, $total, $qrToken, $transactionId, $paymentStatus, $base, $gst, $total]);
+            $stmt->execute([
+                $userId,
+                $eventId,
+                $teamName,
+                is_array($teamMembers) ? json_encode($teamMembers) : $teamMembers,
+                $total,
+                $qrToken,
+                $transactionId,
+                $paymentStatus,
+                $base,
+                $gst,
+                $total
+            ]);
 
             // Decrease Capacity
             $this->pdo->prepare("UPDATE events SET capacity = capacity - 1 WHERE id = ?")->execute([$eventId]);
@@ -97,7 +109,7 @@ class Registration
 
     public function getUserRegistrations($userId)
     {
-        $sql = "SELECT r.*, e.name as event_name, e.event_date, e.venue 
+        $sql = "SELECT r.*, e.name as event_name, e.event_date, e.venue, e.is_group_event 
                 FROM registrations r 
                 JOIN events e ON r.event_id = e.id 
                 WHERE r.user_id = ? 

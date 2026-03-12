@@ -126,6 +126,49 @@ function createProgram($pdo, $userId)
 {
     $data = json_decode(file_get_contents('php://input'), true);
 
+    // === SERVER-SIDE VALIDATION ===
+    if (empty($data['program_name']) || strlen(trim($data['program_name'])) < 2) {
+        echo json_encode(['success' => false, 'error' => 'Program name must be at least 2 characters.']);
+        return;
+    }
+
+    $today = date('Y-m-d');
+    $startDate = $data['start_date'] ?? '';
+    $endDate = $data['end_date'] ?? '';
+
+    if (empty($startDate)) {
+        echo json_encode(['success' => false, 'error' => 'Start date is required.']);
+        return;
+    }
+    if ($startDate < $today) {
+        echo json_encode(['success' => false, 'error' => 'Program start date cannot be in the past.']);
+        return;
+    }
+    if (empty($endDate)) {
+        echo json_encode(['success' => false, 'error' => 'End date is required.']);
+        return;
+    }
+    if ($endDate < $startDate) {
+        echo json_encode(['success' => false, 'error' => 'End date must be on or after the start date.']);
+        return;
+    }
+
+    $maxPart = isset($data['max_participants']) ? intval($data['max_participants']) : 0;
+    if ($maxPart < 1) {
+        echo json_encode(['success' => false, 'error' => 'Maximum participants must be at least 1.']);
+        return;
+    }
+
+    if (!empty($data['is_paid']) && $data['is_paid'] == 1) {
+        $fee = floatval($data['registration_fee'] ?? 0);
+        if ($fee <= 0) {
+            echo json_encode(['success' => false, 'error' => 'Registration fee must be greater than ₹0 for a paid program.']);
+            return;
+        }
+
+    }
+    // === END VALIDATION ===
+
     $stmt = $pdo->prepare("
         INSERT INTO external_programs 
         (program_name, program_description, registration_form_fields, is_active, 
@@ -172,6 +215,36 @@ function createProgram($pdo, $userId)
 function updateProgram($pdo, $id, $userId)
 {
     $data = json_decode(file_get_contents('php://input'), true);
+
+    // === SERVER-SIDE VALIDATION ===
+    if (empty($data['program_name']) || strlen(trim($data['program_name'])) < 2) {
+        echo json_encode(['success' => false, 'error' => 'Program name must be at least 2 characters.']);
+        return;
+    }
+
+    $startDate = $data['start_date'] ?? '';
+    $endDate = $data['end_date'] ?? '';
+
+    if (!empty($endDate) && !empty($startDate) && $endDate < $startDate) {
+        echo json_encode(['success' => false, 'error' => 'End date must be on or after the start date.']);
+        return;
+    }
+
+    $maxPart = isset($data['max_participants']) ? intval($data['max_participants']) : 0;
+    if ($maxPart < 1) {
+        echo json_encode(['success' => false, 'error' => 'Maximum participants must be at least 1.']);
+        return;
+    }
+
+    if (!empty($data['is_paid']) && $data['is_paid'] == 1) {
+        $fee = floatval($data['registration_fee'] ?? 0);
+        if ($fee <= 0) {
+            echo json_encode(['success' => false, 'error' => 'Registration fee must be greater than ₹0 for a paid program.']);
+            return;
+        }
+
+    }
+    // === END VALIDATION ===
 
     $stmt = $pdo->prepare("
         UPDATE external_programs 

@@ -1,5 +1,6 @@
 <?php
 require_once '../config/db_connect.php';
+require_once '../config/razorpay_config.php';
 
 if (session_status() === PHP_SESSION_NONE) {
     session_set_cookie_params(0, '/Project/EntryX');
@@ -22,8 +23,8 @@ if (!$targetId) {
 }
 
 try {
-    // 1. Get Payment Settings
-    $stmt = $pdo->prepare("SELECT api_key, api_secret, is_active FROM payment_settings WHERE gateway_name = 'razorpay'");
+    // 1. Check if gateway is enabled (credentials come from .env)
+    $stmt = $pdo->prepare("SELECT is_active FROM payment_settings WHERE gateway_name = 'razorpay'");
     $stmt->execute();
     $gateway = $stmt->fetch();
 
@@ -31,6 +32,9 @@ try {
         echo json_encode(['success' => false, 'error' => 'Payment gateway is not enabled by administrator']);
         exit;
     }
+
+    $apiKey = RAZORPAY_KEY_ID;
+    $apiSecret = RAZORPAY_KEY_SECRET;
 
     // 2. Fetch Item Details & Calculate Amount
     $amount = 0;
@@ -88,7 +92,7 @@ try {
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_USERPWD, $gateway['api_key'] . ":" . $gateway['api_secret']);
+    curl_setopt($ch, CURLOPT_USERPWD, $apiKey . ":" . $apiSecret);
     curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($postData));
     curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
@@ -130,7 +134,7 @@ try {
         'success' => true,
         'order_id' => $order['id'],
         'amount' => $rpAmount,
-        'key' => $gateway['api_key'],
+        'key' => $apiKey,
         'item_name' => $itemName,
         'user_name' => $_SESSION['name'] ?? 'Guest User',
         'user_email' => $_SESSION['email'] ?? '',

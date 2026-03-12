@@ -23,26 +23,30 @@ $error = null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $eventId = $_POST['event_id'];
-    $winner = trim(htmlspecialchars($_POST['winner']));
-    $runnerUp = trim(htmlspecialchars($_POST['runner_up']));
-    $consolation = trim(htmlspecialchars($_POST['consolation']));
-    $desc = trim(htmlspecialchars($_POST['description']));
+    $winner = trim(htmlspecialchars($_POST['winner'] ?? ''));
+    $runnerUp = trim(htmlspecialchars($_POST['runner_up'] ?? '')) ?: null;
+    $consolation = trim(htmlspecialchars($_POST['consolation'] ?? '')) ?: null;
+    $desc = trim(htmlspecialchars($_POST['description'] ?? ''));
 
-    // Check if results already published for this event
-    $checkStmt = $pdo->prepare("SELECT id FROM results WHERE event_id = ?");
-    $checkStmt->execute([$eventId]);
-
-    if ($checkStmt->fetch()) {
-        $error = "Results for this node have already been finalized and broadcasted.";
+    if (!$winner) {
+        $error = "Please select a Winner.";
     } else {
-        $sql = "INSERT INTO results (event_id, winner_name, runner_up_name, consolation_prize, description, published_by) 
-                VALUES (?, ?, ?, ?, ?, ?)";
-        $stmt = $pdo->prepare($sql);
-        try {
-            $stmt->execute([$eventId, $winner, $runnerUp, $consolation, $desc, $_SESSION['user_id']]);
-            $message = "Operational Victory! Results have been broadcasted to all terminals.";
-        } catch (PDOException $e) {
-            $error = "System Failure: " . $e->getMessage();
+        // Check if results already published for this event
+        $checkStmt = $pdo->prepare("SELECT id FROM results WHERE event_id = ?");
+        $checkStmt->execute([$eventId]);
+
+        if ($checkStmt->fetch()) {
+            $error = "Results for this event have already been published.";
+        } else {
+            $sql = "INSERT INTO results (event_id, winner_name, runner_up_name, consolation_prize, description, published_by) 
+                    VALUES (?, ?, ?, ?, ?, ?)";
+            $stmt = $pdo->prepare($sql);
+            try {
+                $stmt->execute([$eventId, $winner, $runnerUp, $consolation, $desc, $_SESSION['user_id']]);
+                $message = "Results have been published successfully!";
+            } catch (PDOException $e) {
+                $error = "Error: " . $e->getMessage();
+            }
         }
     }
 }
@@ -200,24 +204,23 @@ require_once '../includes/header.php';
 
     <a href="admin_dashboard.php" class="back-nav reveal">
         <i class="fa-solid fa-arrow-left"></i>
-        Return to Terminal Alpha
+        Back to Dashboard
     </a>
 
     <div class="result-card-premium reveal">
         <div class="hero-text">
             <h4
                 style="color: var(--p-brand); text-transform: uppercase; letter-spacing: 0.2em; font-size: 0.75rem; margin-bottom: 0.8rem; font-weight: 800;">
-                Recognition Protocol</h4>
-            <h1>Finalize <span style="color: var(--p-brand);">Victory</span></h1>
-            <p style="color: var(--p-text-dim); font-size: 1.2rem;">Record and broadcast official event outcomes to the
-                entire campus network.</p>
+                Publish Results</h4>
+            <h1>Select <span style="color: var(--p-brand);">Winners</span></h1>
+            <p style="color: var(--p-text-dim); font-size: 1.2rem;">Enter winners for the selected event.</p>
         </div>
 
         <form method="POST" class="form-section">
             <div style="margin-bottom: 2.5rem;">
-                <label>Operational Node (Event)</label>
-                <select name="event_id" required>
-                    <option value="" disabled selected>Select a target node...</option>
+                <label>Select Event</label>
+                <select name="event_id" id="eventSelect" required onchange="fetchCandidates(this.value)">
+                    <option value="" disabled selected>Select an event...</option>
                     <?php foreach ($events as $event): ?>
                         <option value="<?php echo $event['id']; ?>">
                             <?php echo htmlspecialchars($event['name']); ?> —
@@ -229,30 +232,66 @@ require_once '../includes/header.php';
 
             <div class="input-grid">
                 <div>
-                    <label>🥇 Primary Victor (Winner)</label>
-                    <input type="text" name="winner" required placeholder="Name or Team Handle">
+                    <label>🥇 Winner</label>
+                    <select name="winner" id="winnerSelect" required>
+                        <option value="" disabled selected>Select winner...</option>
+                    </select>
                 </div>
                 <div>
-                    <label>🥈 Second Tier (Runner Up)</label>
-                    <input type="text" name="runner_up" required placeholder="Name or Team Handle">
+                    <label>🥈 Runner Up <span
+                            style="color: var(--p-text-muted); font-weight: 400; font-size: 0.75rem;">(Optional)</span></label>
+                    <select name="runner_up" id="runnerUpSelect">
+                        <option value="">-- Skip Runner Up --</option>
+                    </select>
                 </div>
             </div>
 
             <div style="margin-bottom: 2.5rem;">
-                <label>🥉 Special Recognition (Consolation)</label>
-                <input type="text" name="consolation" placeholder="Optional handle...">
+                <label>🥉 Consolation <span
+                        style="color: var(--p-text-muted); font-weight: 400; font-size: 0.75rem;">(Optional)</span></label>
+                <select name="consolation" id="consolationSelect">
+                    <option value="">-- No Consolation --</option>
+                </select>
             </div>
 
             <div style="margin-bottom: 1rem;">
-                <label>Victory Transcript (Description)</label>
-                <textarea name="description" rows="4" placeholder="Official announcement text..."></textarea>
+                <label>Description</label>
+                <textarea name="description" rows="4" placeholder="Brief announcement..."></textarea>
             </div>
 
             <button type="submit" class="btn-publish">
                 <i class="fa-solid fa-bullhorn"></i>
-                Broadcast Recognition
+                Publish Result
             </button>
         </form>
+    </div>
+
+    <!-- History Section -->
+    <div class="result-card-premium reveal" style="margin-top: 3rem; animation-delay: 0.2s;">
+        <div class="hero-text" style="margin-bottom: 2rem;">
+            <h4
+                style="color: var(--p-brand); text-transform: uppercase; letter-spacing: 0.2em; font-size: 0.75rem; margin-bottom: 0.8rem; font-weight: 800;">
+                Broadcast History</h4>
+            <h2 style="color: white; font-size: 2rem;">Published <span style="color: var(--p-brand);">Records</span>
+            </h2>
+        </div>
+
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: separate; border-spacing: 0 1rem;">
+                <thead>
+                    <tr
+                        style="text-align: left; color: var(--p-text-muted); font-size: 0.8rem; text-transform: uppercase;">
+                        <th>Event</th>
+                        <th>Winner</th>
+                        <th>Published Date</th>
+                        <th style="text-align: right;">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="resultsTableBody">
+                    <!-- Loaded via JS -->
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 
@@ -281,6 +320,115 @@ require_once '../includes/header.php';
             confirmButtonColor: '#ff1f1f'
         });
     <?php endif; ?>
+
+    // Load History
+    async function loadHistory() {
+        try {
+            const res = await fetch('../api/results.php?action=list');
+            const data = await res.json();
+            const tbody = document.getElementById('resultsTableBody');
+
+            if (data.results && data.results.length > 0) {
+                tbody.innerHTML = data.results.map(r => `
+                    <tr style="background: rgba(255,255,255,0.02);">
+                        <td style="padding: 1.2rem; border-radius: 12px 0 0 12px; color: white; font-weight: 600;">
+                            ${r.event_title}
+                        </td>
+                        <td style="padding: 1.2rem; color: #eab308;">
+                            <i class="fa-solid fa-crown"></i> ${r.winner_name}
+                        </td>
+                        <td style="padding: 1.2rem; color: var(--p-text-dim); font-size: 0.9rem;">
+                            ${new Date(r.published_at).toLocaleDateString()}
+                        </td>
+                        <td style="padding: 1.2rem; text-align: right; border-radius: 0 12px 12px 0;">
+                            <button onclick="deleteResult(${r.id})" 
+                                style="background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer;">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            } else {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 2rem; color: var(--p-text-muted);">No published results found.</td></tr>';
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    async function deleteResult(id) {
+        const confirm = await Swal.fire({
+            title: 'Revoke Victory?',
+            text: "This will remove the result from the public Hall of Fame.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            background: '#0a0a0a',
+            color: '#fff',
+            confirmButtonText: 'Yes, Revoke'
+        });
+
+        if (confirm.isConfirmed) {
+            try {
+                const res = await fetch(`../api/results.php?action=delete&id=${id}`);
+                const data = await res.json();
+                if (data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Revoked',
+                        background: '#0a0a0a',
+                        color: '#fff'
+                    });
+                    loadHistory();
+                } else {
+                    throw new Error(data.error);
+                }
+            } catch (e) {
+                Swal.fire('Error', e.message, 'error');
+            }
+        }
+    }
+
+    async function fetchCandidates(eventId) {
+        if (!eventId) return;
+
+        const winnerSelect = document.getElementById('winnerSelect');
+        const runnerUpSelect = document.getElementById('runnerUpSelect');
+        const consolationSelect = document.getElementById('consolationSelect');
+
+        const loadingOption = '<option value="" disabled selected>Loading candidates...</option>';
+        winnerSelect.innerHTML = loadingOption;
+        runnerUpSelect.innerHTML = loadingOption;
+        consolationSelect.innerHTML = loadingOption;
+
+        try {
+            const res = await fetch(`../api/results.php?action=get_candidates&event_id=${eventId}`);
+            const data = await res.json();
+
+            if (data.success && data.candidates) {
+                const options = data.candidates.map(c => `<option value="${c.name}">${c.name} (${c.email})</option>`).join('');
+
+                const winnerDefault = '<option value="" disabled selected>Select winner...</option>';
+                const skipDefault = '<option value="">-- Skip / None --</option>';
+
+                winnerSelect.innerHTML = winnerDefault + options;
+                runnerUpSelect.innerHTML = skipDefault + options;
+                consolationSelect.innerHTML = skipDefault + options;
+            } else {
+                const noneOption = '<option value="" disabled selected>No candidates found</option>';
+                const skipDefault = '<option value="">-- No Candidates --</option>';
+                winnerSelect.innerHTML = noneOption;
+                runnerUpSelect.innerHTML = skipDefault;
+                consolationSelect.innerHTML = skipDefault;
+            }
+        } catch (e) {
+            console.error('Error fetching candidates:', e);
+            winnerSelect.innerHTML = '<option value="" disabled selected>Error loading candidates</option>';
+            runnerUpSelect.innerHTML = '<option value="" disabled selected>Error loading candidates</option>';
+        }
+    }
+
+    loadHistory();
 
     // Professional Logout logic (keeping consistency)
     async function confirmLogout() {
