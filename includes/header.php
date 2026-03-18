@@ -14,6 +14,8 @@ header("Pragma: no-cache");
     <title>ENTRY X | Premium Event Management</title>
     <!-- Custom CSS -->
     <link rel="stylesheet" href="/Project/EntryX/assets/css/style.css">
+    <!-- Responsive CSS -->
+    <link rel="stylesheet" href="/Project/EntryX/assets/css/responsive.css">
     <!-- FontAwesome 6 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- SweetAlert2 -->
@@ -156,8 +158,37 @@ header("Pragma: no-cache");
                         <?php endif; ?>
 
                     </div>
+
+                    <!-- HAMBURGER (mobile only, shown via CSS) -->
+                    <button class="nav-hamburger" id="navHamburger" aria-label="Menu" aria-expanded="false">
+                        <span></span><span></span><span></span>
+                    </button>
             </div>
         </nav>
+
+        <!-- MOBILE DRAWER -->
+        <div class="nav-mobile-drawer" id="navMobileDrawer">
+            <?php if ($isAdmin): ?>
+                <a href="<?php echo $dashboardUrl; ?>"><i class="fa-solid fa-gauge-high" style="margin-right:0.5rem;"></i>Dashboard</a>
+                <a href="/Project/EntryX/pages/results.php"><i class="fa-solid fa-trophy" style="margin-right:0.5rem;"></i>Results</a>
+            <?php elseif ($isSecurity): ?>
+                <a href="<?php echo $dashboardUrl; ?>"><i class="fa-solid fa-camera" style="margin-right:0.5rem;"></i>Security Terminal</a>
+            <?php elseif ($isStaff): ?>
+                <a href="<?php echo $dashboardUrl; ?>"><i class="fa-solid fa-id-badge" style="margin-right:0.5rem;"></i>Staff Panel</a>
+            <?php elseif ($isStudent): ?>
+                <a href="<?php echo $dashboardUrl; ?>"><i class="fa-solid fa-gauge-high" style="margin-right:0.5rem;"></i>Dashboard</a>
+                <a href="/Project/EntryX/pages/results.php"><i class="fa-solid fa-trophy" style="margin-right:0.5rem;"></i>Results</a>
+            <?php else: ?>
+                <a href="/Project/EntryX/index.php"><i class="fa-solid fa-house" style="margin-right:0.5rem;"></i>Home</a>
+                <a href="/Project/EntryX/pages/results.php"><i class="fa-solid fa-trophy" style="margin-right:0.5rem;"></i>Results</a>
+                <a href="/Project/EntryX/pages/user_login.php"><i class="fa-solid fa-right-to-bracket" style="margin-right:0.5rem;"></i>Login</a>
+            <?php endif; ?>
+            <?php if ($isLoggedIn): ?>
+                <button class="mobile-logout-btn" onclick="confirmNavLogout()">
+                    <i class="fa-solid fa-power-off" style="margin-right:0.5rem;"></i>Logout
+                </button>
+            <?php endif; ?>
+        </div>
 
         <script>
             // Logout confirmation from nav
@@ -198,6 +229,34 @@ header("Pragma: no-cache");
             });
         </script>
     <?php endif; ?>
+
+    <script>
+        // Hamburger toggle
+        const _hamburger = document.getElementById('navHamburger');
+        const _drawer = document.getElementById('navMobileDrawer');
+        if (_hamburger && _drawer) {
+            _hamburger.addEventListener('click', function () {
+                const isOpen = _drawer.classList.toggle('open');
+                _hamburger.classList.toggle('open', isOpen);
+                _hamburger.setAttribute('aria-expanded', isOpen);
+            });
+            // Close drawer on outside click
+            document.addEventListener('click', function(e) {
+                if (!_hamburger.contains(e.target) && !_drawer.contains(e.target)) {
+                    _drawer.classList.remove('open');
+                    _hamburger.classList.remove('open');
+                    _hamburger.setAttribute('aria-expanded', 'false');
+                }
+            });
+            // Close on drawer link click
+            _drawer.querySelectorAll('a').forEach(function(link) {
+                link.addEventListener('click', function() {
+                    _drawer.classList.remove('open');
+                    _hamburger.classList.remove('open');
+                });
+            });
+        }
+    </script>
 
 
     <style>

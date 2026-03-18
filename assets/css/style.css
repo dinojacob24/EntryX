@@ -254,9 +254,12 @@ label {
     background: var(--p-brand);
 }
 
-/* Mobile Adjustments */
+/* Mobile Adjustments — extended in responsive.css */
 @media (max-width: 768px) {
-    .container {
-        padding: 0 1.5rem;
-    }
+    .container { padding: 0 1rem; }
+    h1 { font-size: clamp(1.8rem, 6vw, 3rem); }
+    h2 { font-size: clamp(1.4rem, 5vw, 2rem); }
+}
+@media (max-width: 480px) {
+    .container { padding: 0 0.85rem; }
 }

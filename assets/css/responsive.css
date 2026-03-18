@@ -1,0 +1,360 @@
+/* ============================================================
+   ENTRYX — COMPREHENSIVE RESPONSIVE STYLESHEET
+   Breakpoints:
+     xs: < 480px  (phones portrait)
+     sm: < 640px  (phones landscape / small phones)
+     md: < 768px  (tablets portrait)
+     lg: < 1024px (tablets landscape / small laptops)
+   ============================================================ */
+
+/* ─── HAMBURGER MENU ─────────────────────────────────────── */
+.nav-hamburger {
+    display: none;
+    flex-direction: column;
+    gap: 5px;
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 8px;
+    transition: background 0.2s;
+}
+.nav-hamburger:hover { background: rgba(255,255,255,0.05); }
+.nav-hamburger span {
+    display: block;
+    width: 24px;
+    height: 2px;
+    background: #94a3b8;
+    border-radius: 2px;
+    transition: all 0.35s cubic-bezier(0.16,1,0.3,1);
+}
+.nav-hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); background: white; }
+.nav-hamburger.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+.nav-hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); background: white; }
+
+/* Mobile slide-down nav drawer */
+.nav-mobile-drawer {
+    display: none;
+    flex-direction: column;
+    gap: 0;
+    background: rgba(5,5,5,0.98);
+    backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(255,255,255,0.06);
+    position: absolute;
+    top: 100%;
+    left: 0; right: 0;
+    padding: 1rem 1.5rem 1.5rem;
+    z-index: 999;
+    animation: slideDown 0.3s cubic-bezier(0.16,1,0.3,1);
+}
+.nav-mobile-drawer.open { display: flex; }
+.nav-mobile-drawer a {
+    padding: 0.85rem 0;
+    color: #94a3b8;
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-decoration: none;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    transition: color 0.2s;
+}
+.nav-mobile-drawer a:last-child { border-bottom: none; }
+.nav-mobile-drawer a:hover { color: white; }
+.nav-mobile-drawer .mobile-logout-btn {
+    margin-top: 1rem;
+    padding: 0.75rem;
+    background: rgba(255,31,31,0.08);
+    border: 1px solid rgba(255,31,31,0.2);
+    border-radius: 12px;
+    color: #ef4444;
+    font-weight: 700;
+    cursor: pointer;
+    text-align: center;
+    font-size: 0.9rem;
+    font-family: inherit;
+    transition: background 0.2s;
+    width: 100%;
+}
+.nav-mobile-drawer .mobile-logout-btn:hover { background: rgba(255,31,31,0.15); }
+
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── LARGE DESKTOP (≤ 1024px) ──────────────────────────── */
+@media (max-width: 1024px) {
+    .container { padding: 0 1.5rem; }
+
+    /* Admin dashboard grid */
+    .admin-stats-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+
+    /* Dashboard 3-col → 2-col */
+    [style*="grid-template-columns: repeat(3,"] {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+}
+
+/* ─── TABLET PORTRAIT (≤ 768px) ─────────────────────────── */
+@media (max-width: 768px) {
+    /* --- NAV --- */
+    .nav-links-main,
+    .user-meta-hide {
+        display: none !important;
+    }
+    .nav-hamburger {
+        display: flex;
+    }
+    /* Make nav position relative so drawer drops below it */
+    .nav-standard {
+        position: sticky;
+        top: 0;
+    }
+    .nav-standard .container {
+        position: relative;
+    }
+
+    /* --- CONTAINER --- */
+    .container { padding: 0 1rem; }
+
+    /* --- HERO (index.php) --- */
+    section[style*="min-height: 85vh"] {
+        padding: 2rem 0 !important;
+        min-height: auto !important;
+    }
+    section[style*="min-height: 85vh"] h1 {
+        font-size: clamp(2rem, 8vw, 3.5rem) !important;
+    }
+    section[style*="min-height: 85vh"] p {
+        font-size: 1rem !important;
+        margin-bottom: 2.5rem !important;
+    }
+    /* Hero buttons stack */
+    section[style*="min-height: 85vh"] [style*="display: flex; gap: 1.5rem"] {
+        flex-direction: column !important;
+        align-items: center !important;
+        gap: 1rem !important;
+    }
+    section[style*="min-height: 85vh"] [style*="display: flex; gap: 1.5rem"] a,
+    section[style*="min-height: 85vh"] [style*="display: flex; gap: 1rem"] a,
+    section[style*="min-height: 85vh"] [style*="display: flex; gap: 1rem"] .btn {
+        width: 100%;
+        max-width: 340px;
+        justify-content: center;
+    }
+
+    /* --- GLASS PANEL --- */
+    .glass-panel {
+        border-radius: 20px !important;
+    }
+
+    /* --- REGISTER PAGE --- */
+    .glass-panel[style*="max-width: 800px"] {
+        padding: 2rem 1.5rem !important;
+    }
+    /* All 2-col grids → 1-col */
+    [style*="grid-template-columns: 1fr 1fr"],
+    [style*="grid-template-columns: 1fr 1fr; gap"],
+    .input-grid {
+        grid-template-columns: 1fr !important;
+        gap: 1.2rem !important;
+    }
+
+    /* --- PUBLISH RESULTS --- */
+    .publish-container {
+        padding: 2rem 0 !important;
+    }
+    .result-card-premium {
+        padding: 2rem 1.5rem !important;
+        border-radius: 20px !important;
+    }
+    .hero-text h1 {
+        font-size: 2rem !important;
+    }
+
+    /* --- FORMS GENERAL --- */
+    form[style*="padding: 2.5rem"],
+    .form-section {
+        padding: 1.5rem !important;
+    }
+
+    /* --- TABLES: Make them scrollable --- */
+    table {
+        display: block !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
+        white-space: nowrap;
+    }
+    /* Keep table cells from being too narrow */
+    th, td {
+        min-width: 100px;
+    }
+
+    /* --- DASHBOARD STATS GRID → single column --- */
+    [style*="grid-template-columns: repeat(4"],
+    [style*="grid-template-columns: repeat(3"],
+    [style*="grid-template-columns: repeat(2"] {
+        grid-template-columns: 1fr 1fr !important;
+    }
+
+    /* --- MODALS: full width on mobile --- */
+    [style*="max-width: 650px"],
+    [style*="max-width: 700px"],
+    [style*="max-width: 720px"],
+    [style*="max-width: 750px"],
+    [style*="max-width: 800px"] {
+        max-width: 100% !important;
+        width: 100% !important;
+        margin: 0 !important;
+        border-radius: 0 !important;
+    }
+    /* Modal scrollable */
+    [style*="overflow-y: auto"] {
+        max-height: 90vh !important;
+    }
+
+    /* --- ADMIN DASHBOARD SIDEBAR/NAV TABS --- */
+    .admin-tab-bar {
+        flex-wrap: wrap !important;
+        gap: 0.5rem !important;
+    }
+
+    /* --- BUTTON ROWS: stack them --- */
+    [style*="display: flex; gap: 2rem"] > button,
+    [style*="display: flex; gap: 2rem"] > a {
+        flex: 1 1 100% !important;
+    }
+
+    /* --- PAYMENT SECTION --- */
+    #paymentSection {
+        padding: 1.5rem !important;
+    }
+
+    /* --- STUDENT/EXTERNAL DASHBOARD --- */
+    .dashboard-grid-2,
+    [style*="display: grid; grid-template-columns: 1fr 1fr"] {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+/* ─── PHONE PORTRAIT (≤ 480px) ──────────────────────────── */
+@media (max-width: 480px) {
+    .container { padding: 0 0.85rem; }
+
+    /* Nav logo text shrink */
+    .nav-standard span[style*="1.4rem"] {
+        font-size: 1.1rem !important;
+    }
+    .nav-standard div[style*="42px"] {
+        width: 36px !important;
+        height: 36px !important;
+    }
+
+    /* Page section padding reduction */
+    section { padding: 1.5rem 0 !important; }
+
+    /* Glass panels extra-compact */
+    .glass-panel[style*="padding: 3rem"] {
+        padding: 1.5rem !important;
+    }
+    .glass-panel[style*="padding: 4rem"] {
+        padding: 1.5rem !important;
+    }
+    .result-card-premium {
+        padding: 1.5rem 1rem !important;
+    }
+
+    /* Hero title smaller */
+    h1[style*="font-size: clamp"] {
+        font-size: clamp(1.8rem, 8vw, 2.5rem) !important;
+        line-height: 1.1 !important;
+    }
+
+    /* All stats in 1 column */
+    [style*="grid-template-columns: repeat"] {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* Buttons full width */
+    .btn {
+        width: 100%;
+        justify-content: center;
+    }
+    /* Override inline btn widths that should fill */
+    [style*="flex: 1"] > .btn,
+    [style*="flex: 2"] > .btn {
+        width: 100% !important;
+    }
+
+    /* Table action column buttons wrap */
+    td [style*="display: flex; gap"] {
+        flex-wrap: wrap !important;
+        gap: 0.4rem !important;
+    }
+
+    /* Login & register cards */
+    [style*="max-width: 480px"],
+    [style*="max-width: 500px"] {
+        padding: 1.5rem 1rem !important;
+    }
+
+    /* Admin dashboard tab strip scrollable */
+    [style*="border-bottom: 1px solid"] {
+        overflow-x: auto;
+    }
+
+    /* Status badges smaller */
+    .status-badge {
+        font-size: 0.65rem !important;
+        padding: 0.3rem 0.7rem !important;
+    }
+
+    /* Form inputs comfortable on small screens */
+    input, select, textarea {
+        font-size: 0.95rem !important;
+        padding: 0.9rem 1rem !important;
+    }
+
+    /* Icon + text flex items wrap */
+    [style*="display: flex; align-items: center; gap: 1rem"] {
+        flex-wrap: wrap;
+    }
+
+    /* Scanner page full screen */
+    .scanner-container {
+        padding: 1rem !important;
+    }
+
+    /* Security dashboard stat boxes */
+    .security-stat-grid {
+        grid-template-columns: 1fr 1fr !important;
+    }
+
+    /* Hide decorative absolute glow blobs on very small screens */
+    [style*="position: absolute"][style*="filter: blur"][style*="500px"],
+    [style*="position: absolute"][style*="filter: blur"][style*="600px"] {
+        display: none !important;
+    }
+}
+
+/* ─── TOUCH IMPROVEMENTS ─────────────────────────────────── */
+@media (pointer: coarse) {
+    /* Bigger tap targets */
+    .btn { min-height: 44px; }
+    input, select, textarea { min-height: 44px; }
+    .nav-link-premium { padding: 0.5rem 0; }
+    .user-avatar-nav { width: 44px !important; height: 44px !important; }
+
+    /* Remove hover transforms on touch (they stick) */
+    .glass-panel:hover { transform: none !important; }
+    .btn-primary:hover { transform: none !important; }
+    .btn-outline:hover { transform: none !important; }
+}
+
+/* ─── UTILITY: responsive text ───────────────────────────── */
+@media (max-width: 768px) {
+    .hide-mobile { display: none !important; }
+    .show-mobile { display: block !important; }
+}
+@media (min-width: 769px) {
+    .hide-desktop { display: none !important; }
+}
