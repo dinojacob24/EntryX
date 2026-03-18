@@ -79,8 +79,10 @@ class Registration
         }
 
         // 7. Insert Registration
-        $sql = "INSERT INTO registrations (user_id, event_id, team_name, team_members, amount_paid, qr_token, transaction_id, payment_status, base_amount, gst_amount, total_amount) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        // Store QR token in BOTH qr_token AND qr_code columns for backward compatibility
+        // The attendance scanner checks both columns to support old and new records
+        $sql = "INSERT INTO registrations (user_id, event_id, team_name, team_members, amount_paid, qr_token, qr_code, transaction_id, payment_status, base_amount, gst_amount, total_amount) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try {
             $stmt = $this->pdo->prepare($sql);
@@ -90,7 +92,8 @@ class Registration
                 $teamName,
                 is_array($teamMembers) ? json_encode($teamMembers) : $teamMembers,
                 $total,
-                $qrToken,
+                $qrToken,   // qr_token column
+                $qrToken,   // qr_code column (same value, for backward compatibility)
                 $transactionId,
                 $paymentStatus,
                 $base,

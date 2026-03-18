@@ -29,12 +29,37 @@ $stmt->execute([$userId]);
 $primaryPass = $stmt->fetch(PDO::FETCH_ASSOC);
 
 $allEvents = $eventObj->getAllEvents();
-$myRegs = $regObj->getUserRegistrations($userId);
+$fullRegList = $regObj->getUserRegistrations($userId);
+
+// Filter out internal "General Admission" or "Campus Admission" registrations from the UI
+$myRegs = array_filter($fullRegList, function($r) {
+    if (stripos($r['event_name'], 'General Admission') !== false) return false;
+    if (stripos($r['event_name'], 'Campus Admission') !== false) return false;
+    if (stripos($r['event_name'], 'General Campus') !== false) return false;
+    return true;
+});
 
 // Filter available events
-$registeredEventIds = array_column($myRegs, 'event_id');
+$registeredEventIds = array_column($fullRegList, 'event_id');
 $availableEvents = array_filter($allEvents, function ($e) use ($registeredEventIds) {
-    return !in_array($e['id'], $registeredEventIds);
+    // Hide if already registered
+    if (in_array($e['id'], $registeredEventIds)) return false;
+    
+    // Hide 'internal' only events
+    if (isset($e['type']) && $e['type'] === 'internal') return false;
+    
+    // Hide automatic admission events from the public ticket list
+    if (stripos($e['name'], 'General Admission') !== false) return false;
+    if (stripos($e['name'], 'Campus Admission') !== false) return false;
+    if (stripos($e['name'], 'General Campus') !== false) return false;
+    
+    // Hide cancelled or completed events
+    if (isset($e['status']) && in_array($e['status'], ['cancelled', 'completed'])) return false;
+    
+    // Hide past events
+    if (isset($e['event_date']) && strtotime($e['event_date']) < strtotime('today')) return false;
+
+    return true;
 });
 
 // Calculate stats
@@ -291,7 +316,7 @@ $upcomingEventsCount = count($availableEvents);
             <div id="modalQr"
                 style="display: inline-block; padding: 1.5rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 20px; margin-bottom: 2rem;">
             </div>
-            <div style="margin-bottom: 2.5rem;">
+            <div style="margin-bottom: 1.5rem;">
                 <h4 style="color: #0f172a; font-weight: 800; font-size: 1.4rem; margin-bottom: 0.5rem;">
                     <?php echo htmlspecialchars($userName); ?>
                 </h4>
@@ -300,6 +325,13 @@ $upcomingEventsCount = count($availableEvents);
                     <span id="modalDate"></span>
                     <span id="modalVenue"></span>
                 </div>
+            </div>
+            <!-- One-time use notice -->
+            <div style="background: #f0fdf4; border: 1px solid #86efac; border-radius: 12px; padding: 0.9rem 1rem; margin-bottom: 1.5rem; text-align: left;">
+                <p style="color: #14532d; font-size: 0.8rem; margin: 0; font-weight: 700; display: flex; align-items: flex-start; gap: 0.5rem;">
+                    <i class="fa-solid fa-shield-check" style="color: #16a34a; margin-top: 2px; flex-shrink:0;"></i>
+                    <span>This QR code grants <strong>1 entry</strong> and <strong>1 exit</strong> for this event. After both are recorded, the QR is permanently locked.</span>
+                </p>
             </div>
             <div style="display: flex; gap: 1rem;">
                 <button class="btn btn-outline"

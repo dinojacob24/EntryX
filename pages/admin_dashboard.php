@@ -20,21 +20,27 @@ $userName = $_SESSION['name'];
 $userRole = $_SESSION['role'];
 
 $eventObj = new Event($pdo);
-$events = $eventObj->getAllEvents(true);
+$allEvents = $eventObj->getAllEvents(true);
+// Filter out system-generated campus admission events from admin view
+$events = array_filter($allEvents, function($evt) {
+    $name = strtolower($evt['name']);
+    return strpos($name, 'general campus admission') === false
+        && strpos($name, 'campus admission') === false
+        && strpos($name, 'general admission') === false;
+});
 
 // Fetch Sub-Admins for Management
-$stmtAdmins = $pdo->prepare("SELECT id, name, email, role, created_at FROM users WHERE role IN ('event_admin',
-'security') ORDER BY created_at DESC");
+$stmtAdmins = $pdo->prepare("SELECT id, name, email, role, created_at FROM users WHERE role IN ('event_admin', 'security') ORDER BY created_at DESC");
 $stmtAdmins->execute();
 $subAdmins = $stmtAdmins->fetchAll();
 
-// Fetch Dynamic Stats
+// Initial stats for page load (will be updated live via JS)
 $totalEvents = count($events);
-$stmtReg = $pdo->query("SELECT COUNT(*) FROM registrations");
+$stmtReg = $pdo->query("SELECT COUNT(*) FROM registrations r JOIN events e ON r.event_id = e.id WHERE e.name NOT LIKE '%General%Admission%' AND e.name NOT LIKE '%Campus Admission%'");
 $totalReg = $stmtReg->fetchColumn();
 $stmtExt = $pdo->query("SELECT COUNT(*) FROM users WHERE role = 'external'");
 $externalCount = $stmtExt->fetchColumn();
-$stmtInside = $pdo->query("SELECT COUNT(*) FROM attendance_logs WHERE exit_time IS NULL");
+$stmtInside = $pdo->query("SELECT COUNT(*) FROM attendance_logs WHERE status = 'inside'");
 $insideCount = $stmtInside->fetchColumn();
 ?>
 
@@ -116,6 +122,62 @@ $insideCount = $stmtInside->fetchColumn();
         grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
         gap: 2.5rem;
         margin-bottom: 5rem;
+    }
+
+    /* Live indicator for stat cards */
+    .live-pulse-dot {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        background: #10b981;
+        border-radius: 50%;
+        box-shadow: 0 0 8px #10b981;
+        animation: livePulse 1.5s ease-in-out infinite;
+        margin-left: 0.5rem;
+        vertical-align: middle;
+    }
+
+    @keyframes livePulse {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.4; transform: scale(0.8); }
+    }
+
+    .live-badge-strip {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: rgba(16, 185, 129, 0.08);
+        border: 1px solid rgba(16, 185, 129, 0.2);
+        border-radius: 999px;
+        padding: 0.3rem 0.9rem;
+        font-size: 0.7rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: #10b981;
+    }
+
+    .stat-update-flash {
+        animation: statFlash 0.4s ease-out;
+    }
+
+    @keyframes statFlash {
+        0% { color: #10b981; transform: scale(1.05); }
+        100% { color: white; transform: scale(1); }
+    }
+
+    /* campus admission notice banner */
+    .admission-system-note {
+        background: rgba(99, 102, 241, 0.06);
+        border: 1px solid rgba(99, 102, 241, 0.2);
+        border-radius: 14px;
+        padding: 1rem 1.5rem;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        font-size: 0.85rem;
+        color: #a5b4fc;
     }
 
     .stat-matrix-card {
@@ -277,44 +339,65 @@ $insideCount = $stmtInside->fetchColumn();
         </div>
     </div>
 
+    <!-- Live Stats Header Bar -->
+    <div style="display: flex; justify-content: flex-end; align-items: center; margin-bottom: 1.5rem;">
+        <div class="live-badge-strip" id="liveSyncBadge">
+            <span class="live-pulse-dot"></span>
+            <span>LIVE</span>
+            <span id="lastSyncTime" style="opacity: 0.7; font-weight: 600;">--:--:--</span>
+        </div>
+    </div>
+
     <!-- Stats Matrix -->
     <div class="stats-matrix">
         <div class="stat-matrix-card reveal">
             <div class="stat-icon-alpha" style="background: rgba(99, 102, 241, 0.1); color: #6366f1;">
                 <i class="fa-solid fa-calendar-nodes"></i>
             </div>
-            <h3
-                style="color: var(--p-text-muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem;">
-                Total Events</h3>
-            <p style="font-size: 3rem; font-weight: 900; color: white; line-height: 1;"><?php echo $totalEvents; ?></p>
+            <h3 style="color: var(--p-text-muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem;">Total Events</h3>
+            <p id="stat-events" style="font-size: 3rem; font-weight: 900; color: white; line-height: 1; transition: color 0.3s;"><?php echo $totalEvents; ?></p>
         </div>
         <div class="stat-matrix-card reveal" style="animation-delay: 0.1s;">
-            <div class="stat-icon-alpha" style="background: rgba(16, 185, 129, 0.1); color: #10b981;">
-                <i class="fa-solid fa-users-viewfinder"></i>
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+                <div class="stat-icon-alpha" style="background: rgba(16, 185, 129, 0.1); color: #10b981; margin-bottom: 0;">
+                    <i class="fa-solid fa-users-viewfinder"></i>
+                </div>
+                <span class="live-badge-strip" style="font-size: 0.6rem; padding: 0.2rem 0.6rem;">
+                    <span class="live-pulse-dot" style="width: 6px; height: 6px;"></span> LIVE
+                </span>
             </div>
-            <h3
-                style="color: var(--p-text-muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem;">
-                Outside Guests</h3>
-            <p style="font-size: 3rem; font-weight: 900; color: white; line-height: 1;"><?php echo $externalCount; ?>
-            </p>
+            <h3 style="color: var(--p-text-muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem;">Outside Guests Inside</h3>
+            <p id="stat-external" style="font-size: 3rem; font-weight: 900; color: white; line-height: 1; transition: color 0.3s;">0</p>
+            <div style="font-size: 0.75rem; color: #475569; margin-top: 0.4rem; font-weight: 600;">Currently on campus</div>
         </div>
         <div class="stat-matrix-card reveal" style="animation-delay: 0.2s;">
             <div class="stat-icon-alpha" style="background: rgba(234, 179, 8, 0.1); color: #eab308;">
                 <i class="fa-solid fa-ticket"></i>
             </div>
-            <h3
-                style="color: var(--p-text-muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem;">
-                Registrations</h3>
-            <p style="font-size: 3rem; font-weight: 900; color: white; line-height: 1;"><?php echo $totalReg; ?></p>
+            <h3 style="color: var(--p-text-muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem;">Registrations</h3>
+            <p id="stat-reg" style="font-size: 3rem; font-weight: 900; color: white; line-height: 1; transition: color 0.3s;"><?php echo $totalReg; ?></p>
         </div>
         <div class="stat-matrix-card reveal" style="animation-delay: 0.3s;">
-            <div class="stat-icon-alpha" style="background: rgba(239, 68, 68, 0.1); color: var(--p-brand);">
-                <i class="fa-solid fa-wifi fa-fade"></i>
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+                <div class="stat-icon-alpha" style="background: rgba(239, 68, 68, 0.1); color: var(--p-brand); margin-bottom: 0;">
+                    <i class="fa-solid fa-wifi fa-fade"></i>
+                </div>
+                <span class="live-badge-strip" style="font-size: 0.6rem; padding: 0.2rem 0.6rem;">
+                    <span class="live-pulse-dot" style="width: 6px; height: 6px;"></span> LIVE
+                </span>
             </div>
-            <h3
-                style="color: var(--p-text-muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem;">
-                People Inside</h3>
-            <p style="font-size: 3rem; font-weight: 900; color: white; line-height: 1;"><?php echo $insideCount; ?></p>
+            <h3 style="color: var(--p-text-muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem;">People Inside Campus</h3>
+            <p id="stat-inside" style="font-size: 3rem; font-weight: 900; color: white; line-height: 1; transition: color 0.3s;"><?php echo $insideCount; ?></p>
+            <div style="display: flex; gap: 0.8rem; margin-top: 0.8rem;">
+                <div style="flex: 1; background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.15); border-radius: 10px; padding: 0.5rem 0.8rem; text-align: center;">
+                    <div id="stat-internal" style="font-size: 1.2rem; font-weight: 900; color: #10b981;">0</div>
+                    <div style="font-size: 0.6rem; color: #475569; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;">Internal</div>
+                </div>
+                <div style="flex: 1; background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.15); border-radius: 10px; padding: 0.5rem 0.8rem; text-align: center;">
+                    <div id="stat-external-inside" style="font-size: 1.2rem; font-weight: 900; color: #f59e0b;">0</div>
+                    <div style="font-size: 0.6rem; color: #475569; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;">External</div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -963,21 +1046,8 @@ $insideCount = $stmtInside->fetchColumn();
                 </div>
             </div>
 
-            <div
-                style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 16px; padding: 1.5rem; margin-bottom: 2rem;">
-                <h4
-                    style="color: #10b981; margin-bottom: 1rem; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.1em;">
-                    <i class="fa-solid fa-info-circle"></i> Program Status
-                </h4>
-                <div style="display: flex; align-items: center; gap: 1rem;">
-                    <input type="checkbox" id="programIsActive" name="is_active"
-                        style="width: 24px; height: 24px; cursor: pointer;">
-                    <label for="programIsActive"
-                        style="margin: 0; cursor: pointer; text-transform: none; color: white;">
-                        Program is Active (can be enabled for public registration)
-                    </label>
-                </div>
-            </div>
+            <!-- Program is always created as active; enable/disable via the Enable Public Reg button -->
+            <input type="hidden" id="programIsActive" name="is_active" value="1">
 
             <div style="display: flex; gap: 2rem;">
                 <button type="button" class="btn btn-outline" style="flex: 1;"
@@ -1472,16 +1542,16 @@ $insideCount = $stmtInside->fetchColumn();
                     </td>
                     <td style="text-align: right; padding: 1.5rem; border-radius: 0 16px 16px 0; border-top: 1px solid rgba(255,255,255,0.03); border-bottom: 1px solid rgba(255,255,255,0.03);">
                         <div style="display: flex; gap: 0.8rem; justify-content: flex-end;">
-                            ${(!isExternalRegEnabled || currentExternalProgramId !== program.id) ? `
+                            ${(isExternalRegEnabled && currentExternalProgramId === parseInt(program.id)) ? `
+                                <span style="color: #10b981; font-size: 0.85rem; font-weight: 700; padding: 0.6rem 1.2rem; background: rgba(16, 185, 129, 0.1); border-radius: 12px; display: flex; align-items: center; gap: 0.5rem;">
+                                    <i class="fa-solid fa-satellite-dish fa-spin"></i> LIVE ON SITE
+                                </span>
+                            ` : `
                                 <button class="btn btn-primary" style="padding: 0.6rem 1.2rem; font-size: 0.85rem; background: linear-gradient(135deg, #10b981 0%, #059669 100%);"
                                     onclick="enableExternalReg(${program.id})">
                                     <i class="fa-solid fa-rocket"></i> Enable Public Reg
                                 </button>
-                            ` : isExternalRegEnabled && currentExternalProgramId === program.id ? `
-                                <span style="color: #10b981; font-size: 0.85rem; font-weight: 700; padding: 0.6rem 1.2rem; background: rgba(16, 185, 129, 0.1); border-radius: 12px; display: flex; align-items: center; gap: 0.5rem;">
-                                    <i class="fa-solid fa-satellite-dish fa-spin"></i> LIVE ON SITE
-                                </span>
-                            ` : ''}
+                            `}
                             <button class="user-avatar-nav" style="width: 36px; height: 36px; border-radius: 10px;"
                                 onclick="editExternalProgram(${program.id})">
                                 <i class="fa-solid fa-pen-nib"></i>
@@ -1591,7 +1661,7 @@ $insideCount = $stmtInside->fetchColumn();
                 document.getElementById('programStartDate').value = program.start_date || '';
                 document.getElementById('programEndDate').value = program.end_date || '';
                 document.getElementById('programMaxParticipants').value = program.max_participants;
-                document.getElementById('programIsActive').checked = parseInt(program.is_active) === 1;
+                document.getElementById('programIsActive').value = parseInt(program.is_active) === 1 ? 1 : 0;
 
                 // Payment Fields
                 const isPaid = parseInt(program.is_paid) === 1;
@@ -1721,7 +1791,7 @@ $insideCount = $stmtInside->fetchColumn();
 
                 if (result.success) {
                     Swal.fire('Enabled!', 'External registration is now live on the landing page.', 'success');
-                    loadExternalRegStatus();
+                    await loadExternalRegStatus();
                     loadExternalPrograms();
                 } else {
                     Swal.fire('Error', result.error, 'error');
@@ -1753,7 +1823,8 @@ $insideCount = $stmtInside->fetchColumn();
 
                 if (result.success) {
                     Swal.fire('Disabled!', 'External registration has been disabled.', 'success');
-                    loadExternalRegStatus();
+                    await loadExternalRegStatus();
+                    loadExternalPrograms();
                 } else {
                     Swal.fire('Error', result.error, 'error');
                 }
@@ -1888,7 +1959,7 @@ $insideCount = $stmtInside->fetchColumn();
             start_date: startDate,
             end_date: endDate,
             max_participants: maxPart,
-            is_active: document.getElementById('programIsActive').checked ? 1 : 0,
+            is_active: 1, // Always active; controlled via Enable/Disable Public Registration
             // Payment fields
             is_paid: isPaidProgram ? 1 : 0,
             registration_fee: isPaidProgram ? regFee : 0,
@@ -2167,5 +2238,69 @@ $insideCount = $stmtInside->fetchColumn();
             window.location.href = '/Project/EntryX/api/auth.php?action=logout';
         }
     }
+
+    // ========== LIVE DASHBOARD STATS SYSTEM ==========
+    // Stores the last known values to detect changes and flash animation
+    let _lastStats = {
+        inside: null, internal: null, externalInside: null,
+        events: null, reg: null, external: null
+    };
+
+    function animateStatChange(elementId, newValue) {
+        const el = document.getElementById(elementId);
+        if (!el) return;
+        const current = parseInt(el.textContent);
+        if (current !== newValue) {
+            el.textContent = newValue;
+            el.classList.remove('stat-update-flash');
+            // Force reflow to restart animation
+            void el.offsetWidth;
+            el.classList.add('stat-update-flash');
+            setTimeout(() => el.classList.remove('stat-update-flash'), 500);
+        }
+    }
+
+    async function fetchLiveDashboardStats() {
+        try {
+            const res = await fetch('/Project/EntryX/api/stats.php?action=dashboard_live&_t=' + Date.now());
+            if (!res.ok) return;
+            const data = await res.json();
+
+            if (!data.success) return;
+
+            // Update People Inside (most critical - live campus tracking)
+            animateStatChange('stat-inside', data.people_inside);
+            animateStatChange('stat-internal', data.internal_inside);
+            animateStatChange('stat-external-inside', data.external_inside);
+
+            // Update other stats
+            animateStatChange('stat-events', data.total_events);
+            animateStatChange('stat-reg', data.total_reg);
+            // Outside Guests = only externals currently inside campus (scanned in, not just registered)
+            animateStatChange('stat-external', data.external_inside);
+
+            // Update last sync time in the live badge
+            const timeEl = document.getElementById('lastSyncTime');
+            if (timeEl) timeEl.textContent = data.timestamp;
+
+            _lastStats = {
+                inside: data.people_inside,
+                internal: data.internal_inside,
+                externalInside: data.external_inside,
+                events: data.total_events,
+                reg: data.total_reg,
+                external: data.external_count
+            };
+
+        } catch (err) {
+            // Silently fail - dashboard keeps showing last known values
+            console.warn('Live stats fetch failed:', err.message);
+        }
+    }
+
+    // Start live polling immediately on load, then every 3 seconds
+    fetchLiveDashboardStats();
+    setInterval(fetchLiveDashboardStats, 3000);
+
 </script>
 <?php require_once '../includes/footer.php'; ?>

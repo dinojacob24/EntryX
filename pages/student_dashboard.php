@@ -39,7 +39,24 @@ $myRegs = $regObj->getUserRegistrations($userId);
 // Filter available events
 $registeredEventIds = array_column($myRegs, 'event_id');
 $availableEvents = array_filter($allEvents, function ($e) use ($registeredEventIds) {
-    return !in_array($e['id'], $registeredEventIds);
+    // Hide if already registered
+    if (in_array($e['id'], $registeredEventIds)) return false;
+    
+    // Hide 'external' only events from students (who are internal)
+    if (isset($e['type']) && $e['type'] === 'external') return false;
+    
+    // Hide automatic admission events from the public ticket list
+    if (stripos($e['name'], 'General Admission') !== false) return false;
+    if (stripos($e['name'], 'Campus Admission') !== false) return false;
+    if (stripos($e['name'], 'General Campus') !== false) return false;
+    
+    // Hide cancelled or completed events
+    if (isset($e['status']) && in_array($e['status'], ['cancelled', 'completed'])) return false;
+    
+    // Hide past events
+    if (isset($e['event_date']) && strtotime($e['event_date']) < strtotime('today')) return false;
+
+    return true;
 });
 
 // Calculate stats

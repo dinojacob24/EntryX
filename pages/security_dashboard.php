@@ -20,32 +20,65 @@ $userRole = $_SESSION['role'];
 $eventObj = new Event($pdo);
 $events = $eventObj->getAllEvents();
 
-$initialEventId = !empty($events) ? $events[0]['id'] : null;
+$initialEventId = !empty($events) ? $events[0]['id'] : 0;
 
-// Fetch live entry stats
-$stmtTotal = $pdo->query("SELECT COUNT(*) FROM attendance_logs WHERE status = 'inside'");
-$totalInside = $stmtTotal->fetchColumn();
+// If no events exist, try to find a General entry event or just allow any scan
+if ($initialEventId == 0) {
+    // Check for a 'General' event already
+    $stmtCheck = $pdo->query("SELECT id FROM events WHERE name LIKE '%General Admission%' LIMIT 1");
+    $initialEventId = $stmtCheck->fetchColumn() ?: 0;
+}
+
+// Fetch live entry stats (Unified atomic query for consistency)
+$stmtSummary = $pdo->query("
+    SELECT 
+        COUNT(*) as total_inside,
+        SUM(CASE WHEN u.role IN ('internal', 'student', 'staff') THEN 1 ELSE 0 END) as internal_inside,
+        SUM(CASE WHEN u.role = 'external' THEN 1 ELSE 0 END) as external_inside
+    FROM attendance_logs al
+    JOIN registrations r ON al.registration_id = r.id
+    JOIN users u ON r.user_id = u.id
+    WHERE al.status = 'inside'
+");
+$summary = $stmtSummary->fetch(PDO::FETCH_ASSOC);
+
+$totalInside = (int)($summary['total_inside'] ?? 0);
+$internalInside = (int)($summary['internal_inside'] ?? 0);
+$externalInside = (int)($summary['external_inside'] ?? 0);
 
 $stmtToday = $pdo->query("SELECT COUNT(*) FROM attendance_logs WHERE DATE(entry_time) = CURDATE()");
-$entriesToday = $stmtToday->fetchColumn();
+$entriesToday = $stmtToday->fetchColumn() ?: 0;
 
-// Fetch internal vs external breakdown
-$stmtInternal = $pdo->query("SELECT COUNT(*) FROM attendance_logs al JOIN registrations r ON al.registration_id = r.id JOIN users u ON r.user_id = u.id WHERE al.status = 'inside' AND u.role = 'internal'");
-$internalInside = $stmtInternal->fetchColumn();
-
-$stmtExternal = $pdo->query("SELECT COUNT(*) FROM attendance_logs al JOIN registrations r ON al.registration_id = r.id JOIN users u ON r.user_id = u.id WHERE al.status = 'inside' AND u.role = 'external'");
-$externalInside = $stmtExternal->fetchColumn();
-
-// Recent activity log
+// Recent activity log (UNION entries and exits to show movement history)
 $stmtRecent = $pdo->query("
-    SELECT al.*, r.qr_token, u.name as user_name, u.role as user_role, e.name as event_name
-    FROM attendance_logs al 
-    JOIN registrations r ON al.registration_id = r.id
-    JOIN users u ON r.user_id = u.id 
-    JOIN events e ON r.event_id = e.id
-    ORDER BY al.entry_time DESC LIMIT 10
+    (
+        SELECT al.id, 'inside' as status, u.name as user_name, u.role as user_role, al.entry_time as log_time
+        FROM attendance_logs al
+        JOIN registrations r ON al.registration_id = r.id
+        JOIN users u ON r.user_id = u.id
+    )
+    UNION ALL
+    (
+        SELECT al.id, 'exited' as status, u.name as user_name, u.role as user_role, al.exit_time as log_time
+        FROM attendance_logs al
+        JOIN registrations r ON al.registration_id = r.id
+        JOIN users u ON r.user_id = u.id
+        WHERE al.exit_time IS NOT NULL
+    )
+    ORDER BY log_time DESC LIMIT 30
 ");
 $recentActivity = $stmtRecent->fetchAll(PDO::FETCH_ASSOC);
+
+// Fetch who is currently inside (alphabetical)
+$stmtWho = $pdo->query("
+    SELECT al.id as log_id, u.name as user_name, u.role as user_role, al.entry_time
+    FROM attendance_logs al
+    JOIN registrations r ON al.registration_id = r.id
+    JOIN users u ON r.user_id = u.id
+    WHERE al.status = 'inside'
+    ORDER BY u.name ASC
+");
+$whoInside = $stmtWho->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
 <style>
@@ -774,18 +807,57 @@ $recentActivity = $stmtRecent->fetchAll(PDO::FETCH_ASSOC);
 
     .log-item.entry {
         border-left-color: #10b981;
+        background: rgba(16, 185, 129, 0.04);
     }
 
     .log-item.exit {
-        border-left-color: #3b82f6;
-    }
-
-    .log-item.denied {
         border-left-color: #ef4444;
+        background: rgba(239, 68, 68, 0.04);
     }
 
-    .log-item.info {
-        border-left-color: #475569;
+    /* Inside Now panel item */
+    .inside-item {
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+        padding: 0.75rem 0.8rem;
+        border-radius: 10px;
+        background: rgba(16, 185, 129, 0.05);
+        border: 1px solid rgba(16, 185, 129, 0.12);
+        animation: slideInRight 0.3s ease-out;
+    }
+
+    .inside-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        background: linear-gradient(135deg, #064e3b, #10b981);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.8rem;
+        font-weight: 800;
+        color: white;
+        flex-shrink: 0;
+    }
+
+    .inside-name {
+        font-size: 0.82rem;
+        font-weight: 700;
+        color: white;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        margin-bottom: 0.2rem;
+    }
+
+    .inside-meta {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.65rem;
+        color: #475569;
+        font-weight: 600;
     }
 
     .log-name {
@@ -837,8 +909,8 @@ $recentActivity = $stmtRecent->fetchAll(PDO::FETCH_ASSOC);
     }
 
     .action-pill.exit {
-        background: rgba(59, 130, 246, 0.15);
-        color: #3b82f6;
+        background: rgba(239, 68, 68, 0.15);
+        color: #ef4444;
     }
 
     .action-pill.denied {
@@ -1041,20 +1113,16 @@ $recentActivity = $stmtRecent->fetchAll(PDO::FETCH_ASSOC);
                 </div>
             </div>
 
-            <!-- Role Breakdown -->
+            <!-- Externals Inside -->
             <div>
-                <div class="stat-label-sm" style="margin-bottom:0.6rem;"><i class="fa-solid fa-id-card"
-                        style="color:#3b82f6;"></i> Role Breakdown</div>
-                <div class="role-breakdown">
-                    <div class="role-card int">
-                        <div class="role-count" id="countInternal"><?php echo $internalInside; ?></div>
-                        <div class="role-name">Internal</div>
-                    </div>
-                    <div class="role-card ext">
-                        <div class="role-count" id="countExternal"><?php echo $externalInside; ?></div>
-                        <div class="role-name">External</div>
-                    </div>
+                <div class="stat-label-sm" style="margin-bottom:0.6rem;"><i class="fa-solid fa-user-group"
+                        style="color:#f59e0b;"></i> Externals Inside</div>
+                <div class="role-card ext" style="width:100%;">
+                    <div class="role-count" id="countExternal"><?php echo $externalInside; ?></div>
+                    <div class="role-name">External</div>
                 </div>
+                <!-- hidden element kept for JS compatibility -->
+                <span id="countInternal" style="display:none;"><?php echo $internalInside; ?></span>
             </div>
 
             <!-- Today's Activity -->
@@ -1073,7 +1141,7 @@ $recentActivity = $stmtRecent->fetchAll(PDO::FETCH_ASSOC);
                     <div class="mode-dot"></div>
                     <div>
                         <div style="font-size:0.8rem;font-weight:800;color:#475569;" id="modeText">SCANNER IDLE</div>
-                        <div style="font-size:0.65rem;color:#334155;margin-top:2px;">Awaiting initialization</div>
+                        <div style="font-size:0.65rem;color:#334155;margin-top:2px;">Choose Entry or Exit to begin</div>
                     </div>
                 </div>
             </div>
@@ -1137,8 +1205,7 @@ $recentActivity = $stmtRecent->fetchAll(PDO::FETCH_ASSOC);
                 </div>
                 <div>
                     <div class="start-title">Gate Security Terminal</div>
-                    <div class="start-sub" style="margin-top:0.5rem;">Select a scan mode to initialize the camera and
-                        begin scanning participant QR codes.</div>
+                    <div class="start-sub" style="margin-top:0.5rem;">Select a mode to start scanning.<br>Each QR can be used <strong style="color:#10b981;">once for entry</strong> and <strong style="color:#f59e0b;">once for exit</strong>.</div>
                 </div>
                 <div class="start-btn-group">
                     <button class="start-btn entry-btn" onclick="startScanner('entry')">
@@ -1197,41 +1264,91 @@ $recentActivity = $stmtRecent->fetchAll(PDO::FETCH_ASSOC);
         </div>
     </main>
 
-    <!-- ===== RIGHT: ACTIVITY LOG ===== -->
+    <!-- ===== RIGHT: TABBED PANEL ===== -->
     <aside class="sidebar-right">
-        <div class="log-header">
-            <div class="log-title">
-                <div class="live-badge"></div>
-                Activity Log
-            </div>
-            <button onclick="clearLog()" class="ctrl-btn" style="font-size:0.7rem;padding:0.35rem 0.7rem;">
-                <i class="fa-solid fa-xmark"></i> Clear
+
+        <!-- Tab Strip -->
+        <div style="display:flex;border-bottom:1px solid var(--sec-border);">
+            <button id="tabActivity" onclick="switchRightTab('activity')"
+                style="flex:1;padding:0.9rem 0.5rem;background:rgba(59,130,246,0.1);border:none;border-bottom:2px solid #3b82f6;color:#3b82f6;font-size:0.7rem;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;cursor:pointer;transition:0.2s;display:flex;align-items:center;justify-content:center;gap:0.5rem;">
+                <div class="live-badge"></div> Activity Log
+            </button>
+            <button id="tabInside" onclick="switchRightTab('inside')"
+                style="flex:1;padding:0.9rem 0.5rem;background:transparent;border:none;border-bottom:2px solid transparent;color:#475569;font-size:0.7rem;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;cursor:pointer;transition:0.2s;display:flex;align-items:center;justify-content:center;gap:0.5rem;">
+                <i class="fa-solid fa-users" style="font-size:0.65rem;"></i> Inside Now
+                <span id="insideBadge" style="background:rgba(16,185,129,0.2);color:#10b981;border-radius:99px;padding:1px 7px;font-size:0.6rem;"><?php echo count($whoInside); ?></span>
             </button>
         </div>
 
-        <div class="log-feed" id="logFeed">
-            <?php if (empty($recentActivity)): ?>
-                <div class="empty-log" id="emptyLogMsg">
-                    <i class="fa-solid fa-fingerprint" style="font-size:2.5rem;opacity:0.15;"></i>
-                    <div style="font-size:0.85rem;font-weight:600;">Waiting for scan events...</div>
-                </div>
-            <?php else: ?>
-                <?php foreach ($recentActivity as $act): ?>
-                    <div class="log-item <?php echo $act['status'] === 'inside' ? 'entry' : 'exit'; ?>">
-                        <div class="log-name"><?php echo htmlspecialchars($act['user_name']); ?></div>
-                        <div class="log-meta">
-                            <span class="action-pill <?php echo $act['status'] === 'inside' ? 'entry' : 'exit'; ?>">
-                                <?php echo $act['status'] === 'inside' ? 'ENTRY' : 'EXIT'; ?>
-                            </span>
-                            <span class="role-pill <?php echo $act['user_role']; ?>">
-                                <?php echo strtoupper($act['user_role']); ?>
-                            </span>
-                            <span><?php echo date('H:i', strtotime($act['entry_time'])); ?></span>
-                        </div>
+        <!-- ── ACTIVITY LOG PANEL ── -->
+        <div id="panelActivity" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;">
+            <div style="display:flex;justify-content:flex-end;padding:0.6rem 0.8rem;border-bottom:1px solid var(--sec-border);">
+                <button onclick="clearLog()" class="ctrl-btn" style="font-size:0.65rem;padding:0.3rem 0.6rem;">
+                    <i class="fa-solid fa-xmark"></i> Clear
+                </button>
+            </div>
+            <div class="log-feed" id="logFeed">
+                <?php if (empty($recentActivity)): ?>
+                    <div class="empty-log" id="emptyLogMsg">
+                        <i class="fa-solid fa-fingerprint" style="font-size:2.5rem;opacity:0.15;"></i>
+                        <div style="font-size:0.85rem;font-weight:600;">Waiting for scan events...</div>
                     </div>
-                <?php endforeach; ?>
-            <?php endif; ?>
+                <?php else: ?>
+                    <?php foreach ($recentActivity as $act): ?>
+                        <div class="log-item <?php echo $act['status'] === 'inside' ? 'entry' : 'exit'; ?>">
+                            <div class="log-name"><?php echo htmlspecialchars($act['user_name']); ?></div>
+                            <div class="log-meta">
+                                <span class="action-pill <?php echo $act['status'] === 'inside' ? 'entry' : 'exit'; ?>">
+                                    <?php echo $act['status'] === 'inside' ? 'ENTRY' : 'EXIT'; ?>
+                                </span>
+                                <span class="role-pill <?php echo $act['user_role']; ?>">
+                                    <?php echo strtoupper($act['user_role']); ?>
+                                </span>
+                                <span><?php echo date('H:i', strtotime($act['log_time'])); ?></span>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </div>
         </div>
+
+        <!-- ── INSIDE NOW PANEL ── -->
+        <div id="panelInside" style="flex:1;overflow-y:auto;display:none;flex-direction:column;">
+            <div style="padding:0.6rem 0.8rem;border-bottom:1px solid var(--sec-border);display:flex;justify-content:space-between;align-items:center;">
+                <span style="font-size:0.65rem;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;color:#64748b;">Currently Inside Venue</span>
+                <button onclick="refreshInsidePanel()" class="ctrl-btn" style="font-size:0.65rem;padding:0.3rem 0.6rem;">
+                    <i class="fa-solid fa-rotate"></i>
+                </button>
+            </div>
+            <div id="insideFeed" style="flex:1;overflow-y:auto;padding:0.8rem;display:flex;flex-direction:column;gap:0.4rem;">
+                <?php if (empty($whoInside)): ?>
+                    <div class="empty-log" id="emptyInsideMsg">
+                        <i class="fa-solid fa-door-open" style="font-size:2.5rem;opacity:0.15;"></i>
+                        <div style="font-size:0.85rem;font-weight:600;">No one inside yet</div>
+                    </div>
+                <?php else: ?>
+                    <?php foreach ($whoInside as $p): ?>
+                        <div class="inside-item" style="display:flex;align-items:center;gap:0.8rem;padding:0.8rem;border-radius:10px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04);margin-bottom:0.4rem;">
+                            <div class="inside-avatar"><?php echo strtoupper(substr($p['user_name'],0,1)); ?></div>
+                            <div style="flex:1;overflow:hidden;min-width:0;">
+                                <div class="inside-name" style="font-weight:700;font-size:0.85rem;color:white;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><?php echo htmlspecialchars($p['user_name']); ?></div>
+                                <div class="inside-meta" style="display:flex;align-items:center;gap:0.4rem;margin-top:0.2rem;">
+                                    <span class="role-pill <?php echo $p['user_role']; ?>"><?php echo strtoupper($p['user_role']); ?></span>
+                                    <span style="font-size:0.65rem;color:#475569;">In since <?php echo date('H:i', strtotime($p['entry_time'])); ?></span>
+                                </div>
+                            </div>
+                            <button onclick="manualExit(<?php echo $p['log_id']; ?>, this)"
+                                style="flex-shrink:0;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);color:#ef4444;border-radius:8px;padding:0.35rem 0.7rem;font-size:0.65rem;font-weight:800;text-transform:uppercase;letter-spacing:0.06em;cursor:pointer;transition:0.2s;"
+                                onmouseover="this.style.background='rgba(239,68,68,0.2)'"
+                                onmouseout="this.style.background='rgba(239,68,68,0.1)'">
+                                <i class="fa-solid fa-right-from-bracket"></i> Exit
+                            </button>
+                        </div>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </div>
+        </div>
+
     </aside>
 </div>
 
@@ -1353,7 +1470,7 @@ $recentActivity = $stmtRecent->fetchAll(PDO::FETCH_ASSOC);
             // Step 3: Start decoding loop (jsQR)
             startDecodingLoop();
 
-            addToLog('Camera active — ' + mode.toUpperCase() + ' mode', 'info');
+            // System messages suppressed — only person scans are logged
 
         } catch (err) {
             console.error('Camera Error:', err);
@@ -1423,7 +1540,6 @@ $recentActivity = $stmtRecent->fetchAll(PDO::FETCH_ASSOC);
         if (cameraControlsFooter) cameraControlsFooter.style.display = 'none';
 
         updateModeUI('idle');
-        addToLog('Scanner stopped', 'info');
     }
 
     async function forceRelease() {
@@ -1456,7 +1572,7 @@ $recentActivity = $stmtRecent->fetchAll(PDO::FETCH_ASSOC);
     async function switchMode(mode) {
         currentScanMode = mode;
         updateModeUI(mode);
-        addToLog('Mode switched to: ' + mode.toUpperCase(), 'info');
+        // mode switch is silent — no log entry
     }
 
     let usingFacingMode = 'user'; // Default to front camera for laptops
@@ -1474,45 +1590,49 @@ $recentActivity = $stmtRecent->fetchAll(PDO::FETCH_ASSOC);
         const laser = document.getElementById('scanLaser');
         const frame = document.getElementById('scanFrame');
 
-        indicator.className = 'mode-indicator ' + (mode === 'idle' ? 'idle' : mode);
+        indicator.style.background = '';
+        indicator.style.border = '';
 
         // Tab styling
         const tabEntry = document.getElementById('tabEntry');
-        const tabExit = document.getElementById('tabExit');
+        const tabExit  = document.getElementById('tabExit');
         if (tabEntry && tabExit) {
             tabEntry.className = 'mode-tab' + (mode === 'entry' ? ' active-entry' : '');
-            tabExit.className = 'mode-tab' + (mode === 'exit' ? ' active-exit' : '');
+            tabExit.className  = 'mode-tab' + (mode === 'exit'  ? ' active-exit'  : '');
         }
 
         if (mode === 'entry') {
-            modeText.textContent = 'ENTRY SCAN ACTIVE';
+            indicator.className = 'mode-indicator entry';
+            modeText.textContent = 'ENTRY SCAN';
             modeText.style.color = '#10b981';
             badge.textContent = 'ENTRY';
             badge.style.background = 'rgba(16,185,129,0.15)';
             badge.style.borderColor = 'rgba(16,185,129,0.3)';
             badge.style.color = '#10b981';
             if (laser) { laser.style.background = '#10b981'; laser.style.boxShadow = '0 0 12px 2px #10b981'; }
-            if (frame) { frame.style.setProperty('--frame-color', '#10b981'); }
+            if (frame) frame.style.setProperty('--frame-color', '#10b981');
             scannerBadge.textContent = '⬤ ENTRY MODE';
             scannerBadge.style.background = 'rgba(16,185,129,0.15)';
             scannerBadge.style.color = '#10b981';
             scannerBadge.style.border = '1px solid rgba(16,185,129,0.3)';
             scannerBadge.style.display = 'block';
         } else if (mode === 'exit') {
-            modeText.textContent = 'EXIT SCAN ACTIVE';
+            indicator.className = 'mode-indicator exit';
+            modeText.textContent = 'EXIT SCAN';
             modeText.style.color = '#ef4444';
             badge.textContent = 'EXIT';
             badge.style.background = 'rgba(239,68,68,0.15)';
             badge.style.borderColor = 'rgba(239,68,68,0.3)';
             badge.style.color = '#ef4444';
             if (laser) { laser.style.background = '#ef4444'; laser.style.boxShadow = '0 0 12px 2px #ef4444'; }
-            if (frame) { frame.style.setProperty('--frame-color', '#ef4444'); }
+            if (frame) frame.style.setProperty('--frame-color', '#ef4444');
             scannerBadge.textContent = '⬤ EXIT MODE';
             scannerBadge.style.background = 'rgba(239,68,68,0.15)';
             scannerBadge.style.color = '#ef4444';
             scannerBadge.style.border = '1px solid rgba(239,68,68,0.3)';
             scannerBadge.style.display = 'block';
         } else {
+            indicator.className = 'mode-indicator idle';
             modeText.textContent = 'SCANNER IDLE';
             modeText.style.color = '#475569';
             badge.textContent = 'SECURE';
@@ -1535,13 +1655,10 @@ $recentActivity = $stmtRecent->fetchAll(PDO::FETCH_ASSOC);
         lastScannedToken = decodedText;
         lastScannedTime = now;
 
-        const eId = document.getElementById('activeEventId').value;
-        if (!eId || eId == 0) {
-            addToLog('Error: No active event configured', 'denied');
-            showResultFlash(false, 'NO EVENT', 'Contact admin to create an event', '', '');
-            return;
-        }
-
+        const eId = document.getElementById('activeEventId').value || 0;
+        // Allowance for General Entry Scans even if eId is 0 or unselected
+        // The API will handle the context-based lookup (e.g. general program entry)
+        
         isProcessing = true;
 
         if (navigator.vibrate) navigator.vibrate(80);
@@ -1556,32 +1673,26 @@ $recentActivity = $stmtRecent->fetchAll(PDO::FETCH_ASSOC);
                 if (data.success) {
                     playBeep(1200, 120);
                     if (navigator.vibrate) navigator.vibrate(80);
+                    
+                    // Don't log if it's already in the feed (prevent local duplicates)
                     showResultFlash(true, data.type.toUpperCase() + ' GRANTED', data.user_name, data.user_role, data.time);
                     addToLog(data.user_name, data.type, data.user_role, data.time);
 
-                    if (data.type === 'entry') {
-                        entriesToday++;
-                        insideNow++;
-                        if (data.user_role === 'internal') internalNow++;
-                        else externalNow++;
-                    } else {
-                        insideNow = Math.max(0, insideNow - 1);
-                        if (data.user_role === 'internal') internalNow = Math.max(0, internalNow - 1);
-                        else externalNow = Math.max(0, externalNow - 1);
-                    }
-
-                    updateStats();
+                    // Re-fetch accurate stats from server to avoid sync issues
+                    refreshDashboardStats();
                 } else {
                     playBeep(300, 300, 'square');
                     if (navigator.vibrate) navigator.vibrate([150, 80, 150]);
                     showResultFlash(false, 'ACCESS DENIED', data.error || 'Unknown error', '', '');
-                    addToLog(data.error || 'Scan failed', 'denied', '', '');
                 }
+
+                // Debounce: wait 1.5s before allowing NEXT scan
+                setTimeout(() => { isProcessing = false; }, 1500);
+                refreshInsidePanel();
             })
             .catch(err => {
                 console.error(err);
                 isProcessing = false;
-                addToLog('Network error during scan', 'denied');
             });
     }
 
@@ -1623,40 +1734,142 @@ $recentActivity = $stmtRecent->fetchAll(PDO::FETCH_ASSOC);
     // ============================================
     // LOG
     // ============================================
+    // Only logs actual person entry/exit — no system messages
     function addToLog(name, type, role, time) {
+        if (!type || type === 'info') return; // silently drop system messages
+
         const feed = document.getElementById('logFeed');
         const empty = document.getElementById('emptyLogMsg');
         if (empty) empty.remove();
 
+        const isEntry = type === 'entry';
+        const isExit  = type === 'exit';
+        if (!isEntry && !isExit) return; // only entry/exit in the log
+
         const item = document.createElement('div');
-        item.className = 'log-item ' + (type || 'info');
+        item.className = 'log-item ' + type;
 
         const rolePill = role
             ? `<span class="role-pill ${role}">${role.toUpperCase()}</span>`
             : '';
-
-        const actionPill = type && type !== 'info'
-            ? `<span class="action-pill ${type}">${type.toUpperCase()}</span>`
-            : `<span style="font-size:0.65rem;color:#475569;font-weight:600;">SYSTEM</span>`;
 
         const timeStr = time || new Date().toLocaleTimeString('en-US', { hour12: false });
 
         item.innerHTML = `
             <div class="log-name">${name}</div>
             <div class="log-meta">
-                ${actionPill}
+                <span class="action-pill ${type}">${type.toUpperCase()}</span>
                 ${rolePill}
                 <span>${timeStr}</span>
             </div>
         `;
 
         feed.insertBefore(item, feed.firstChild);
+        while (feed.children.length > 30) feed.removeChild(feed.lastChild);
+    }
 
-        // Keep log manageable
-        while (feed.children.length > 20) {
-            feed.removeChild(feed.lastChild);
+    // ============================================
+    // RIGHT PANEL TABS
+    // ============================================
+    function switchRightTab(tab) {
+        const isActivity = tab === 'activity';
+        document.getElementById('panelActivity').style.display = isActivity ? 'flex' : 'none';
+        document.getElementById('panelInside').style.display  = isActivity ? 'none'  : 'flex';
+
+        const tA = document.getElementById('tabActivity');
+        const tI = document.getElementById('tabInside');
+        if (isActivity) {
+            tA.style.background   = 'rgba(59,130,246,0.1)';
+            tA.style.borderBottomColor = '#3b82f6';
+            tA.style.color        = '#3b82f6';
+            tI.style.background   = 'transparent';
+            tI.style.borderBottomColor = 'transparent';
+            tI.style.color        = '#475569';
+        } else {
+            tI.style.background   = 'rgba(16,185,129,0.1)';
+            tI.style.borderBottomColor = '#10b981';
+            tI.style.color        = '#10b981';
+            tA.style.background   = 'transparent';
+            tA.style.borderBottomColor = 'transparent';
+            tA.style.color        = '#475569';
         }
     }
+
+    // ============================================
+    // INSIDE NOW — fetch & render
+    // ============================================
+    async function refreshInsidePanel() {
+        try {
+            const eId = document.getElementById('activeEventId').value || 0;
+            const res = await fetch('../api/attendance.php?action=inside&event_id=' + eId);
+            const data = await res.json();
+            if (!data.success) return;
+
+            const feed = document.getElementById('insideFeed');
+            const badge = document.getElementById('insideBadge');
+            badge.textContent = data.people.length;
+
+            if (!data.people.length) {
+                feed.innerHTML = `<div class="empty-log" id="emptyInsideMsg">
+                    <i class="fa-solid fa-door-open" style="font-size:2.5rem;opacity:0.15;"></i>
+                    <div style="font-size:0.85rem;font-weight:600;">No one inside yet</div>
+                </div>`;
+                return;
+            }
+
+            feed.innerHTML = data.people.map(p => `
+                <div class="inside-item" style="display:flex;align-items:center;gap:0.8rem;padding:0.8rem;border-radius:10px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04);margin-bottom:0.4rem;">
+                    <div class="inside-avatar">${p.name.charAt(0).toUpperCase()}</div>
+                    <div style="flex:1;overflow:hidden;min-width:0;">
+                        <div class="inside-name" style="font-weight:700;font-size:0.85rem;color:white;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.name}</div>
+                        <div class="inside-meta" style="display:flex;align-items:center;gap:0.4rem;margin-top:0.2rem;">
+                            <span class="role-pill ${p.role}">${p.role.toUpperCase()}</span>
+                            <span style="font-size:0.65rem;color:#475569;">In since ${p.since}</span>
+                        </div>
+                    </div>
+                    <button onclick="manualExit(${p.log_id}, this)"
+                        style="flex-shrink:0;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);color:#ef4444;border-radius:8px;padding:0.35rem 0.7rem;font-size:0.65rem;font-weight:800;text-transform:uppercase;letter-spacing:0.06em;cursor:pointer;transition:0.2s;"
+                        onmouseover="this.style.background='rgba(239,68,68,0.2)'"
+                        onmouseout="this.style.background='rgba(239,68,68,0.1)'">
+                        <i class="fa-solid fa-right-from-bracket"></i> Exit
+                    </button>
+                </div>
+            `).join('');
+        } catch(e) { console.warn('Inside refresh failed', e); }
+    }
+
+    async function manualExit(logId, btn) {
+        btn.disabled = true;
+        btn.textContent = '...';
+        try {
+            const res = await fetch('../api/attendance.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'manual_exit', log_id: logId })
+            });
+            const data = await res.json();
+            if (data.success) {
+                playBeep(800, 100);
+                // Remove the row immediately
+                const row = btn.closest('.inside-item');
+                if (row) row.remove();
+                // Refresh all stats
+                refreshDashboardStats();
+                refreshInsidePanel();
+                addToLog('Manual exit recorded', 'exit', '', new Date().toLocaleTimeString('en-US', { hour12: false }));
+            } else {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-right-from-bracket"></i> Exit';
+                alert(data.error || 'Exit failed');
+            }
+        } catch(e) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-right-from-bracket"></i> Exit';
+        }
+    }
+
+    // Auto-refresh inside panel every 15 seconds
+    setInterval(refreshInsidePanel, 15000);
 
     function clearLog() {
         const feed = document.getElementById('logFeed');
@@ -1680,6 +1893,29 @@ $recentActivity = $stmtRecent->fetchAll(PDO::FETCH_ASSOC);
         const pct = Math.min((insideNow / 500) * 100, 100);
         document.getElementById('capacityFill').style.width = pct + '%';
     }
+
+    function refreshDashboardStats() {
+        // Fetch new counts from server instead of local incrementing
+        fetch('../api/stats.php?action=gate_counts')
+            .then(r => r.json())
+            .then(res => {
+                if (res.success) {
+                    insideNow = res.inside;
+                    entriesToday = res.total;
+                    document.getElementById('countInside').innerText = res.inside;
+                    document.getElementById('countToday').innerText = res.total;
+                    document.getElementById('countInternal').innerText = res.internal;
+                    document.getElementById('countExternal').innerText = res.external;
+                    updateStats();
+                }
+            });
+    }
+
+    // Auto-refresh every 30 seconds to keep dashboard "Live"
+    setInterval(() => {
+        refreshDashboardStats();
+        refreshInsidePanel();
+    }, 30000);
 
     // ============================================
     // MANUAL ENTRY

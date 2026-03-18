@@ -9,14 +9,14 @@ if (!isset($_SESSION['user_id']) || !in_array($_SESSION['role'], ['super_admin',
 }
 
 require_once '../config/db_connect.php';
-require_once '../classes/Event.php';
 
 $userId = $_SESSION['user_id'];
 $userName = $_SESSION['name'];
 $userRole = $_SESSION['role'];
 
-$eventObj = new Event($pdo);
-$events = $eventObj->getAllEvents(true);
+// Fetch all real events, excluding system-generated 'General Campus Admission' QR-scan entries
+$stmtEvents = $pdo->query("SELECT * FROM events WHERE name NOT LIKE 'General Campus Admission%' ORDER BY event_date DESC");
+$events = $stmtEvents->fetchAll(PDO::FETCH_ASSOC);
 
 $message = null;
 $error = null;
@@ -129,6 +129,12 @@ require_once '../includes/header.php';
         color: white;
         font-size: 1rem;
         transition: all 0.3s ease;
+    }
+
+    /* Ensure dropdown options are readable on native browser dropdown (white bg) */
+    select option {
+        color: #111111;
+        background: #ffffff;
     }
 
     select:focus,

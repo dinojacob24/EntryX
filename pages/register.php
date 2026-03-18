@@ -188,15 +188,49 @@ require_once '../includes/header.php';
                             </p>
                         </div>
                         <div style="text-align: right;">
-                            <div style="font-size: 1.8rem; font-weight: 800; color: #10b981;">
-                                ₹<?php echo number_format($activeProgram['total_amount_with_gst'], 2); ?></div>
-                            <?php if ($activeProgram['is_gst_enabled']): ?>
-                                <div style="font-size: 0.7rem; color: var(--p-text-dim);">Incl.
-                                    <?php echo $activeProgram['gst_rate']; ?>% GST
+                            <?php if ($activeProgram['is_gst_enabled']): 
+                                $baseFee = floatval($activeProgram['registration_fee']);
+                                $gstRate = floatval($activeProgram['gst_rate']);
+                                $gstAmount = ($baseFee * $gstRate) / 100;
+                                $totalAmount = $baseFee + $gstAmount;
+                            ?>
+                                <div style="font-size: 1.8rem; font-weight: 800; color: #10b981;">
+                                    ₹<?php echo number_format($totalAmount, 2); ?>
+                                </div>
+                                <div style="font-size: 0.75rem; color: var(--p-text-dim); margin-top: 0.3rem;">
+                                    Incl. <?php echo $gstRate; ?>% GST
+                                </div>
+                            <?php else: ?>
+                                <div style="font-size: 1.8rem; font-weight: 800; color: #10b981;">
+                                    ₹<?php echo number_format(floatval($activeProgram['registration_fee']), 2); ?>
+                                </div>
+                                <div style="font-size: 0.75rem; color: var(--p-text-dim); margin-top: 0.3rem;">
+                                    No GST applicable
                                 </div>
                             <?php endif; ?>
                         </div>
                     </div>
+
+                    <?php if ($activeProgram['is_gst_enabled']): ?>
+                        <!-- GST Breakdown Card -->
+                        <div style="background: rgba(16, 185, 129, 0.07); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 14px; padding: 1.2rem 1.5rem; margin-bottom: 1.5rem;">
+                            <div style="font-size: 0.78rem; color: #10b981; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.8rem;">
+                                <i class="fa-solid fa-receipt"></i> Payment Breakdown
+                            </div>
+                            <div style="display: flex; justify-content: space-between; font-size: 0.88rem; color: var(--p-text-dim); margin-bottom: 0.4rem;">
+                                <span>Base Fee</span>
+                                <span style="color: white; font-weight: 600;">₹<?php echo number_format($baseFee, 2); ?></span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; font-size: 0.88rem; color: var(--p-text-dim); margin-bottom: 0.6rem;">
+                                <span>GST (<?php echo $gstRate; ?>%)</span>
+                                <span style="color: white; font-weight: 600;">₹<?php echo number_format($gstAmount, 2); ?></span>
+                            </div>
+                            <div style="border-top: 1px solid rgba(16, 185, 129, 0.25); padding-top: 0.6rem; display: flex; justify-content: space-between; font-size: 0.95rem;">
+                                <strong style="color: white;">Total Payable</strong>
+                                <strong style="color: #10b981; font-size: 1.05rem;">₹<?php echo number_format($totalAmount, 2); ?></strong>
+                            </div>
+                        </div>
+                    <?php endif; ?>
 
                     <div style="text-align: center; margin-bottom: 1rem;">
                         <div
