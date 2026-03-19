@@ -129,16 +129,17 @@
         margin-bottom: 2.5rem !important;
     }
     /* Hero buttons stack */
-    section[style*="min-height: 85vh"] [style*="display: flex; gap: 1.5rem"] {
+    section[style*="min-height: 85vh"] [style*="display: flex; gap: 1.5rem"],
+    section[style*="min-height: 85vh"] [style*="display: flex; gap: 1rem"] {
         flex-direction: column !important;
-        align-items: center !important;
+        align-items: stretch !important;
         gap: 1rem !important;
     }
     section[style*="min-height: 85vh"] [style*="display: flex; gap: 1.5rem"] a,
     section[style*="min-height: 85vh"] [style*="display: flex; gap: 1rem"] a,
     section[style*="min-height: 85vh"] [style*="display: flex; gap: 1rem"] .btn {
         width: 100%;
-        max-width: 340px;
+        max-width: none !important;
         justify-content: center;
     }
 
@@ -210,6 +211,33 @@
     /* Modal scrollable */
     [style*="overflow-y: auto"] {
         max-height: 90vh !important;
+    }
+
+    /* --- ADMIN DASHBOARD FIXES --- */
+    .dashboard-top-bar {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 1rem !important;
+    }
+    .user-info-badge {
+        flex-wrap: wrap !important;
+        justify-content: center !important;
+    }
+    .admin-hero-card {
+        flex-direction: column !important;
+        text-align: center !important;
+        padding: 2rem 1.5rem !important;
+        gap: 2rem !important;
+    }
+    .admin-hero-card .hero-text h1 {
+        font-size: 2.5rem !important;
+    }
+    .admin-hero-card .action-group {
+        width: 100% !important;
+        padding: 1.5rem !important;
+    }
+    .admin-hero-card [style*="grid-template-columns: 1fr 1fr"] {
+        grid-template-columns: 1fr !important; /* Stack sub-admin and results buttons */
     }
 
     /* --- ADMIN DASHBOARD SIDEBAR/NAV TABS --- */
@@ -293,8 +321,15 @@
 
     /* Login & register cards */
     [style*="max-width: 480px"],
-    [style*="max-width: 500px"] {
+    [style*="max-width: 500px"],
+    [style*="max-width: 600px"],
+    [style*="max-width: 800px"] {
         padding: 1.5rem 1rem !important;
+    }
+
+    /* Prevent absolutely positioned "Back to Home" link from overlapping top icons */
+    .glass-panel > a[style*="position: absolute"] + div {
+        margin-top: 2.5rem !important;
     }
 
     /* Admin dashboard tab strip scrollable */
@@ -311,7 +346,6 @@
     /* Form inputs comfortable on small screens */
     input, select, textarea {
         font-size: 0.95rem !important;
-        padding: 0.9rem 1rem !important;
     }
 
     /* Icon + text flex items wrap */
