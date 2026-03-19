@@ -1068,7 +1068,78 @@ $whoInside = $stmtWho->fetchAll(PDO::FETCH_ASSOC);
             grid-template-columns: 250px 1fr 260px;
         }
     }
+
+    /* ===== MOBILE LAYOUT (<=768px) ===== */
+    @media (max-width: 768px) {
+        body {
+            height: auto !important;
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+            min-height: 100vh;
+        }
+        .gate-terminal {
+            display: flex !important;
+            flex-direction: column !important;
+            height: auto !important;
+            min-height: 100vh;
+            overflow: visible !important;
+        }
+        /* Stats strip at top */
+        .sidebar-left {
+            flex-direction: column !important;
+            height: auto !important;
+            border-right: none !important;
+            border-bottom: 1px solid rgba(59,130,246,0.2) !important;
+            overflow: visible !important;
+        }
+        .sidebar-header {
+            padding: 0.75rem 1rem !important;
+            border-bottom: 1px solid rgba(59,130,246,0.1) !important;
+        }
+        .sidebar-body {
+            display: grid !important;
+            grid-template-columns: 1fr 1fr !important;
+            gap: 0.6rem !important;
+            padding: 0.75rem !important;
+            overflow: visible !important;
+            height: auto !important;
+            flex: unset !important;
+            white-space: normal !important;
+        }
+        .sidebar-body .stat-card {
+            min-width: unset !important;
+            padding: 0.75rem !important;
+        }
+        .sidebar-body .stat-value-lg {
+            font-size: 1.8rem !important;
+        }
+        .sidebar-footer { display: none !important; }
+        /* Camera section */
+        .scanner-main {
+            height: 65vh !important;
+            min-height: 360px !important;
+            flex-shrink: 0 !important;
+            overflow: hidden !important;
+        }
+        .scanner-footer {
+            flex-wrap: wrap !important;
+            gap: 0.5rem !important;
+            padding: 0.5rem 0.75rem !important;
+        }
+        .manual-input-group {
+            flex: 1 1 100% !important;
+            max-width: 100% !important;
+        }
+        .sidebar-right { display: none !important; }
+        .start-btn-group {
+            max-width: 100% !important;
+            padding: 0 1rem !important;
+            width: 100% !important;
+        }
+        .mode-indicator { display: none !important; }
+    }
 </style>
+
 
 <div class="gate-terminal">
     <!-- ===== LEFT SIDEBAR ===== -->
