@@ -1084,23 +1084,45 @@ $whoInside = $stmtWho->fetchAll(PDO::FETCH_ASSOC);
             min-height: 100vh;
             overflow: visible !important;
         }
-        /* Stats strip at top */
+        /* Pin the Gate Terminal header fixed at top */
+        .sidebar-header {
+            position: fixed !important;
+            top: 0 !important; left: 0 !important; right: 0 !important;
+            z-index: 150 !important;
+            background: rgba(8,12,30,0.98) !important;
+            border-bottom: 1px solid rgba(59,130,246,0.25) !important;
+            backdrop-filter: blur(20px);
+            padding: 0.8rem 1rem !important;
+        }
+        /* Space below fixed header */
+        .gate-terminal {
+            padding-top: 60px !important;
+        }
+        /* Sidebar-left: shows stats at bottom (order 3) */
         .sidebar-left {
-            flex-direction: column !important;
+            order: 3 !important;
             height: auto !important;
             border-right: none !important;
-            border-bottom: 1px solid rgba(59,130,246,0.2) !important;
+            border-top: 1px solid rgba(59,130,246,0.2) !important;
             overflow: visible !important;
-            order: 1; /* Header+logout FIRST on mobile */
         }
-        /* Hide the stats cards body on mobile — stats in the floating button sheet */
+        /* Stats body visible in 2-column grid at bottom */
         .sidebar-body {
-            display: none !important;
+            display: grid !important;
+            grid-template-columns: 1fr 1fr !important;
+            gap: 0.75rem !important;
+            padding: 1rem !important;
+            overflow: visible !important;
+            height: auto !important;
+            flex: unset !important;
+            white-space: normal !important;
         }
+        .sidebar-body .stat-card { padding: 0.9rem !important; }
+        .sidebar-body .stat-value-lg { font-size: 1.8rem !important; }
         .sidebar-footer { display: none !important; }
-        /* Camera/Scanner section — order 2 (below header bar) */
+        /* Scanner comes FIRST in scroll order (just below fixed header) */
         .scanner-main {
-            order: 2; /* Scanner SECOND, below the header bar */
+            order: 1 !important;
             height: auto !important;
             min-height: unset !important;
             flex-shrink: 0 !important;
