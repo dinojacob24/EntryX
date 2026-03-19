@@ -1091,6 +1091,7 @@ $whoInside = $stmtWho->fetchAll(PDO::FETCH_ASSOC);
             border-right: none !important;
             border-bottom: 1px solid rgba(59,130,246,0.2) !important;
             overflow: visible !important;
+            order: 2; /* Stats go BELOW camera on mobile */
         }
         .sidebar-header {
             padding: 0.75rem 1rem !important;
@@ -1116,8 +1117,9 @@ $whoInside = $stmtWho->fetchAll(PDO::FETCH_ASSOC);
         .sidebar-footer { display: none !important; }
         /* Camera section */
         .scanner-main {
-            height: 65vh !important;
-            min-height: 360px !important;
+            order: 1; /* Camera comes FIRST on mobile */
+            height: 70vh !important;
+            min-height: 400px !important;
             flex-shrink: 0 !important;
             overflow: hidden !important;
         }
