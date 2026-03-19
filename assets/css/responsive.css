@@ -4,7 +4,7 @@
      xs: < 480px  (phones portrait)
      sm: < 640px  (phones landscape / small phones)
      md: < 768px  (tablets portrait)
-     lg: < 1024px (tablets landscape / small laptops)
+     lg: < 1024px (tablets landscape)
    ============================================================ */
 
 /* ─── HAMBURGER MENU ─────────────────────────────────────── */
@@ -13,9 +13,12 @@
     flex-direction: column;
     gap: 5px;
     cursor: pointer;
-    padding: 6px;
+    padding: 8px;
     border-radius: 8px;
     transition: background 0.2s;
+    background: none;
+    border: none;
+    flex-shrink: 0;
 }
 .nav-hamburger:hover { background: rgba(255,255,255,0.05); }
 .nav-hamburger span {
@@ -30,7 +33,7 @@
 .nav-hamburger.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
 .nav-hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); background: white; }
 
-/* Mobile slide-down nav drawer */
+/* Mobile slide-down nav drawer — INSIDE nav so top:100% works */
 .nav-mobile-drawer {
     display: none;
     flex-direction: column;
@@ -41,25 +44,27 @@
     position: absolute;
     top: 100%;
     left: 0; right: 0;
-    padding: 1rem 1.5rem 1.5rem;
+    padding: 0.75rem 1.25rem 1.25rem;
     z-index: 999;
     animation: slideDown 0.3s cubic-bezier(0.16,1,0.3,1);
 }
 .nav-mobile-drawer.open { display: flex; }
 .nav-mobile-drawer a {
-    padding: 0.85rem 0;
+    padding: 0.9rem 0.25rem;
     color: #94a3b8;
-    font-size: 0.95rem;
+    font-size: 1rem;
     font-weight: 600;
     text-decoration: none;
-    border-bottom: 1px solid rgba(255,255,255,0.04);
+    border-bottom: 1px solid rgba(255,255,255,0.05);
     transition: color 0.2s;
+    display: flex;
+    align-items: center;
 }
-.nav-mobile-drawer a:last-child { border-bottom: none; }
+.nav-mobile-drawer a:last-of-type { border-bottom: none; }
 .nav-mobile-drawer a:hover { color: white; }
 .nav-mobile-drawer .mobile-logout-btn {
-    margin-top: 1rem;
-    padding: 0.75rem;
+    margin-top: 0.75rem;
+    padding: 0.85rem;
     background: rgba(255,31,31,0.08);
     border: 1px solid rgba(255,31,31,0.2);
     border-radius: 12px;
@@ -67,7 +72,7 @@
     font-weight: 700;
     cursor: pointer;
     text-align: center;
-    font-size: 0.9rem;
+    font-size: 0.95rem;
     font-family: inherit;
     transition: background 0.2s;
     width: 100%;
@@ -79,24 +84,10 @@
     to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ─── LARGE DESKTOP (≤ 1024px) ──────────────────────────── */
-@media (max-width: 1024px) {
-    .container { padding: 0 1.5rem; }
-
-    /* Admin dashboard grid */
-    .admin-stats-grid {
-        grid-template-columns: repeat(2, 1fr) !important;
-    }
-
-    /* Dashboard 3-col → 2-col */
-    [style*="grid-template-columns: repeat(3,"] {
-        grid-template-columns: repeat(2, 1fr) !important;
-    }
-}
-
-/* ─── TABLET PORTRAIT (≤ 768px) ─────────────────────────── */
+/* ─── TABLET / MEDIUM (≤ 768px) ─────────────────────────── */
 @media (max-width: 768px) {
-    /* --- NAV --- */
+
+    /* ── NAV ── */
     .nav-links-main,
     .user-meta-hide {
         display: none !important;
@@ -104,163 +95,246 @@
     .nav-hamburger {
         display: flex;
     }
-    /* Make nav position relative so drawer drops below it */
+    /* nav needs relative so drawer drops below it */
     .nav-standard {
         position: sticky;
         top: 0;
+        z-index: 500;
     }
     .nav-standard .container {
         position: relative;
     }
 
-    /* --- CONTAINER --- */
+    /* ── GLOBAL CONTAINER ── */
     .container { padding: 0 1rem; }
 
-    /* --- HERO (index.php) --- */
+    /* ── HERO (index.php) ── */
     section[style*="min-height: 85vh"] {
         padding: 2rem 0 !important;
         min-height: auto !important;
     }
     section[style*="min-height: 85vh"] h1 {
         font-size: clamp(2rem, 8vw, 3.5rem) !important;
+        line-height: 1.1 !important;
     }
     section[style*="min-height: 85vh"] p {
         font-size: 1rem !important;
-        margin-bottom: 2.5rem !important;
+        margin-bottom: 2rem !important;
     }
-    /* Hero buttons stack */
+    /* Hero button grid → vertical stack */
     section[style*="min-height: 85vh"] [style*="display: flex; gap: 1.5rem"],
     section[style*="min-height: 85vh"] [style*="display: flex; gap: 1rem"] {
         flex-direction: column !important;
         align-items: stretch !important;
-        gap: 1rem !important;
+        gap: 0.85rem !important;
     }
     section[style*="min-height: 85vh"] [style*="display: flex; gap: 1.5rem"] a,
     section[style*="min-height: 85vh"] [style*="display: flex; gap: 1rem"] a,
     section[style*="min-height: 85vh"] [style*="display: flex; gap: 1rem"] .btn {
-        width: 100%;
+        width: 100% !important;
         max-width: none !important;
-        justify-content: center;
+        justify-content: center !important;
     }
 
-    /* --- GLASS PANEL --- */
+    /* ── GLASS PANELS ── */
     .glass-panel {
         border-radius: 20px !important;
     }
 
-    /* --- REGISTER PAGE --- */
-    .glass-panel[style*="max-width: 800px"] {
-        padding: 2rem 1.5rem !important;
-    }
-    /* All 2-col grids → 1-col */
+    /* ── ALL 2-COL GRIDS → 1-COL ── */
     [style*="grid-template-columns: 1fr 1fr"],
     [style*="grid-template-columns: 1fr 1fr; gap"],
     .input-grid {
         grid-template-columns: 1fr !important;
-        gap: 1.2rem !important;
+        gap: 1rem !important;
     }
 
-    /* --- PUBLISH RESULTS --- */
-    .publish-container {
-        padding: 2rem 0 !important;
-    }
-    .result-card-premium {
-        padding: 2rem 1.5rem !important;
-        border-radius: 20px !important;
-    }
-    .hero-text h1 {
-        font-size: 2rem !important;
-    }
-
-    /* --- FORMS GENERAL --- */
-    form[style*="padding: 2.5rem"],
-    .form-section {
-        padding: 1.5rem !important;
-    }
-
-    /* --- TABLES: Make them scrollable --- */
+    /* ── TABLES: scrollable ── */
     table {
         display: block !important;
         overflow-x: auto !important;
         -webkit-overflow-scrolling: touch;
         white-space: nowrap;
     }
-    /* Keep table cells from being too narrow */
-    th, td {
-        min-width: 100px;
-    }
+    th, td { min-width: 110px; }
 
-    /* --- DASHBOARD STATS GRID → single column --- */
+    /* ── STAT GRIDS ── */
     [style*="grid-template-columns: repeat(4"],
     [style*="grid-template-columns: repeat(3"],
-    [style*="grid-template-columns: repeat(2"] {
+    [style*="grid-template-columns: repeat(2"],
+    .stats-matrix,
+    .stats-grid {
         grid-template-columns: 1fr 1fr !important;
+        gap: 1rem !important;
     }
 
-    /* --- MODALS: full width on mobile --- */
+    /* ── MODALS: full width ── */
     [style*="max-width: 650px"],
     [style*="max-width: 700px"],
     [style*="max-width: 720px"],
     [style*="max-width: 750px"],
-    [style*="max-width: 800px"] {
+    [style*="max-width: 800px"],
+    [style*="max-width: 900px"] {
         max-width: 100% !important;
         width: 100% !important;
         margin: 0 !important;
         border-radius: 0 !important;
     }
-    /* Modal scrollable */
     [style*="overflow-y: auto"] {
         max-height: 90vh !important;
     }
 
-    /* --- ADMIN DASHBOARD FIXES --- */
+    /* ── STUDENT/EXTERNAL DASHBOARD — welcome card ── */
+    .welcome-card-premium {
+        flex-direction: column !important;
+        text-align: center !important;
+        padding: 2rem 1.5rem !important;
+        gap: 1.5rem !important;
+        align-items: center !important;
+    }
+    .welcome-text h1 {
+        font-size: 2.5rem !important;
+    }
+    .user-avatar-large {
+        width: 90px !important;
+        height: 90px !important;
+        font-size: 2.5rem !important;
+        border-radius: 20px !important;
+    }
+
+    /* ── DASHBOARD TOP BAR (all dashboards) ── */
     .dashboard-top-bar {
         flex-direction: column !important;
         align-items: stretch !important;
-        gap: 1rem !important;
+        gap: 0.75rem !important;
+        padding: 0 !important;
     }
     .user-info-badge {
+        justify-content: center !important;
         flex-wrap: wrap !important;
+    }
+    .logout-btn-premium {
+        width: 100% !important;
         justify-content: center !important;
     }
+
+    /* ── ADMIN DASHBOARD hero card ── */
     .admin-hero-card {
         flex-direction: column !important;
         text-align: center !important;
         padding: 2rem 1.5rem !important;
-        gap: 2rem !important;
+        gap: 1.5rem !important;
     }
     .admin-hero-card .hero-text h1 {
-        font-size: 2.5rem !important;
+        font-size: 2.2rem !important;
     }
     .admin-hero-card .action-group {
         width: 100% !important;
+        padding: 1.25rem !important;
+    }
+
+    /* ── SECTION TITLE ── */
+    .section-title {
+        font-size: 1.8rem !important;
+        gap: 0.75rem !important;
+        flex-wrap: wrap !important;
+    }
+
+    /* ── PUBLISH RESULTS ── */
+    .result-card-premium {
+        padding: 2rem 1.5rem !important;
+        border-radius: 20px !important;
+    }
+    .hero-text h1 { font-size: 2rem !important; }
+
+    /* ── GENERAL FORMS ── */
+    form[style*="padding: 2.5rem"],
+    .form-section {
         padding: 1.5rem !important;
     }
-    .admin-hero-card [style*="grid-template-columns: 1fr 1fr"] {
-        grid-template-columns: 1fr !important; /* Stack sub-admin and results buttons */
-    }
 
-    /* --- ADMIN DASHBOARD SIDEBAR/NAV TABS --- */
-    .admin-tab-bar {
-        flex-wrap: wrap !important;
-        gap: 0.5rem !important;
-    }
+    /* ── PAYMENT ── */
+    #paymentSection { padding: 1.5rem !important; }
 
-    /* --- BUTTON ROWS: stack them --- */
+    /* ── BUTTON ROWS ── */
     [style*="display: flex; gap: 2rem"] > button,
     [style*="display: flex; gap: 2rem"] > a {
         flex: 1 1 100% !important;
     }
 
-    /* --- PAYMENT SECTION --- */
-    #paymentSection {
-        padding: 1.5rem !important;
+    /* ── SECURITY TERMINAL — force mobile layout ── */
+    .gate-terminal {
+        display: flex !important;
+        flex-direction: column !important;
+        height: 100dvh !important;
+        height: 100vh !important;
+        overflow: hidden !important;
+    }
+    /* Top mini header strip */
+    .sidebar-left {
+        flex-direction: row !important;
+        height: auto !important;
+        min-height: unset !important;
+        border-right: none !important;
+        border-bottom: 1px solid rgba(59,130,246,0.2) !important;
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        padding: 0 !important;
+    }
+    .sidebar-header {
+        padding: 0.6rem 1rem !important;
+        flex-shrink: 0 !important;
+        border-bottom: none !important;
+        border-right: 1px solid rgba(59,130,246,0.15) !important;
+    }
+    .sidebar-body {
+        display: flex !important;
+        flex-direction: row !important;
+        gap: 0.6rem !important;
+        padding: 0.6rem !important;
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        flex: 1;
+        align-items: center;
+        white-space: nowrap;
+    }
+    .sidebar-body .stat-card {
+        min-width: 120px !important;
+        flex-shrink: 0 !important;
+        padding: 0.6rem 0.8rem !important;
+    }
+    .sidebar-body .stat-value-lg {
+        font-size: 1.6rem !important;
+    }
+    .sidebar-body .mode-indicator,
+    .sidebar-footer {
+        display: none !important;
+    }
+    /* Camera = main area takes all remaining height */
+    .scanner-main {
+        flex: 1 !important;
+        min-height: 0 !important;
+        overflow: hidden !important;
+    }
+    /* Hide right log panel on mobile to give full screen to camera */
+    .sidebar-right {
+        display: none !important;
+    }
+    /* Scanner footer — make buttons wrap */
+    .scanner-footer {
+        flex-wrap: wrap !important;
+        gap: 0.5rem !important;
+        padding: 0.6rem 0.8rem !important;
+    }
+    .manual-input-group {
+        max-width: 100% !important;
+        flex: 1 1 100% !important;
     }
 
-    /* --- STUDENT/EXTERNAL DASHBOARD --- */
-    .dashboard-grid-2,
-    [style*="display: grid; grid-template-columns: 1fr 1fr"] {
-        grid-template-columns: 1fr !important;
+    /* ── ADMIN TAB BAR ── */
+    .admin-tab-bar {
+        flex-wrap: wrap !important;
+        gap: 0.5rem !important;
     }
 }
 
@@ -268,37 +342,27 @@
 @media (max-width: 480px) {
     .container { padding: 0 0.85rem; }
 
-    /* Nav logo text shrink */
-    .nav-standard span[style*="1.4rem"] {
-        font-size: 1.1rem !important;
-    }
-    .nav-standard div[style*="42px"] {
-        width: 36px !important;
-        height: 36px !important;
-    }
-
-    /* Page section padding reduction */
+    /* Section padding */
     section { padding: 1.5rem 0 !important; }
 
-    /* Glass panels extra-compact */
-    .glass-panel[style*="padding: 3rem"] {
-        padding: 1.5rem !important;
+    /* Glass panels */
+    .glass-panel[style*="padding: 3rem"],
+    .glass-panel[style*="padding: 4rem"],
+    .glass-panel[style*="padding: 2.5rem"] {
+        padding: 1.25rem !important;
     }
-    .glass-panel[style*="padding: 4rem"] {
-        padding: 1.5rem !important;
-    }
-    .result-card-premium {
-        padding: 1.5rem 1rem !important;
-    }
+    .result-card-premium { padding: 1.25rem !important; }
 
-    /* Hero title smaller */
+    /* Hero title */
     h1[style*="font-size: clamp"] {
         font-size: clamp(1.8rem, 8vw, 2.5rem) !important;
         line-height: 1.1 !important;
     }
 
-    /* All stats in 1 column */
-    [style*="grid-template-columns: repeat"] {
+    /* All repeat grids → 1 col */
+    [style*="grid-template-columns: repeat"],
+    .stats-matrix,
+    .stats-grid {
         grid-template-columns: 1fr !important;
     }
 
@@ -307,88 +371,84 @@
         width: 100%;
         justify-content: center;
     }
-    /* Override inline btn widths that should fill */
-    [style*="flex: 1"] > .btn,
-    [style*="flex: 2"] > .btn {
-        width: 100% !important;
-    }
 
-    /* Table action column buttons wrap */
-    td [style*="display: flex; gap"] {
-        flex-wrap: wrap !important;
-        gap: 0.4rem !important;
-    }
-
-    /* Login & register cards */
+    /* Login / register cards */
     [style*="max-width: 480px"],
     [style*="max-width: 500px"],
-    [style*="max-width: 600px"],
-    [style*="max-width: 800px"] {
-        padding: 1.5rem 1rem !important;
+    [style*="max-width: 600px"] {
+        padding: 1.25rem 1rem !important;
     }
 
-    /* Prevent absolutely positioned "Back to Home" link from overlapping top icons */
+    /* Prevent "Back to Home" absolute link overlapping top icons */
     .glass-panel > a[style*="position: absolute"] + div {
         margin-top: 2.5rem !important;
-    }
-
-    /* Admin dashboard tab strip scrollable */
-    [style*="border-bottom: 1px solid"] {
-        overflow-x: auto;
     }
 
     /* Status badges smaller */
     .status-badge {
         font-size: 0.65rem !important;
-        padding: 0.3rem 0.7rem !important;
+        padding: 0.25rem 0.6rem !important;
     }
 
-    /* Form inputs comfortable on small screens */
-    input, select, textarea {
-        font-size: 0.95rem !important;
+    /* Section title wrap */
+    .section-title {
+        font-size: 1.5rem !important;
     }
 
-    /* Icon + text flex items wrap */
-    [style*="display: flex; align-items: center; gap: 1rem"] {
-        flex-wrap: wrap;
+    /* event card content */
+    .card-content { padding: 1.25rem !important; }
+    .card-banner { height: 100px !important; }
+
+    /* Stats matrix / stat cards compact */
+    .stat-matrix-card { padding: 1.25rem !important; }
+    .stat-card-ultra { padding: 1.25rem !important; gap: 1rem !important; }
+
+    /* Admin dashboard admin hero */
+    .admin-hero-card { padding: 1.5rem 1rem !important; }
+    .welcome-card-premium { padding: 1.5rem 1rem !important; }
+
+    /* Table action buttons wrap neatly */
+    td [style*="display: flex; gap"] {
+        flex-wrap: wrap !important;
+        gap: 0.4rem !important;
     }
 
-    /* Scanner page full screen */
-    .scanner-container {
-        padding: 1rem !important;
-    }
-
-    /* Security dashboard stat boxes */
-    .security-stat-grid {
-        grid-template-columns: 1fr 1fr !important;
-    }
-
-    /* Hide decorative absolute glow blobs on very small screens */
+    /* Hide decorative blur blobs */
     [style*="position: absolute"][style*="filter: blur"][style*="500px"],
-    [style*="position: absolute"][style*="filter: blur"][style*="600px"] {
+    [style*="position: absolute"][style*="filter: blur"][style*="600px"],
+    [style*="position: absolute"][style*="filter: blur"][style*="400px"] {
         display: none !important;
+    }
+
+    /* User avatar in dashboard smaller */
+    .user-avatar-large {
+        width: 72px !important;
+        height: 72px !important;
+        font-size: 2rem !important;
+        border-radius: 16px !important;
     }
 }
 
 /* ─── TOUCH IMPROVEMENTS ─────────────────────────────────── */
 @media (pointer: coarse) {
-    /* Bigger tap targets */
-    .btn { min-height: 44px; }
-    input, select, textarea { min-height: 44px; }
+    .btn { min-height: 48px; }
+    input, select, textarea { min-height: 48px; }
     .nav-link-premium { padding: 0.5rem 0; }
     .user-avatar-nav { width: 44px !important; height: 44px !important; }
-
-    /* Remove hover transforms on touch (they stick) */
+    /* Remove sticky hover effects on touch */
     .glass-panel:hover { transform: none !important; }
     .btn-primary:hover { transform: none !important; }
     .btn-outline:hover { transform: none !important; }
+    .event-card-glass:hover { transform: none !important; }
+    .stat-card-ultra:hover { transform: none !important; }
 }
 
-/* ─── UTILITY: responsive text ───────────────────────────── */
+/* ─── UTILITY CLASSES ─────────────────────────────────────── */
 @media (max-width: 768px) {
     .hide-mobile { display: none !important; }
     .show-mobile { display: block !important; }
 }
 @media (min-width: 769px) {
     .hide-desktop { display: none !important; }
+    .show-desktop { display: block !important; }
 }

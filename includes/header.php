@@ -164,31 +164,31 @@ header("Pragma: no-cache");
                         <span></span><span></span><span></span>
                     </button>
             </div>
-        </nav>
 
-        <!-- MOBILE DRAWER -->
-        <div class="nav-mobile-drawer" id="navMobileDrawer">
-            <?php if ($isAdmin): ?>
-                <a href="<?php echo $dashboardUrl; ?>"><i class="fa-solid fa-gauge-high" style="margin-right:0.5rem;"></i>Dashboard</a>
-                <a href="/Project/EntryX/pages/results.php"><i class="fa-solid fa-trophy" style="margin-right:0.5rem;"></i>Results</a>
-            <?php elseif ($isSecurity): ?>
-                <a href="<?php echo $dashboardUrl; ?>"><i class="fa-solid fa-camera" style="margin-right:0.5rem;"></i>Security Terminal</a>
-            <?php elseif ($isStaff): ?>
-                <a href="<?php echo $dashboardUrl; ?>"><i class="fa-solid fa-id-badge" style="margin-right:0.5rem;"></i>Staff Panel</a>
-            <?php elseif ($isStudent): ?>
-                <a href="<?php echo $dashboardUrl; ?>"><i class="fa-solid fa-gauge-high" style="margin-right:0.5rem;"></i>Dashboard</a>
-                <a href="/Project/EntryX/pages/results.php"><i class="fa-solid fa-trophy" style="margin-right:0.5rem;"></i>Results</a>
-            <?php else: ?>
-                <a href="/Project/EntryX/index.php"><i class="fa-solid fa-house" style="margin-right:0.5rem;"></i>Home</a>
-                <a href="/Project/EntryX/pages/results.php"><i class="fa-solid fa-trophy" style="margin-right:0.5rem;"></i>Results</a>
-                <a href="/Project/EntryX/pages/user_login.php"><i class="fa-solid fa-right-to-bracket" style="margin-right:0.5rem;"></i>Login</a>
-            <?php endif; ?>
-            <?php if ($isLoggedIn): ?>
-                <button class="mobile-logout-btn" onclick="confirmNavLogout()">
-                    <i class="fa-solid fa-power-off" style="margin-right:0.5rem;"></i>Logout
-                </button>
-            <?php endif; ?>
-        </div>
+            <!-- MOBILE DRAWER -->
+            <div class="nav-mobile-drawer" id="navMobileDrawer">
+                <?php if ($isAdmin): ?>
+                    <a href="<?php echo $dashboardUrl; ?>"><i class="fa-solid fa-gauge-high" style="margin-right:0.5rem;"></i>Dashboard</a>
+                    <a href="/Project/EntryX/pages/results.php"><i class="fa-solid fa-trophy" style="margin-right:0.5rem;"></i>Results</a>
+                <?php elseif ($isSecurity): ?>
+                    <a href="<?php echo $dashboardUrl; ?>"><i class="fa-solid fa-camera" style="margin-right:0.5rem;"></i>Security Terminal</a>
+                <?php elseif ($isStaff): ?>
+                    <a href="<?php echo $dashboardUrl; ?>"><i class="fa-solid fa-id-badge" style="margin-right:0.5rem;"></i>Staff Panel</a>
+                <?php elseif ($isStudent): ?>
+                    <a href="<?php echo $dashboardUrl; ?>"><i class="fa-solid fa-gauge-high" style="margin-right:0.5rem;"></i>Dashboard</a>
+                    <a href="/Project/EntryX/pages/results.php"><i class="fa-solid fa-trophy" style="margin-right:0.5rem;"></i>Results</a>
+                <?php else: ?>
+                    <a href="/Project/EntryX/index.php"><i class="fa-solid fa-house" style="margin-right:0.5rem;"></i>Home</a>
+                    <a href="/Project/EntryX/pages/results.php"><i class="fa-solid fa-trophy" style="margin-right:0.5rem;"></i>Results</a>
+                    <a href="/Project/EntryX/pages/user_login.php"><i class="fa-solid fa-right-to-bracket" style="margin-right:0.5rem;"></i>Login</a>
+                <?php endif; ?>
+                <?php if ($isLoggedIn): ?>
+                    <button class="mobile-logout-btn" onclick="confirmNavLogout()">
+                        <i class="fa-solid fa-power-off" style="margin-right:0.5rem;"></i>Logout
+                    </button>
+                <?php endif; ?>
+            </div>
+        </nav>
 
         <script>
             // Logout confirmation from nav
