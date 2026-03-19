@@ -1115,13 +1115,30 @@ $whoInside = $stmtWho->fetchAll(PDO::FETCH_ASSOC);
             font-size: 1.8rem !important;
         }
         .sidebar-footer { display: none !important; }
-        /* Camera section */
+        /* Camera section — auto height so ALL buttons are visible */
         .scanner-main {
-            order: 1; /* Camera comes FIRST on mobile */
-            height: 70vh !important;
-            min-height: 400px !important;
+            order: 1; /* Camera/scanner comes FIRST on mobile */
+            height: auto !important;
+            min-height: unset !important;
             flex-shrink: 0 !important;
-            overflow: hidden !important;
+            overflow: visible !important;
+        }
+        /* Scanner chamber: auto height to show full start overlay */
+        .scanner-chamber {
+            position: relative !important;
+            height: auto !important;
+            min-height: unset !important;
+            overflow: visible !important;
+        }
+        /* When camera is active, give it enough room */
+        #cameraFeed:not([style*="display:none"]) + .scanner-chamber,
+        .scanner-chamber:has(#cameraFeed[style*="block"]) {
+            min-height: 60vh !important;
+        }
+        /* Start overlay: static position so it flows normally */
+        .start-overlay {
+            position: relative !important;
+            padding: 2rem 1rem !important;
         }
         .scanner-footer {
             flex-wrap: wrap !important;
