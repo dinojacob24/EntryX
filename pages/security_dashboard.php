@@ -1091,33 +1091,16 @@ $whoInside = $stmtWho->fetchAll(PDO::FETCH_ASSOC);
             border-right: none !important;
             border-bottom: 1px solid rgba(59,130,246,0.2) !important;
             overflow: visible !important;
-            order: 2; /* Stats go BELOW camera on mobile */
+            order: 1; /* Header+logout FIRST on mobile */
         }
-        .sidebar-header {
-            padding: 0.75rem 1rem !important;
-            border-bottom: 1px solid rgba(59,130,246,0.1) !important;
-        }
+        /* Hide the stats cards body on mobile — stats in the floating button sheet */
         .sidebar-body {
-            display: grid !important;
-            grid-template-columns: 1fr 1fr !important;
-            gap: 0.6rem !important;
-            padding: 0.75rem !important;
-            overflow: visible !important;
-            height: auto !important;
-            flex: unset !important;
-            white-space: normal !important;
-        }
-        .sidebar-body .stat-card {
-            min-width: unset !important;
-            padding: 0.75rem !important;
-        }
-        .sidebar-body .stat-value-lg {
-            font-size: 1.8rem !important;
+            display: none !important;
         }
         .sidebar-footer { display: none !important; }
-        /* Camera section — auto height so ALL buttons are visible */
+        /* Camera/Scanner section — order 2 (below header bar) */
         .scanner-main {
-            order: 1; /* Camera/scanner comes FIRST on mobile */
+            order: 2; /* Scanner SECOND, below the header bar */
             height: auto !important;
             min-height: unset !important;
             flex-shrink: 0 !important;
