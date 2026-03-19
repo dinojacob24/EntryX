@@ -1352,6 +1352,183 @@ $whoInside = $stmtWho->fetchAll(PDO::FETCH_ASSOC);
     </aside>
 </div>
 
+<!-- ===== MOBILE LOG PANEL BUTTON (mobile only) ===== -->
+<button id="mobileLogBtn" onclick="openMobileLog()"
+    style="display:none;position:fixed;bottom:5rem;right:1rem;z-index:200;
+           background:linear-gradient(135deg,#1d4ed8,#3b82f6);
+           border:none;border-radius:16px;color:white;font-weight:800;font-size:0.8rem;
+           padding:0.75rem 1.1rem;cursor:pointer;box-shadow:0 8px 24px rgba(59,130,246,0.4);
+           display:flex;align-items:center;gap:0.5rem;text-transform:uppercase;letter-spacing:0.06em;">
+    <i class="fa-solid fa-users"></i>
+    Who's Inside
+    <span id="mobileInsideBadge" style="background:rgba(255,255,255,0.25);border-radius:99px;padding:2px 8px;font-size:0.75rem;">
+        <?php echo $totalInside; ?>
+    </span>
+</button>
+
+<!-- ===== MOBILE LOG BOTTOM SHEET ===== -->
+<div id="mobileLogSheet"
+    style="display:none;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);"
+    onclick="closeMobileLog()">
+    <div onclick="event.stopPropagation()"
+        style="position:absolute;bottom:0;left:0;right:0;background:#08102b;
+               border-top:1px solid rgba(59,130,246,0.25);border-radius:24px 24px 0 0;
+               max-height:85vh;display:flex;flex-direction:column;overflow:hidden;">
+
+        <!-- Sheet Handle -->
+        <div style="padding:0.75rem;text-align:center;">
+            <div style="width:40px;height:4px;background:rgba(255,255,255,0.15);border-radius:99px;margin:0 auto;"></div>
+        </div>
+
+        <!-- Sheet Tabs -->
+        <div style="display:flex;border-bottom:1px solid rgba(59,130,246,0.15);padding:0 1rem;">
+            <button id="mobileTabActivity" onclick="switchMobileTab('activity')"
+                style="flex:1;padding:0.8rem 0.5rem;background:rgba(59,130,246,0.1);border:none;border-bottom:2px solid #3b82f6;
+                       color:#3b82f6;font-size:0.75rem;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;cursor:pointer;
+                       display:flex;align-items:center;justify-content:center;gap:0.5rem;">
+                <span style="width:6px;height:6px;background:#10b981;border-radius:50%;box-shadow:0 0 6px #10b981;display:inline-block;"></span>
+                Activity Log
+            </button>
+            <button id="mobileTabInside" onclick="switchMobileTab('inside')"
+                style="flex:1;padding:0.8rem 0.5rem;background:transparent;border:none;border-bottom:2px solid transparent;
+                       color:#475569;font-size:0.75rem;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;cursor:pointer;
+                       display:flex;align-items:center;justify-content:center;gap:0.5rem;">
+                <i class="fa-solid fa-users" style="font-size:0.65rem;"></i> Inside Now
+                <span style="background:rgba(16,185,129,0.2);color:#10b981;border-radius:99px;padding:1px 7px;font-size:0.65rem;">
+                    <?php echo count($whoInside); ?>
+                </span>
+            </button>
+        </div>
+
+        <!-- Activity Log Panel -->
+        <div id="mobilePanelActivity" style="flex:1;overflow-y:auto;padding:0.75rem;display:flex;flex-direction:column;gap:0.5rem;">
+            <?php if (empty($recentActivity)): ?>
+                <div style="text-align:center;padding:3rem;color:#334155;">
+                    <i class="fa-solid fa-fingerprint" style="font-size:2rem;opacity:0.15;display:block;margin-bottom:1rem;"></i>
+                    Waiting for scan events...
+                </div>
+            <?php else: ?>
+                <?php foreach ($recentActivity as $act): ?>
+                    <div style="padding:0.75rem;border-radius:10px;background:rgba(255,255,255,0.02);
+                                border:1px solid rgba(255,255,255,0.05);
+                                border-left:3px solid <?php echo $act['status']==='inside' ? '#10b981' : '#ef4444'; ?>;">
+                        <div style="font-weight:800;font-size:0.85rem;color:white;margin-bottom:0.25rem;">
+                            <?php echo htmlspecialchars($act['user_name']); ?>
+                        </div>
+                        <div style="display:flex;gap:0.5rem;align-items:center;">
+                            <span style="padding:2px 7px;border-radius:5px;font-size:0.65rem;font-weight:800;text-transform:uppercase;
+                                background:<?php echo $act['status']==='inside' ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)'; ?>;
+                                color:<?php echo $act['status']==='inside' ? '#10b981' : '#ef4444'; ?>;">
+                                <?php echo $act['status']==='inside' ? 'ENTRY' : 'EXIT'; ?>
+                            </span>
+                            <span style="padding:2px 7px;border-radius:5px;font-size:0.65rem;font-weight:800;text-transform:uppercase;
+                                background:rgba(255,255,255,0.05);color:#94a3b8;">
+                                <?php echo strtoupper($act['user_role']); ?>
+                            </span>
+                            <span style="font-size:0.65rem;color:#475569;"><?php echo date('H:i', strtotime($act['log_time'])); ?></span>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            <?php endif; ?>
+        </div>
+
+        <!-- Inside Now Panel -->
+        <div id="mobilePanelInside" style="flex:1;overflow-y:auto;padding:0.75rem;display:none;flex-direction:column;gap:0.5rem;">
+            <?php if (empty($whoInside)): ?>
+                <div style="text-align:center;padding:3rem;color:#334155;">
+                    <i class="fa-solid fa-door-open" style="font-size:2rem;opacity:0.15;display:block;margin-bottom:1rem;"></i>
+                    No one inside yet
+                </div>
+            <?php else: ?>
+                <?php foreach ($whoInside as $p): ?>
+                    <div style="display:flex;align-items:center;gap:0.75rem;padding:0.75rem;border-radius:10px;
+                                background:rgba(16,185,129,0.04);border:1px solid rgba(16,185,129,0.12);">
+                        <div style="width:36px;height:36px;border-radius:8px;background:linear-gradient(135deg,#064e3b,#10b981);
+                                    display:flex;align-items:center;justify-content:center;font-size:0.85rem;font-weight:800;
+                                    color:white;flex-shrink:0;">
+                            <?php echo strtoupper(substr($p['user_name'],0,1)); ?>
+                        </div>
+                        <div style="flex:1;overflow:hidden;min-width:0;">
+                            <div style="font-weight:700;font-size:0.9rem;color:white;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                                <?php echo htmlspecialchars($p['user_name']); ?>
+                            </div>
+                            <div style="display:flex;gap:0.4rem;align-items:center;margin-top:0.2rem;">
+                                <span style="padding:2px 7px;border-radius:5px;font-size:0.65rem;font-weight:800;text-transform:uppercase;
+                                    background:rgba(16,185,129,0.15);color:#10b981;">
+                                    <?php echo strtoupper($p['user_role']); ?>
+                                </span>
+                                <span style="font-size:0.7rem;color:#475569;">
+                                    Since <?php echo date('H:i', strtotime($p['entry_time'])); ?>
+                                </span>
+                            </div>
+                        </div>
+                        <button onclick="manualExit(<?php echo $p['log_id']; ?>, this)"
+                            style="flex-shrink:0;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);
+                                   color:#ef4444;border-radius:8px;padding:0.4rem 0.75rem;font-size:0.7rem;font-weight:800;
+                                   text-transform:uppercase;cursor:pointer;">
+                            <i class="fa-solid fa-right-from-bracket"></i> Exit
+                        </button>
+                    </div>
+                <?php endforeach; ?>
+            <?php endif; ?>
+        </div>
+
+        <!-- Close button -->
+        <div style="padding:0.75rem 1rem;border-top:1px solid rgba(59,130,246,0.1);">
+            <button onclick="closeMobileLog()"
+                style="width:100%;padding:0.85rem;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);
+                       border-radius:12px;color:#94a3b8;font-weight:700;font-size:0.9rem;cursor:pointer;">
+                Close
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+// Mobile Log Sheet Controls
+function openMobileLog() {
+    document.getElementById('mobileLogSheet').style.display = 'block';
+}
+function closeMobileLog() {
+    document.getElementById('mobileLogSheet').style.display = 'none';
+}
+function switchMobileTab(tab) {
+    const actBtn  = document.getElementById('mobileTabActivity');
+    const insBtn  = document.getElementById('mobileTabInside');
+    const actPanel = document.getElementById('mobilePanelActivity');
+    const insPanel = document.getElementById('mobilePanelInside');
+
+    if (tab === 'activity') {
+        actBtn.style.borderBottomColor = '#3b82f6';
+        actBtn.style.color = '#3b82f6';
+        actBtn.style.background = 'rgba(59,130,246,0.1)';
+        insBtn.style.borderBottomColor = 'transparent';
+        insBtn.style.color = '#475569';
+        insBtn.style.background = 'transparent';
+        actPanel.style.display = 'flex';
+        insPanel.style.display = 'none';
+    } else {
+        insBtn.style.borderBottomColor = '#10b981';
+        insBtn.style.color = '#10b981';
+        insBtn.style.background = 'rgba(16,185,129,0.1)';
+        actBtn.style.borderBottomColor = 'transparent';
+        actBtn.style.color = '#475569';
+        actBtn.style.background = 'transparent';
+        insPanel.style.display = 'flex';
+        actPanel.style.display = 'none';
+    }
+}
+
+// Show mobile button only on small screens
+function checkMobileLogBtn() {
+    const btn = document.getElementById('mobileLogBtn');
+    if (btn) btn.style.display = window.innerWidth <= 768 ? 'flex' : 'none';
+}
+checkMobileLogBtn();
+window.addEventListener('resize', checkMobileLogBtn);
+</script>
+
+
 <!-- ===== FULL-SCREEN RESULT FLASH ===== -->
 <div id="resultFlash" class="result-flash">
     <div class="flash-icon" id="flashIcon"></div>
