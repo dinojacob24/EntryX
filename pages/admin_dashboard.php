@@ -334,30 +334,41 @@ $insideCount = $stmtInside->fetchColumn();
         .user-info-badge {
             background: rgba(255, 31, 31, 0.05) !important;
             border: 1px solid rgba(255, 31, 31, 0.1) !important;
-            padding: 0.5rem 1rem !important;
-            font-size: 0.85rem !important;
+            padding: 0.5rem 0.8rem !important;
+            font-size: 0.8rem !important;
             border-radius: 12px !important;
             flex: 1 !important;
             min-width: 0 !important;
             justify-content: flex-start !important;
+            gap: 0.4rem !important;
         }
 
         .user-info-badge span:first-of-type {
             white-space: nowrap !important;
             overflow: hidden !important;
             text-overflow: ellipsis !important;
-            max-width: 120px !important;
+            max-width: 80px !important;
         }
 
         .role-badge-admin {
-            font-size: 0.6rem !important;
-            padding: 0.2rem 0.6rem !important;
+            font-size: 0.55rem !important;
+            padding: 0.2rem 0.5rem !important;
             background: rgba(255, 31, 31, 0.2) !important;
             flex-shrink: 0 !important;
         }
 
+        /* Adjust integrated Live badge */
+        .live-badge-strip {
+            padding: 0.2rem 0.5rem !important;
+            font-size: 0.6rem !important;
+            background: rgba(16, 185, 129, 0.1) !important;
+            border-radius: 6px !important;
+            flex-shrink: 0 !important;
+        }
+        #lastSyncTime { display: none !important; } /* Save space on mobile */
+
         .logout-btn-premium {
-            padding: 0.6rem 1.2rem !important;
+            padding: 0.6rem 1rem !important;
             font-size: 0.8rem !important;
             border-radius: 12px !important;
             background: rgba(239, 68, 68, 0.08) !important;
@@ -368,12 +379,10 @@ $insideCount = $stmtInside->fetchColumn();
         }
 
         .logout-btn-premium span {
-            display: none !important; /* Hide 'Logout' text, show icon only or keep it compact */
+            display: inline-block !important; /* Show 'Logout' text */
         }
         .logout-btn-premium::after {
-            content: 'OFF' !important;
-            margin-left: 4px;
-            font-weight: 800;
+            display: none !important; /* Remove 'OFF' */
         }
 
         /* ── ADMIN HERO CARD ──
@@ -580,6 +589,13 @@ $insideCount = $stmtInside->fetchColumn();
             <i class="fa-solid fa-shield-halved" style="color: var(--p-brand);"></i>
             <span><?php echo htmlspecialchars($userName); ?></span>
             <span class="role-badge-admin">SUPER ADMIN</span>
+            
+            <!-- Integrated LIVE Status -->
+            <div class="live-badge-strip" id="liveSyncBadge" style="margin-left: 1rem; border: none; background: rgba(16, 185, 129, 0.1);">
+                <span class="live-pulse-dot"></span>
+                <span>LIVE</span>
+                <span id="lastSyncTime" style="opacity: 0.7; font-weight: 600; font-size: 0.65rem;">--:--:--</span>
+            </div>
         </div>
         <button class="logout-btn-premium" onclick="confirmLogout()">
             <i class="fa-solid fa-power-off"></i>
@@ -620,17 +636,8 @@ $insideCount = $stmtInside->fetchColumn();
         </div>
     </div>
 
-    <!-- Live Stats Header Bar -->
-    <div style="display: flex; justify-content: flex-end; align-items: center; margin-bottom: 1.5rem;">
-        <div class="live-badge-strip" id="liveSyncBadge">
-            <span class="live-pulse-dot"></span>
-            <span>LIVE</span>
-            <span id="lastSyncTime" style="opacity: 0.7; font-weight: 600;">--:--:--</span>
-        </div>
-    </div>
-
-    <!-- Stats Matrix -->
-    <div class="stats-matrix">
+    <!-- Status Matrix -->
+    <div class="stats-matrix" style="margin-top: 2rem;">
         <div class="stat-matrix-card reveal">
             <div class="stat-icon-alpha" style="background: rgba(99, 102, 241, 0.1); color: #6366f1;">
                 <i class="fa-solid fa-calendar-nodes"></i>
