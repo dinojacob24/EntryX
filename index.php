@@ -5,19 +5,19 @@ session_start();
 if (isset($_SESSION['user_id']) && isset($_SESSION['role'])) {
     $role = $_SESSION['role'];
     if (in_array($role, ['super_admin', 'event_admin'])) {
-        header('Location: /Project/EntryX/pages/admin_dashboard.php');
+        header('Location: pages/admin_dashboard.php');
         exit;
     } elseif ($role === 'security') {
-        header('Location: /Project/EntryX/pages/security_dashboard.php');
+        header('Location: pages/security_dashboard.php');
         exit;
     } elseif ($role === 'staff') {
-        header('Location: /Project/EntryX/pages/staff_dashboard.php');
+        header('Location: pages/staff_dashboard.php');
         exit;
     } elseif ($role === 'internal') {
-        header('Location: /Project/EntryX/pages/student_dashboard.php');
+        header('Location: pages/student_dashboard.php');
         exit;
     } elseif ($role === 'external') {
-        header('Location: /Project/EntryX/pages/external_dashboard.php');
+        header('Location: pages/external_dashboard.php');
         exit;
     }
 }
