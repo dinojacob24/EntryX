@@ -292,173 +292,282 @@ $insideCount = $stmtInside->fetchColumn();
     }
 
     /* ============================================================
-       ADMIN DASHBOARD — MOBILE RESPONSIVE (≤ 768px)
+       ADMIN DASHBOARD — PROFESSIONAL MOBILE REFACTOR (≤ 768px)
        ============================================================ */
     @media (max-width: 768px) {
-
         .dashboard-container {
-            padding: 1rem 0 2rem;
+            padding: 1rem 0 !important;
+            max-width: 100% !important;
+            min-height: 100vh !important;
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 1.5rem !important;
         }
 
-        /* ── TOP BAR: glassmorphism sub-header card ── */
-        .dashboard-top-bar {
-            flex-direction: row !important;
-            align-items: center !important;
+        /* ── TOP NAVIGATION CONTEXT ──
+           Tighten the header navigation if present
+        */
+        .nav-standard .container {
+            padding: 0 1rem !important;
+            display: flex !important;
             justify-content: space-between !important;
-            gap: 0.75rem !important;
-            margin-bottom: 1.25rem !important;
-            padding: 0.75rem 1rem !important;
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid rgba(255, 255, 255, 0.07);
-            border-radius: 16px;
-            backdrop-filter: blur(20px);
+            align-items: center !important;
         }
 
-        /* User info badge: compact on mobile */
+        /* ── DASHBOARD TOP BAR ──
+           [ 🛡 User Name (Badge) ]    [⏻ Logout]
+        */
+        .dashboard-top-bar {
+            display: flex !important;
+            flex-direction: row !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            margin: 0 1rem 0.5rem !important;
+            padding: 0.85rem 1.25rem !important;
+            background: rgba(255, 255, 255, 0.03) !important;
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
+            border-radius: 16px !important;
+            backdrop-filter: blur(15px) !important;
+            gap: 1rem !important;
+        }
+
         .user-info-badge {
+            background: rgba(255, 31, 31, 0.05) !important;
+            border: 1px solid rgba(255, 31, 31, 0.1) !important;
             padding: 0.5rem 1rem !important;
-            font-size: 0.82rem !important;
-            gap: 0.5rem !important;
-            flex: 1;
-            min-width: 0;
-            overflow: hidden;
+            font-size: 0.85rem !important;
+            border-radius: 12px !important;
+            flex: 1 !important;
+            min-width: 0 !important;
+            justify-content: flex-start !important;
         }
+
         .user-info-badge span:first-of-type {
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            max-width: 120px !important;
         }
+
         .role-badge-admin {
             font-size: 0.6rem !important;
             padding: 0.2rem 0.6rem !important;
-            flex-shrink: 0;
+            background: rgba(255, 31, 31, 0.2) !important;
+            flex-shrink: 0 !important;
         }
 
-        /* Logout button: compact icon+text pill */
         .logout-btn-premium {
-            padding: 0.6rem 1rem !important;
+            padding: 0.6rem 1.2rem !important;
             font-size: 0.8rem !important;
             border-radius: 12px !important;
-            flex-shrink: 0;
-            white-space: nowrap;
+            background: rgba(239, 68, 68, 0.08) !important;
+            border: 1px solid rgba(239, 68, 68, 0.2) !important;
+            width: auto !important;
+            justify-content: center !important;
+            flex-shrink: 0 !important;
         }
 
-        /* ── ADMIN HERO CARD ── */
+        .logout-btn-premium span {
+            display: none !important; /* Hide 'Logout' text, show icon only or keep it compact */
+        }
+        .logout-btn-premium::after {
+            content: 'OFF' !important;
+            margin-left: 4px;
+            font-weight: 800;
+        }
+
+        /* ── ADMIN HERO CARD ──
+           Centered column layout, centered text
+        */
         .admin-hero-card {
             flex-direction: column !important;
+            padding: 2.5rem 1.25rem !important;
             text-align: center !important;
-            padding: 2rem 1.25rem !important;
-            gap: 1.75rem !important;
             border-radius: 24px !important;
-            align-items: stretch !important;
-            margin-bottom: 1.5rem !important;
+            margin: 0 1rem !important;
+            gap: 2rem !important;
+            align-items: center !important;
         }
 
-        /* Typography hierarchy */
         .admin-hero-card .hero-text h4 {
-            font-size: 0.7rem !important;
-            letter-spacing: 0.25em !important;
-            margin-bottom: 0.6rem !important;
-        }
-        .admin-hero-card .hero-text h1,
-        .hero-text h1 {
-            font-size: 2.4rem !important;
-            line-height: 1.1 !important;
+            font-size: 0.65rem !important;
+            letter-spacing: 0.3em !important;
+            color: #ff3131 !important;
             margin-bottom: 0.75rem !important;
         }
-        .admin-hero-card .hero-text p {
-            font-size: 0.95rem !important;
-            line-height: 1.6 !important;
+
+        .admin-hero-card .hero-text h1,
+        .hero-text h1 {
+            font-size: 2.25rem !important;
+            line-height: 1.1 !important;
+            margin-bottom: 1rem !important;
         }
 
-        /* ── ACTION BUTTONS: full-width, large tap targets ── */
+        .admin-hero-card .hero-text p {
+            font-size: 0.95rem !important;
+            max-width: 300px !important;
+            margin: 0 auto !important;
+            opacity: 0.8 !important;
+        }
+
+        /* ── ACTION BUTTONS ──
+           Standardized, high-impact buttons
+        */
         .action-group {
             width: 100% !important;
-            gap: 0.85rem !important;
-            padding: 1.25rem !important;
-            border-radius: 18px !important;
+            background: none !important;
+            box-shadow: none !important;
+            padding: 0 !important;
+            border: none !important;
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 0.75rem !important;
         }
+
         .action-group > div {
-            width: 100% !important;
+            padding: 0 !important;
+            background: none !important;
+            border: none !important;
         }
-        /* ADD NEW EVENT — full width + glow */
-        .action-group .btn-primary {
+
+        /* Primary Call to Action: ADD NEW EVENT */
+        .btn-primary {
             width: 100% !important;
-            min-width: unset !important;
-            padding: 1rem 1.25rem !important;
-            border-radius: 14px !important;
+            padding: 1.1rem !important;
             font-size: 0.95rem !important;
+            letter-spacing: 0.08em !important;
+            border-radius: 14px !important;
+            background: linear-gradient(135deg, #ff3131 0%, #a80000 100%) !important;
+            box-shadow: 0 10px 25px rgba(255, 49, 49, 0.4) !important;
+            border: none !important;
+            height: auto !important;
+            display: flex !important;
             justify-content: center !important;
-            box-shadow: 0 8px 24px rgba(255,31,31,0.3) !important;
+            align-items: center !important;
+            font-weight: 800 !important;
         }
-        /* SUB-ADMIN + RESULTS: side-by-side on mobile, full row */
+
+        /* Sub Buttons: SUB-ADMIN + RESULTS */
         .action-group [style*="grid-template-columns: 1fr 1fr"] {
             display: grid !important;
             grid-template-columns: 1fr 1fr !important;
             gap: 0.75rem !important;
         }
-        .action-group .btn-outline {
-            padding: 0.85rem 0.6rem !important;
-            border-radius: 14px !important;
-            font-size: 0.8rem !important;
+
+        .btn-outline {
+            padding: 0.9rem 0.5rem !important;
+            font-size: 0.75rem !important;
+            border-radius: 12px !important;
+            background: rgba(255, 255, 255, 0.03) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            color: white !important;
+            height: auto !important;
+            display: flex !important;
             justify-content: center !important;
-            text-align: center;
-            white-space: nowrap;
+            align-items: center !important;
+            font-weight: 700 !important;
         }
 
-        /* ── STATS MATRIX: 2-col on mobile ── */
+        /* Results button specific yellow border override */
+        .btn-outline[style*="rgba(234, 179, 8, 0.4)"] {
+            border-color: rgba(234, 179, 8, 0.4) !important;
+            color: #eab308 !important;
+        }
+
+        /* ── STATS MATRIX ──
+           2-column grid for better horizontal space usage
+        */
         .stats-matrix {
             grid-template-columns: 1fr 1fr !important;
             gap: 1rem !important;
+            padding: 0 1rem !important;
             margin-bottom: 2rem !important;
         }
+
         .stat-matrix-card {
-            padding: 1.25rem !important;
-            border-radius: 18px !important;
-        }
-        .stat-matrix-card p[style*="font-size: 3rem"] {
-            font-size: 2rem !important;
-        }
-        .stat-icon-alpha {
-            width: 44px !important;
-            height: 44px !important;
-            font-size: 1.1rem !important;
-            border-radius: 12px !important;
-            margin-bottom: 0.75rem !important;
-        }
-        .stat-matrix-card h3 {
-            font-size: 0.72rem !important;
-        }
-
-        /* ── EVENT TABLE PANEL ── */
-        .glass-panel[style*="padding: 3rem"] {
-            padding: 1.25rem !important;
+            padding: 1.5rem 1rem !important;
             border-radius: 20px !important;
-        }
-        .glass-panel[style*="padding: 3rem"] h2 {
-            font-size: 1.3rem !important;
-            margin-bottom: 1.25rem !important;
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            text-align: center !important;
         }
 
-        /* ── ADMISSION NOTICE ── */
-        .admission-system-note {
+        .stat-icon-alpha {
+            width: 48px !important;
+            height: 48px !important;
+            border-radius: 14px !important;
+            font-size: 1.1rem !important;
+            margin-bottom: 1rem !important;
+        }
+
+        .stat-matrix-card h3 {
+            font-size: 0.7rem !important;
+            letter-spacing: 0.05em !important;
+            margin-bottom: 0.4rem !important;
+        }
+
+        .stat-matrix-card p {
+            font-size: 1.85rem !important;
+            font-weight: 900 !important;
+        }
+
+        /* ── INFRASTRUCTURE CONTROL TABLE ── */
+        .glass-panel[style*="padding: 3rem"] {
+            padding: 1.5rem !important;
+            margin: 0 1rem !important;
+            border-radius: 24px !important;
+        }
+
+        .glass-panel h2 {
+            font-size: 1.4rem !important;
+            justify-content: center !important;
+            margin-bottom: 1.5rem !important;
+        }
+
+        /* Hide complicated table headers, stack the content */
+        table thead { display: none !important; }
+        table tbody tr {
+            display: flex !important;
             flex-direction: column !important;
-            text-align: center;
-            gap: 0.5rem !important;
+            padding: 1rem !important;
+            border-radius: 16px !important;
+            margin-bottom: 1rem !important;
+            border: 1px solid rgba(255, 255, 255, 0.05) !important;
+        }
+
+        table tbody td {
+            padding: 0.4rem 0 !important;
+            border: none !important;
+            text-align: center !important;
+        }
+
+        table tbody td:first-child {
+            font-size: 1.1rem !important;
+            color: #ff3131 !important;
+        }
+
+        table tbody td:last-child {
+            justify-content: center !important;
+            display: flex !important;
+            padding-top: 1rem !important;
+        }
+
+        /* ── MISC ── */
+        .admission-system-note {
+            margin: 0 1rem 1rem !important;
+            padding: 0.85rem !important;
+            font-size: 0.75rem !important;
         }
     }
 
-    /* Extra small phones (≤ 480px) */
+    /* Small Phone adjustments */
     @media (max-width: 480px) {
+        .admin-hero-card .hero-text h1 {
+            font-size: 1.85rem !important;
+        }
         .stats-matrix {
             grid-template-columns: 1fr !important;
-        }
-        .action-group [style*="grid-template-columns: 1fr 1fr"] {
-            grid-template-columns: 1fr !important;
-        }
-        .admin-hero-card .hero-text h1,
-        .hero-text h1 {
-            font-size: 2rem !important;
         }
     }
 </style>
