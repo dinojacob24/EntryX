@@ -290,7 +290,179 @@ $insideCount = $stmtInside->fetchColumn();
         appearance: none;
         -webkit-appearance: none;
     }
+
+    /* ============================================================
+       ADMIN DASHBOARD — MOBILE RESPONSIVE (≤ 768px)
+       ============================================================ */
+    @media (max-width: 768px) {
+
+        .dashboard-container {
+            padding: 1rem 0 2rem;
+        }
+
+        /* ── TOP BAR: glassmorphism sub-header card ── */
+        .dashboard-top-bar {
+            flex-direction: row !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            gap: 0.75rem !important;
+            margin-bottom: 1.25rem !important;
+            padding: 0.75rem 1rem !important;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            border-radius: 16px;
+            backdrop-filter: blur(20px);
+        }
+
+        /* User info badge: compact on mobile */
+        .user-info-badge {
+            padding: 0.5rem 1rem !important;
+            font-size: 0.82rem !important;
+            gap: 0.5rem !important;
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+        }
+        .user-info-badge span:first-of-type {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .role-badge-admin {
+            font-size: 0.6rem !important;
+            padding: 0.2rem 0.6rem !important;
+            flex-shrink: 0;
+        }
+
+        /* Logout button: compact icon+text pill */
+        .logout-btn-premium {
+            padding: 0.6rem 1rem !important;
+            font-size: 0.8rem !important;
+            border-radius: 12px !important;
+            flex-shrink: 0;
+            white-space: nowrap;
+        }
+
+        /* ── ADMIN HERO CARD ── */
+        .admin-hero-card {
+            flex-direction: column !important;
+            text-align: center !important;
+            padding: 2rem 1.25rem !important;
+            gap: 1.75rem !important;
+            border-radius: 24px !important;
+            align-items: stretch !important;
+            margin-bottom: 1.5rem !important;
+        }
+
+        /* Typography hierarchy */
+        .admin-hero-card .hero-text h4 {
+            font-size: 0.7rem !important;
+            letter-spacing: 0.25em !important;
+            margin-bottom: 0.6rem !important;
+        }
+        .admin-hero-card .hero-text h1,
+        .hero-text h1 {
+            font-size: 2.4rem !important;
+            line-height: 1.1 !important;
+            margin-bottom: 0.75rem !important;
+        }
+        .admin-hero-card .hero-text p {
+            font-size: 0.95rem !important;
+            line-height: 1.6 !important;
+        }
+
+        /* ── ACTION BUTTONS: full-width, large tap targets ── */
+        .action-group {
+            width: 100% !important;
+            gap: 0.85rem !important;
+            padding: 1.25rem !important;
+            border-radius: 18px !important;
+        }
+        .action-group > div {
+            width: 100% !important;
+        }
+        /* ADD NEW EVENT — full width + glow */
+        .action-group .btn-primary {
+            width: 100% !important;
+            min-width: unset !important;
+            padding: 1rem 1.25rem !important;
+            border-radius: 14px !important;
+            font-size: 0.95rem !important;
+            justify-content: center !important;
+            box-shadow: 0 8px 24px rgba(255,31,31,0.3) !important;
+        }
+        /* SUB-ADMIN + RESULTS: side-by-side on mobile, full row */
+        .action-group [style*="grid-template-columns: 1fr 1fr"] {
+            display: grid !important;
+            grid-template-columns: 1fr 1fr !important;
+            gap: 0.75rem !important;
+        }
+        .action-group .btn-outline {
+            padding: 0.85rem 0.6rem !important;
+            border-radius: 14px !important;
+            font-size: 0.8rem !important;
+            justify-content: center !important;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        /* ── STATS MATRIX: 2-col on mobile ── */
+        .stats-matrix {
+            grid-template-columns: 1fr 1fr !important;
+            gap: 1rem !important;
+            margin-bottom: 2rem !important;
+        }
+        .stat-matrix-card {
+            padding: 1.25rem !important;
+            border-radius: 18px !important;
+        }
+        .stat-matrix-card p[style*="font-size: 3rem"] {
+            font-size: 2rem !important;
+        }
+        .stat-icon-alpha {
+            width: 44px !important;
+            height: 44px !important;
+            font-size: 1.1rem !important;
+            border-radius: 12px !important;
+            margin-bottom: 0.75rem !important;
+        }
+        .stat-matrix-card h3 {
+            font-size: 0.72rem !important;
+        }
+
+        /* ── EVENT TABLE PANEL ── */
+        .glass-panel[style*="padding: 3rem"] {
+            padding: 1.25rem !important;
+            border-radius: 20px !important;
+        }
+        .glass-panel[style*="padding: 3rem"] h2 {
+            font-size: 1.3rem !important;
+            margin-bottom: 1.25rem !important;
+        }
+
+        /* ── ADMISSION NOTICE ── */
+        .admission-system-note {
+            flex-direction: column !important;
+            text-align: center;
+            gap: 0.5rem !important;
+        }
+    }
+
+    /* Extra small phones (≤ 480px) */
+    @media (max-width: 480px) {
+        .stats-matrix {
+            grid-template-columns: 1fr !important;
+        }
+        .action-group [style*="grid-template-columns: 1fr 1fr"] {
+            grid-template-columns: 1fr !important;
+        }
+        .admin-hero-card .hero-text h1,
+        .hero-text h1 {
+            font-size: 2rem !important;
+        }
+    }
 </style>
+
 
 <div class="dashboard-container">
     <!-- Top Bar -->
