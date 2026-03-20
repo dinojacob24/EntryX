@@ -5,6 +5,18 @@ header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
 header("Cache-Control: post-check=0, pre-check=0", false);
 header("Pragma: no-cache");
 ?>
+<?php
+// Dynamic Base Path Detection for Portability (Local XAMPP vs Server)
+$self = str_replace('\\', '/', $_SERVER['PHP_SELF']);
+$pos = strpos($self, '/EntryX/');
+if ($pos !== false) {
+    // Detects /Project/EntryX/ or /EntryX/ automatically
+    $entryx_root = substr($self, 0, $pos + 8); 
+} else {
+    // Fallback if EntryX is the root of the domain
+    $entryx_root = '/';
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -13,9 +25,9 @@ header("Pragma: no-cache");
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ENTRY X | Premium Event Management</title>
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="/Project/EntryX/assets/css/style.css">
+    <link rel="stylesheet" href="<?php echo $entryx_root; ?>assets/css/style.css">
     <!-- Responsive CSS -->
-    <link rel="stylesheet" href="/Project/EntryX/assets/css/responsive.css">
+    <link rel="stylesheet" href="<?php echo $entryx_root; ?>assets/css/responsive.css">
     <!-- FontAwesome 6 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- SweetAlert2 -->
@@ -206,7 +218,7 @@ header("Pragma: no-cache");
                     color: '#fff'
                 });
                 if (res.isConfirmed) {
-                    window.location.href = '/Project/EntryX/api/auth.php?action=logout';
+                    window.location.href = '<?php echo $entryx_root; ?>api/auth.php?action=logout';
                 }
             }
 
