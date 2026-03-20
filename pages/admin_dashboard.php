@@ -1404,8 +1404,8 @@ $insideCount = $stmtInside->fetchColumn();
         document.getElementById('eventTimeOnly').value = timeStr;
     }
 
-    // Real-time event date validation
-    document.getElementById('eventDateOnly').addEventListener('change', function () {
+    // 1. Live Date Validation
+    document.getElementById('eventDateOnly').addEventListener('input', function () {
         const today = new Date().toISOString().split('T')[0];
         const errEl = document.getElementById('eventDateError');
         if (this.value && this.value < today) {
@@ -1417,9 +1417,26 @@ $insideCount = $stmtInside->fetchColumn();
         }
     });
 
+    // 2. Live Capacity & Price Validation
+    document.getElementById('eventCapacity').addEventListener('input', function() {
+        if (this.value < 1) this.value = 1;
+    });
+
+    document.getElementById('eventPrice').addEventListener('input', function() {
+        if (this.value < 0) this.value = 0;
+        const errEl = document.getElementById('eventPriceError');
+        if (this.value !== '' && parseFloat(this.value) <= 0) {
+            errEl.style.display = 'block';
+            this.style.borderColor = '#ef4444';
+        } else {
+            errEl.style.display = 'none';
+            this.style.borderColor = '';
+        }
+    });
+
 
     function closeModal() {
-        modal.style.display = 'none';
+        eventModal.style.display = 'none';
     }
 
     async function editEvent(id) {
@@ -1537,6 +1554,23 @@ $insideCount = $stmtInside->fetchColumn();
         groupSettings.style.display = e.target.checked ? 'grid' : 'none';
     });
 
+    // Team Size Live Validation
+    const minT = document.getElementById('minTeamSize');
+    const maxT = document.getElementById('maxTeamSize');
+    [minT, maxT].forEach(el => {
+        el.addEventListener('input', function() {
+            if (this.value < 1) this.value = 1;
+            const minV = parseInt(minT.value) || 1;
+            const maxV = parseInt(maxT.value) || 1;
+            if (maxV < minV) {
+                maxT.style.borderColor = '#ef4444';
+            } else {
+                maxT.style.borderColor = '';
+                minT.style.borderColor = '';
+            }
+        });
+    });
+
     // GST Calculation for Events
     function calculateEventGST() {
         const baseFee = parseFloat(document.getElementById('eventPrice').value) || 0;
@@ -1559,7 +1593,6 @@ $insideCount = $stmtInside->fetchColumn();
         }
     }
 
-    document.getElementById('eventPrice').addEventListener('input', calculateEventGST);
     document.getElementById('eventGst').addEventListener('input', calculateEventGST);
 
     eventForm.addEventListener('submit', async (e) => {
