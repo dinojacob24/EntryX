@@ -52,7 +52,7 @@ try {
             $gstAmount = $amount * ($item['gst_rate'] / 100);
         }
     } else {
-        $stmtItem = $pdo->prepare("SELECT name, base_price, is_gst_enabled, gst_rate FROM events WHERE id = ?");
+        $stmtItem = $pdo->prepare("SELECT name, base_price, is_gst_enabled, gst_rate, gst_target FROM events WHERE id = ?");
         $stmtItem->execute([$targetId]);
         $item = $stmtItem->fetch();
         if (!$item)
@@ -61,7 +61,15 @@ try {
         $itemName = $item['name'];
         $amount = (float) $item['base_price'];
         if ($item['is_gst_enabled']) {
-            $gstAmount = $amount * ((float) $item['gst_rate'] / 100);
+            $userRole = $_SESSION['role'] ?? 'internal';
+            $isExternal = ($userRole === 'external');
+            $target = $item['gst_target'] ?? 'both';
+            $applyGst = ($target === 'both')
+                || ($target === 'externals_only' && $isExternal)
+                || ($target === 'internals_only' && !$isExternal);
+            if ($applyGst) {
+                $gstAmount = $amount * ((float) $item['gst_rate'] / 100);
+            }
         }
     }
 
@@ -133,6 +141,9 @@ try {
         'amount' => $rpAmount,
         'key' => $apiKey,
         'item_name' => $itemName,
+        'base_amount' => $amount,
+        'gst_amount' => $gstAmount,
+        'total_amount' => $totalAmount,
         'user_name' => $_SESSION['name'] ?? 'Guest User',
         'user_email' => $_SESSION['email'] ?? '',
         'user_contact' => $userPhone
