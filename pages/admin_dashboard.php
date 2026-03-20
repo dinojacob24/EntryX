@@ -386,197 +386,114 @@ $insideCount = $stmtInside->fetchColumn();
         }
 
         /* ── ADMIN HERO CARD ──
-           Centered column layout, centered text
+           Tighter, more compact
         */
         .admin-hero-card {
             flex-direction: column !important;
-            padding: 2.5rem 1.25rem !important;
+            padding: 1.5rem !important;
             text-align: center !important;
-            border-radius: 24px !important;
-            margin: 0 1rem !important;
-            gap: 2rem !important;
-            align-items: center !important;
+            border-radius: 20px !important;
+            margin: 0 0.75rem !important;
+            gap: 1.25rem !important;
+            align-items: stretch !important;
+        }
+
+        .admin-hero-card .hero-text {
+            margin-bottom: 0 !important;
         }
 
         .admin-hero-card .hero-text h4 {
-            font-size: 0.65rem !important;
-            letter-spacing: 0.3em !important;
-            color: #ff3131 !important;
-            margin-bottom: 0.75rem !important;
+            font-size: 0.6rem !important;
+            letter-spacing: 0.2em !important;
+            margin-bottom: 0.4rem !important;
         }
 
         .admin-hero-card .hero-text h1,
         .hero-text h1 {
-            font-size: 2.25rem !important;
+            font-size: 1.9rem !important;
             line-height: 1.1 !important;
-            margin-bottom: 1rem !important;
+            margin-bottom: 0.5rem !important;
         }
 
         .admin-hero-card .hero-text p {
-            font-size: 0.95rem !important;
-            max-width: 300px !important;
-            margin: 0 auto !important;
-            opacity: 0.8 !important;
+            font-size: 0.85rem !important;
+            max-width: 100% !important;
+            margin: 0 !important;
+            opacity: 0.7 !important;
         }
 
         /* ── ACTION BUTTONS ──
-           Standardized, high-impact buttons
+           SINGLE ROW ALIGNMENT as requested
         */
         .action-group {
             width: 100% !important;
-            background: none !important;
-            box-shadow: none !important;
             padding: 0 !important;
+            background: none !important;
             border: none !important;
-            display: flex !important;
-            flex-direction: column !important;
-            gap: 0.75rem !important;
         }
 
+        /* Group everything into a single row flex container */
         .action-group > div {
-            padding: 0 !important;
-            background: none !important;
-            border: none !important;
-        }
-
-        /* Primary Call to Action: ADD NEW EVENT */
-        .btn-primary {
+            display: flex !important;
+            flex-direction: row !important;
+            flex-wrap: nowrap !important;
+            gap: 0.5rem !important;
             width: 100% !important;
-            padding: 1.1rem !important;
-            font-size: 0.95rem !important;
-            letter-spacing: 0.08em !important;
-            border-radius: 14px !important;
-            background: linear-gradient(135deg, #ff3131 0%, #a80000 100%) !important;
-            box-shadow: 0 10px 25px rgba(255, 49, 49, 0.4) !important;
-            border: none !important;
+            justify-content: space-between !important;
+        }
+
+        /* Reset the grid inside since we're using flex row now */
+        .action-group [style*="grid-template-columns"] {
+            display: contents !important;
+        }
+
+        /* Unified button style for the single row */
+        .action-group .btn {
+            flex: 1 !important;
+            padding: 0.75rem 0.4rem !important;
+            font-size: 0.68rem !important;
             height: auto !important;
-            display: flex !important;
-            justify-content: center !important;
-            align-items: center !important;
-            font-weight: 800 !important;
-        }
-
-        /* Sub Buttons: SUB-ADMIN + RESULTS */
-        .action-group [style*="grid-template-columns: 1fr 1fr"] {
-            display: grid !important;
-            grid-template-columns: 1fr 1fr !important;
-            gap: 0.75rem !important;
-        }
-
-        .btn-outline {
-            padding: 0.9rem 0.5rem !important;
-            font-size: 0.75rem !important;
+            min-width: 0 !important;
+            width: auto !important;
+            gap: 0.35rem !important;
+            flex-direction: column !important; /* Stack icon and text for row compactness */
+            text-align: center !important;
             border-radius: 12px !important;
-            background: rgba(255, 255, 255, 0.03) !important;
-            border: 1px solid rgba(255, 255, 255, 0.1) !important;
-            color: white !important;
-            height: auto !important;
-            display: flex !important;
-            justify-content: center !important;
-            align-items: center !important;
-            font-weight: 700 !important;
         }
 
-        /* Results button specific yellow border override */
-        .btn-outline[style*="rgba(234, 179, 8, 0.4)"] {
-            border-color: rgba(234, 179, 8, 0.4) !important;
-            color: #eab308 !important;
+        .action-group i {
+            font-size: 1rem !important;
         }
 
         /* ── STATS MATRIX ──
-           2-column grid for better horizontal space usage
+           FORCE 2-COLUMN to save space
         */
         .stats-matrix {
+            display: grid !important;
             grid-template-columns: 1fr 1fr !important;
-            gap: 1rem !important;
-            padding: 0 1rem !important;
-            margin-bottom: 2rem !important;
-        }
-
-        .stat-matrix-card {
-            padding: 1.5rem 1rem !important;
-            border-radius: 20px !important;
-            display: flex !important;
-            flex-direction: column !important;
-            align-items: center !important;
-            text-align: center !important;
-        }
-
-        .stat-icon-alpha {
-            width: 48px !important;
-            height: 48px !important;
-            border-radius: 14px !important;
-            font-size: 1.1rem !important;
-            margin-bottom: 1rem !important;
-        }
-
-        .stat-matrix-card h3 {
-            font-size: 0.7rem !important;
-            letter-spacing: 0.05em !important;
-            margin-bottom: 0.4rem !important;
-        }
-
-        .stat-matrix-card p {
-            font-size: 1.85rem !important;
-            font-weight: 900 !important;
-        }
-
-        /* ── INFRASTRUCTURE CONTROL TABLE ── */
-        .glass-panel[style*="padding: 3rem"] {
-            padding: 1.5rem !important;
-            margin: 0 1rem !important;
-            border-radius: 24px !important;
-        }
-
-        .glass-panel h2 {
-            font-size: 1.4rem !important;
-            justify-content: center !important;
+            gap: 0.6rem !important;
+            padding: 0 0.75rem !important;
             margin-bottom: 1.5rem !important;
         }
 
-        /* Hide complicated table headers, stack the content */
-        table thead { display: none !important; }
-        table tbody tr {
-            display: flex !important;
-            flex-direction: column !important;
-            padding: 1rem !important;
+        .stat-matrix-card {
+            padding: 1rem 0.75rem !important;
             border-radius: 16px !important;
-            margin-bottom: 1rem !important;
-            border: 1px solid rgba(255, 255, 255, 0.05) !important;
         }
 
-        table tbody td {
-            padding: 0.4rem 0 !important;
-            border: none !important;
-            text-align: center !important;
+        .stat-matrix-card h3 {
+            font-size: 0.65rem !important;
         }
 
-        table tbody td:first-child {
-            font-size: 1.1rem !important;
-            color: #ff3131 !important;
-        }
-
-        table tbody td:last-child {
-            justify-content: center !important;
-            display: flex !important;
-            padding-top: 1rem !important;
-        }
-
-        /* ── MISC ── */
-        .admission-system-note {
-            margin: 0 1rem 1rem !important;
-            padding: 0.85rem !important;
-            font-size: 0.75rem !important;
+        .stat-matrix-card p {
+            font-size: 1.6rem !important;
         }
     }
 
-    /* Small Phone adjustments */
+    /* Remove 480px grid override to keep 2-col */
     @media (max-width: 480px) {
         .admin-hero-card .hero-text h1 {
-            font-size: 1.85rem !important;
-        }
-        .stats-matrix {
-            grid-template-columns: 1fr !important;
+            font-size: 1.6rem !important;
         }
     }
 </style>
@@ -589,13 +506,6 @@ $insideCount = $stmtInside->fetchColumn();
             <i class="fa-solid fa-shield-halved" style="color: var(--p-brand);"></i>
             <span><?php echo htmlspecialchars($userName); ?></span>
             <span class="role-badge-admin">SUPER ADMIN</span>
-            
-            <!-- Integrated LIVE Status -->
-            <div class="live-badge-strip" id="liveSyncBadge" style="margin-left: 1rem; border: none; background: rgba(16, 185, 129, 0.1);">
-                <span class="live-pulse-dot"></span>
-                <span>LIVE</span>
-                <span id="lastSyncTime" style="opacity: 0.7; font-weight: 600; font-size: 0.65rem;">--:--:--</span>
-            </div>
         </div>
         <button class="logout-btn-premium" onclick="confirmLogout()">
             <i class="fa-solid fa-power-off"></i>
@@ -646,13 +556,8 @@ $insideCount = $stmtInside->fetchColumn();
             <p id="stat-events" style="font-size: 3rem; font-weight: 900; color: white; line-height: 1; transition: color 0.3s;"><?php echo $totalEvents; ?></p>
         </div>
         <div class="stat-matrix-card reveal" style="animation-delay: 0.1s;">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
-                <div class="stat-icon-alpha" style="background: rgba(16, 185, 129, 0.1); color: #10b981; margin-bottom: 0;">
-                    <i class="fa-solid fa-users-viewfinder"></i>
-                </div>
-                <span class="live-badge-strip" style="font-size: 0.6rem; padding: 0.2rem 0.6rem;">
-                    <span class="live-pulse-dot" style="width: 6px; height: 6px;"></span> LIVE
-                </span>
+            <div class="stat-icon-alpha" style="background: rgba(16, 185, 129, 0.1); color: #10b981; margin-bottom: 0.5rem;">
+                <i class="fa-solid fa-users-viewfinder"></i>
             </div>
             <h3 style="color: var(--p-text-muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem;">Outside Guests Inside</h3>
             <p id="stat-external" style="font-size: 3rem; font-weight: 900; color: white; line-height: 1; transition: color 0.3s;">0</p>
@@ -666,13 +571,8 @@ $insideCount = $stmtInside->fetchColumn();
             <p id="stat-reg" style="font-size: 3rem; font-weight: 900; color: white; line-height: 1; transition: color 0.3s;"><?php echo $totalReg; ?></p>
         </div>
         <div class="stat-matrix-card reveal" style="animation-delay: 0.3s;">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
-                <div class="stat-icon-alpha" style="background: rgba(239, 68, 68, 0.1); color: var(--p-brand); margin-bottom: 0;">
-                    <i class="fa-solid fa-wifi fa-fade"></i>
-                </div>
-                <span class="live-badge-strip" style="font-size: 0.6rem; padding: 0.2rem 0.6rem;">
-                    <span class="live-pulse-dot" style="width: 6px; height: 6px;"></span> LIVE
-                </span>
+            <div class="stat-icon-alpha" style="background: rgba(239, 68, 68, 0.1); color: var(--p-brand); margin-bottom: 0.5rem;">
+                <i class="fa-solid fa-wifi fa-fade"></i>
             </div>
             <h3 style="color: var(--p-text-muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem;">People Inside Campus</h3>
             <p id="stat-inside" style="font-size: 3rem; font-weight: 900; color: white; line-height: 1; transition: color 0.3s;"><?php echo $insideCount; ?></p>
