@@ -8,14 +8,17 @@ header("Pragma: no-cache");
 <?php
 // Dynamic Base Path Detection for Portability (Local XAMPP vs Server)
 $self = str_replace('\\', '/', $_SERVER['PHP_SELF']);
-$pos = strpos($self, '/EntryX/');
+// Use stripos to handle mixed-case URLs on different servers
+$pos = stripos($self, '/EntryX/');
 if ($pos !== false) {
     // Detects /Project/EntryX/ or /EntryX/ automatically
     $entryx_root = substr($self, 0, $pos + 8); 
 } else {
-    // Fallback if EntryX is the root of the domain
+    // If we're at the root of the domain OR in a case where /EntryX/ is hidden
     $entryx_root = '/';
 }
+// Clean up double slashes if any
+$entryx_root = str_replace('//', '/', $entryx_root);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -120,7 +123,7 @@ if ($pos !== false) {
                                 <a href="<?php echo $dashboardUrl; ?>" class="nav-link-premium">
                                     <i class="fa-solid fa-gauge-high" style="margin-right: 0.3rem;"></i>Dashboard
                                 </a>
-                                <a href="/Project/EntryX/pages/results.php" class="nav-link-premium">Results</a>
+                                <a href="<?php echo $entryx_root; ?>pages/results.php" class="nav-link-premium">Results</a>
                                 <a href="<?php echo $dashboardUrl; ?>" class="nav-link-premium">
                                     <i class="fa-solid fa-ticket" style="margin-right: 0.3rem;"></i>My Events
                                 </a>
@@ -129,8 +132,8 @@ if ($pos !== false) {
                         <?php else: ?>
                             <!-- PUBLIC / GUEST NAV -->
                             <div style="display: flex; gap: 2rem;" class="nav-links-main">
-                                <a href="/Project/EntryX/index.php" class="nav-link-premium">Home</a>
-                                <a href="/Project/EntryX/pages/results.php" class="nav-link-premium">Results</a>
+                                <a href="<?php echo $entryx_root; ?>index.php" class="nav-link-premium">Home</a>
+                                <a href="<?php echo $entryx_root; ?>pages/results.php" class="nav-link-premium">Results</a>
                             </div>
                         <?php endif; ?>
 
@@ -164,7 +167,7 @@ if ($pos !== false) {
                         <?php else: ?>
                             <!-- Guest: Login + Sign Up -->
                             <div style="display: flex; gap: 1rem;">
-                                <a href="/Project/EntryX/pages/user_login.php" class="btn btn-outline"
+                                <a href="<?php echo $entryx_root; ?>pages/user_login.php" class="btn btn-outline"
                                     style="padding: 0.6rem 1.4rem; font-size: 0.85rem; border-radius: 12px;">Login</a>
                             </div>
                         <?php endif; ?>
@@ -181,18 +184,18 @@ if ($pos !== false) {
             <div class="nav-mobile-drawer" id="navMobileDrawer">
                 <?php if ($isAdmin): ?>
                     <a href="<?php echo $dashboardUrl; ?>"><i class="fa-solid fa-gauge-high" style="margin-right:0.5rem;"></i>Dashboard</a>
-                    <a href="/Project/EntryX/pages/results.php"><i class="fa-solid fa-trophy" style="margin-right:0.5rem;"></i>Results</a>
+                    <a href="<?php echo $entryx_root; ?>pages/results.php"><i class="fa-solid fa-trophy" style="margin-right:0.5rem;"></i>Results</a>
                 <?php elseif ($isSecurity): ?>
                     <a href="<?php echo $dashboardUrl; ?>"><i class="fa-solid fa-camera" style="margin-right:0.5rem;"></i>Security Terminal</a>
                 <?php elseif ($isStaff): ?>
                     <a href="<?php echo $dashboardUrl; ?>"><i class="fa-solid fa-id-badge" style="margin-right:0.5rem;"></i>Staff Panel</a>
                 <?php elseif ($isStudent): ?>
                     <a href="<?php echo $dashboardUrl; ?>"><i class="fa-solid fa-gauge-high" style="margin-right:0.5rem;"></i>Dashboard</a>
-                    <a href="/Project/EntryX/pages/results.php"><i class="fa-solid fa-trophy" style="margin-right:0.5rem;"></i>Results</a>
+                    <a href="<?php echo $entryx_root; ?>pages/results.php"><i class="fa-solid fa-trophy" style="margin-right:0.5rem;"></i>Results</a>
                 <?php else: ?>
-                    <a href="/Project/EntryX/index.php"><i class="fa-solid fa-house" style="margin-right:0.5rem;"></i>Home</a>
-                    <a href="/Project/EntryX/pages/results.php"><i class="fa-solid fa-trophy" style="margin-right:0.5rem;"></i>Results</a>
-                    <a href="/Project/EntryX/pages/user_login.php"><i class="fa-solid fa-right-to-bracket" style="margin-right:0.5rem;"></i>Login</a>
+                    <a href="<?php echo $entryx_root; ?>index.php"><i class="fa-solid fa-house" style="margin-right:0.5rem;"></i>Home</a>
+                    <a href="<?php echo $entryx_root; ?>pages/results.php"><i class="fa-solid fa-trophy" style="margin-right:0.5rem;"></i>Results</a>
+                    <a href="<?php echo $entryx_root; ?>pages/user_login.php"><i class="fa-solid fa-right-to-bracket" style="margin-right:0.5rem;"></i>Login</a>
                 <?php endif; ?>
                 <?php if ($isLoggedIn): ?>
                     <button class="mobile-logout-btn" onclick="confirmNavLogout()">
