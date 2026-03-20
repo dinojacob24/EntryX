@@ -488,6 +488,60 @@ $insideCount = $stmtInside->fetchColumn();
         .stat-matrix-card p {
             font-size: 1.6rem !important;
         }
+
+        /* ── SECTION HEADERS (Admin Management, etc) ── */
+        .glass-panel[style*="padding: 3rem"] {
+            padding: 1.5rem !important;
+            margin: 0 0.75rem !important;
+            border-radius: 20px !important;
+        }
+
+        .section-header-flex {
+            flex-direction: column !important;
+            align-items: stretch !important;
+            gap: 1.25rem !important;
+            margin-bottom: 2rem !important;
+            text-align: center !important;
+        }
+
+        .section-header-flex h2 {
+            font-size: 1.4rem !important;
+            justify-content: center !important;
+            margin-bottom: 0 !important;
+        }
+
+        .section-header-flex p {
+            font-size: 0.8rem !important;
+            margin-top: 0.5rem !important;
+        }
+
+        .section-header-flex .btn {
+            width: 100% !important;
+            justify-content: center !important;
+            padding: 0.9rem !important;
+            font-size: 0.85rem !important;
+        }
+
+        /* table layout on mobile */
+        table thead { display: none !important; }
+        table tbody tr {
+            display: flex !important;
+            flex-direction: column !important;
+            padding: 1rem !important;
+            border-radius: 16px !important;
+            margin-bottom: 1rem !important;
+            border: 1px solid rgba(255, 255, 255, 0.05) !important;
+        }
+        table tbody td {
+            padding: 0.4rem 0 !important;
+            border: none !important;
+            text-align: center !important;
+        }
+        table tbody td:last-child {
+            justify-content: center !important;
+            display: flex !important;
+            padding-top: 1rem !important;
+        }
     }
 
     /* Remove 480px grid override to keep 2-col */
@@ -669,7 +723,7 @@ $insideCount = $stmtInside->fetchColumn();
 <!-- Admin Management -->
 <div class="glass-panel reveal"
     style="padding: 3rem; margin-top: 4rem; border-color: rgba(255,31,31,0.1); box-shadow: 0 40px 80px rgba(0,0,0,0.4); border-radius: 32px;">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2.5rem;">
+    <div class="section-header-flex" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2.5rem; gap: 1rem;">
         <h2 style="display: flex; align-items: center; gap: 1rem; font-size: 1.8rem; color: white; margin: 0;">
             <i class="fa-solid fa-user-shield" style="color: var(--p-brand);"></i> Admin Management
         </h2>
@@ -735,7 +789,7 @@ $insideCount = $stmtInside->fetchColumn();
 <!-- External Programs Management -->
 <div class="glass-panel reveal"
     style="padding: 3rem; margin-top: 4rem; border-color: rgba(16, 185, 129, 0.2); box-shadow: 0 40px 80px rgba(0,0,0,0.4); border-radius: 32px;">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2.5rem;">
+    <div class="section-header-flex" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2.5rem; gap: 1rem;">
         <div>
             <h2
                 style="display: flex; align-items: center; gap: 1rem; font-size: 1.8rem; color: white; margin: 0 0 0.5rem 0;">
@@ -777,7 +831,7 @@ $insideCount = $stmtInside->fetchColumn();
 <!-- Payment Verification Section -->
 <div class="glass-panel reveal"
     style="padding: 3rem; margin-top: 4rem; border-color: rgba(234, 179, 8, 0.2); box-shadow: 0 40px 80px rgba(0,0,0,0.4); border-radius: 32px;">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2.5rem;">
+    <div class="section-header-flex" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2.5rem; gap: 1rem;">
         <div>
             <h2
                 style="display: flex; align-items: center; gap: 1rem; font-size: 1.8rem; color: white; margin: 0 0 0.5rem 0;">
