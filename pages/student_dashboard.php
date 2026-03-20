@@ -66,8 +66,47 @@ $upcomingEventsCount = count($availableEvents);
 
 <style>
     .dashboard-container {
-        padding: 2rem 0;
+        padding: 2.5rem 0;
         position: relative;
+    }
+
+    /* ── NAV BRANDING OVERRIDE (Same as Admin) ──
+       Hide ENTRYX text, replace with User Identity next to logo
+    */
+    .nav-standard .container > a span {
+        display: none !important;
+    }
+
+    .nav-standard .container > a::after {
+        content: '<?php echo htmlspecialchars(explode(" ", $userName)[0]); ?> | <?php echo strtoupper($userRole); ?>';
+        display: inline-block;
+        color: white;
+        font-weight: 950;
+        font-size: 1rem;
+        padding: 0.4rem 1.2rem;
+        background: linear-gradient(135deg, rgba(255, 31, 31, 0.2) 0%, rgba(255, 31, 31, 0.05) 100%);
+        border: 1px solid rgba(255, 31, 31, 0.3);
+        border-radius: 12px;
+        margin-left: 1rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        box-shadow: 0 4px 15px rgba(255, 31, 31, 0.1);
+    }
+
+    @media (max-width: 768px) {
+        .nav-standard .container > a::after {
+            font-size: 0.65rem !important;
+            padding: 0.35rem 0.75rem !important;
+            margin-left: 0.4rem !important;
+            letter-spacing: 0.05em !important;
+            font-weight: 800 !important;
+        }
+
+        /* Ensure nav power button is prominent on mobile */
+        .nav-standard [onclick="confirmNavLogout()"] {
+            border-radius: 12px !important;
+            padding: 0.65rem 0.9rem !important;
+        }
     }
 
     /* Animated Background Particles */
@@ -448,16 +487,7 @@ $upcomingEventsCount = count($availableEvents);
     <!-- Welcome Section with Top Bar -->
     <div class="welcome-section reveal">
         <!-- Top Bar: Logout and User Info -->
-        <div class="dashboard-top-bar">
-            <div class="user-info-badge">
-                <span><?php echo htmlspecialchars($userName); ?></span>
-                <span class="role-badge"><?php echo str_replace('_', ' ', strtoupper($userRole)); ?></span>
-            </div>
-            <button class="logout-btn-premium" onclick="confirmLogout()">
-                <i class="fa-solid fa-power-off"></i>
-                <span>Logout</span>
-            </button>
-        </div>
+        <!-- Top Bar Consolidation: Identity moved to main nav via CSS -->
 
         <!-- Welcome Card -->
         <div class="welcome-card-premium">
