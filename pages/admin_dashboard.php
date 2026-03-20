@@ -1370,7 +1370,6 @@ $insideCount = $stmtInside->fetchColumn();
                 }
             });
         }
-        }
     }
 
     // Recover Global References for Event Form
