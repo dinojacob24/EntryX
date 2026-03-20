@@ -1,10 +1,14 @@
 <?php
-session_start();
+// === BOOTSTRAP: Load Project Root and Start Session ===
+require_once '../config/project_root.php';
 
-// Redirect already-authenticated users to their correct dashboard
-if (isset($_SESSION['user_id']) && isset($_SESSION['role'])) {
-    $role = $_SESSION['role'];
-    if (in_array($role, ['super_admin', 'event_admin'])) {
+// Check if already logged in - redirect based on role
+if (isset($_SESSION['user_id'])) {
+    $role = $_SESSION['role']; // Define $role here for subsequent checks
+    if ($role === 'internal' || $role === 'external') {
+        header('Location: student_dashboard.php');
+        exit;
+    } elseif (in_array($role, ['super_admin', 'event_admin'])) {
         header('Location: admin_dashboard.php');
         exit;
     } elseif ($role === 'security') {
@@ -13,7 +17,6 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role'])) {
     } elseif ($role === 'staff') {
         header('Location: staff_dashboard.php');
         exit;
-    } else {
         // internal / external students
         header('Location: student_dashboard.php');
         exit;

@@ -1,6 +1,7 @@
 <?php
-// Session and Authentication Checks MUST come before any includes
-session_start();
+// === BOOTSTRAP: Load Project Root and Start Session ===
+require_once '../config/project_root.php';
+?>
 
 // Access Control - Students and External Users Only
 if (!isset($_SESSION['user_id'])) {
@@ -1258,7 +1259,7 @@ $upcomingEventsCount = count($availableEvents);
                 timer: 1500,
                 timerProgressBar: true,
                 willClose: () => {
-                    window.location.href = '/Project/EntryX/api/auth.php?action=logout';
+                    window.location.href = '<?php echo $entryx_root; ?>api/auth.php?action=logout';
                 }
             });
         }

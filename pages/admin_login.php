@@ -1,16 +1,16 @@
 <?php
-session_start();
+// === BOOTSTRAP: Load Project Root and Start Session ===
+require_once '../config/project_root.php';
 
-if (isset($_SESSION['user_id'])) {
-    if (in_array($_SESSION['role'], ['super_admin', 'event_admin'])) {
-        header('Location: admin_dashboard.php');
-        exit;
-    }
-    // If a 'security' role user is logged in, redirect them to sub_admin_login.php as per instruction
-    if (in_array($_SESSION['role'], ['security'])) {
-        header('Location: sub_admin_login.php');
-        exit;
-    }
+// Redirect if already logged in
+if (isset($_SESSION['user_id']) && in_array($_SESSION['role'], ['super_admin', 'event_admin'])) {
+    header('Location: admin_dashboard.php');
+    exit;
+}
+// If a 'security' role user is logged in, redirect them to security_dashboard.php
+if (isset($_SESSION['user_id']) && in_array($_SESSION['role'], ['security'])) {
+    header('Location: security_dashboard.php');
+    exit;
 }
 
 require_once '../includes/header.php';

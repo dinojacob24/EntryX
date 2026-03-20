@@ -1,5 +1,6 @@
 <?php
-session_start();
+// === BOOTSTRAP: Load Project Root and Start Session ===
+require_once '../config/project_root.php';
 
 // Redirect already-authenticated users to their dashboard
 if (isset($_SESSION['user_id'])) {
@@ -117,7 +118,7 @@ require_once '../includes/header.php';
             loginBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Verifying...';
 
             try {
-                const res = await fetch('/Project/EntryX/api/auth.php?action=login', {
+                const res = await fetch('<?php echo $entryx_root; ?>api/auth.php?action=login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, password })

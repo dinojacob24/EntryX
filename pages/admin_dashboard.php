@@ -1,9 +1,7 @@
 <?php
-// Session and Authentication Checks MUST come before any includes
-if (session_status() === PHP_SESSION_NONE) {
-    session_set_cookie_params(0, '/Project/EntryX');
-    session_start();
-}
+// === BOOTSTRAP: Load Project Root and Start Session ===
+require_once '../config/project_root.php';
+?>
 
 // Access Control - Super Admin Only
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'super_admin') {
@@ -1366,7 +1364,7 @@ $insideCount = $stmtInside->fetchColumn();
                 timer: 1500,
                 timerProgressBar: true,
                 willClose: () => {
-                    window.location.href = '/Project/EntryX/api/auth.php?action=logout';
+                    window.location.href = '<?php echo ; ?>api/auth.php?action=logout';
                 }
             });
         }
@@ -1441,7 +1439,7 @@ $insideCount = $stmtInside->fetchColumn();
 
     async function editEvent(id) {
         try {
-            const res = await fetch(`/Project/EntryX/api/events.php?action=get&id=${id}`);
+            const res = await fetch(`<?php echo ; ?>api/events.php?action=get&id=${id}`);
             const result = await res.json();
 
             if (result.success) {
@@ -1499,7 +1497,7 @@ $insideCount = $stmtInside->fetchColumn();
         if (confirm.isConfirmed) {
             try {
                 // We'll create a simple API endpoint or use auth.php for this
-                const res = await fetch(`/Project/EntryX/api/auth.php?action=delete_user&id=${id}`, {
+                const res = await fetch(`<?php echo ; ?>api/auth.php?action=delete_user&id=${id}`, {
                     method: 'POST'
                 });
                 const result = await res.json();
@@ -1529,7 +1527,7 @@ $insideCount = $stmtInside->fetchColumn();
 
         if (confirm.isConfirmed) {
             try {
-                const res = await fetch(`/Project/EntryX/api/events.php?action=delete&id=${id}`, {
+                const res = await fetch(`<?php echo ; ?>api/events.php?action=delete&id=${id}`, {
                     method: 'POST'
                 });
                 const result = await res.json();
@@ -1649,7 +1647,7 @@ $insideCount = $stmtInside->fetchColumn();
 
         const id = document.getElementById('eventId').value;
         const action = id ? 'update' : 'create';
-        const url = `/Project/EntryX/api/events.php?action=${action}${id ? '&id=' + id : ''}`;
+        const url = `<?php echo ; ?>api/events.php?action=${action}${id ? '&id=' + id : ''}`;
 
         try {
             const saveBtn = document.getElementById('saveBtn');
@@ -1693,7 +1691,7 @@ $insideCount = $stmtInside->fetchColumn();
         const formData = new FormData(e.target);
 
         try {
-            const res = await fetch('/Project/EntryX/api/auth.php?action=register', {
+            const res = await fetch('<?php echo ; ?>api/auth.php?action=register', {
                 method: 'POST',
                 body: formData
             });
@@ -1732,7 +1730,7 @@ $insideCount = $stmtInside->fetchColumn();
 
     async function loadExternalPrograms() {
         try {
-            const res = await fetch('/Project/EntryX/api/external_programs.php?action=get_all');
+            const res = await fetch('<?php echo ; ?>api/external_programs.php?action=get_all');
             const result = await res.json();
 
             if (result.success) {
@@ -1749,7 +1747,7 @@ $insideCount = $stmtInside->fetchColumn();
 
     async function loadExternalRegStatus() {
         try {
-            const res = await fetch('/Project/EntryX/api/external_programs.php?action=get_settings');
+            const res = await fetch('<?php echo ; ?>api/external_programs.php?action=get_settings');
             const result = await res.json();
 
             if (result.success) {
@@ -1956,7 +1954,7 @@ $insideCount = $stmtInside->fetchColumn();
 
     async function editExternalProgram(id) {
         try {
-            const res = await fetch(`/Project/EntryX/api/external_programs.php?action=get&id=${id}`);
+            const res = await fetch(`<?php echo ; ?>api/external_programs.php?action=get&id=${id}`);
             const result = await res.json();
 
             if (result.success) {
@@ -2040,8 +2038,8 @@ $insideCount = $stmtInside->fetchColumn();
             if (finalConfirm.isConfirmed) {
                 try {
                     const url = force
-                        ? `/Project/EntryX/api/external_programs.php?action=delete&id=${id}&force=true`
-                        : `/Project/EntryX/api/external_programs.php?action=delete&id=${id}`;
+                        ? `<?php echo ; ?>api/external_programs.php?action=delete&id=${id}&force=true`
+                        : `<?php echo ; ?>api/external_programs.php?action=delete&id=${id}`;
 
                     const res = await fetch(url, { method: 'POST' });
                     const result = await res.json();
@@ -2092,7 +2090,7 @@ $insideCount = $stmtInside->fetchColumn();
 
         if (confirm.isConfirmed) {
             try {
-                const res = await fetch(`/Project/EntryX/api/external_programs.php?action=enable_external_registration&program_id=${programId}`, {
+                const res = await fetch(`<?php echo ; ?>api/external_programs.php?action=enable_external_registration&program_id=${programId}`, {
                     method: 'POST'
                 });
                 const result = await res.json();
@@ -2124,7 +2122,7 @@ $insideCount = $stmtInside->fetchColumn();
 
         if (confirm.isConfirmed) {
             try {
-                const res = await fetch('/Project/EntryX/api/external_programs.php?action=disable_external_registration', {
+                const res = await fetch('<?php echo ; ?>api/external_programs.php?action=disable_external_registration', {
                     method: 'POST'
                 });
                 const result = await res.json();
@@ -2280,7 +2278,7 @@ $insideCount = $stmtInside->fetchColumn();
 
         const id = document.getElementById('externalProgramId').value;
         const action = id ? 'update' : 'create';
-        const url = `/Project/EntryX/api/external_programs.php?action=${action}${id ? '&id=' + id : ''}`;
+        const url = `<?php echo ; ?>api/external_programs.php?action=${action}${id ? '&id=' + id : ''}`;
 
         try {
             const saveBtn = document.getElementById('saveProgramBtn');
@@ -2407,7 +2405,7 @@ $insideCount = $stmtInside->fetchColumn();
     async function loadPendingPayments() {
         const container = document.getElementById('pendingPaymentsTableContainer');
         try {
-            const res = await fetch('/Project/EntryX/api/verify_payment.php?action=list_pending');
+            const res = await fetch('<?php echo ; ?>api/verify_payment.php?action=list_pending');
             const result = await res.json();
 
             if (result.success) {
@@ -2502,7 +2500,7 @@ $insideCount = $stmtInside->fetchColumn();
 
         if (confirm.isConfirmed) {
             try {
-                const res = await fetch('/Project/EntryX/api/verify_payment.php?action=verify', {
+                const res = await fetch('<?php echo ; ?>api/verify_payment.php?action=verify', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ registration_id: regId })
@@ -2543,7 +2541,7 @@ $insideCount = $stmtInside->fetchColumn();
             color: '#fff'
         });
         if (res.isConfirmed) {
-            window.location.href = '/Project/EntryX/api/auth.php?action=logout';
+            window.location.href = '<?php echo ; ?>api/auth.php?action=logout';
         }
     }
 
@@ -2570,7 +2568,7 @@ $insideCount = $stmtInside->fetchColumn();
 
     async function fetchLiveDashboardStats() {
         try {
-            const res = await fetch('/Project/EntryX/api/stats.php?action=dashboard_live&_t=' + Date.now());
+            const res = await fetch('<?php echo ; ?>api/stats.php?action=dashboard_live&_t=' + Date.now());
             if (!res.ok) return;
             const data = await res.json();
 

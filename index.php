@@ -1,7 +1,8 @@
 <?php
-session_start();
+// === BOOTSTRAP: Load Project Root and Start Session ===
+require_once 'config/project_root.php';
 
-// === ROLE-BASED REDIRECT: Don't let logged-in users land on public homepage ===
+// === ROLE-BASED REDIRECT ===
 if (isset($_SESSION['user_id']) && isset($_SESSION['role'])) {
     $role = $_SESSION['role'];
     if (in_array($role, ['super_admin', 'event_admin'])) {

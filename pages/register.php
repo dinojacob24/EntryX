@@ -1,9 +1,7 @@
 <?php
-// Session and Authentication Checks MUST come before any includes
-if (session_status() === PHP_SESSION_NONE) {
-    session_set_cookie_params(0, '/Project/EntryX');
-    session_start();
-}
+// === BOOTSTRAP: Load Project Root and Start Session ===
+require_once '../config/project_root.php';
+?>
 require_once '../config/db_connect.php';
 
 // Force clear session ONLY if not an admin (to allow administrators to test without being logged out)
@@ -359,7 +357,7 @@ require_once '../includes/header.php';
         submitBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Processing...';
 
         try {
-            const res = await fetch('/Project/EntryX/api/auth.php?action=register', {
+            const res = await fetch('<?php echo $entryx_root; ?>api/auth.php?action=register', {
                 method: 'POST',
                 body: formData
             });

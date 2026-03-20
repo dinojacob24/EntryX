@@ -6,19 +6,8 @@ header("Cache-Control: post-check=0, pre-check=0", false);
 header("Pragma: no-cache");
 ?>
 <?php
-// Dynamic Base Path Detection for Portability (Local XAMPP vs Server)
-$self = str_replace('\\', '/', $_SERVER['PHP_SELF']);
-// Use stripos to handle mixed-case URLs on different servers
-$pos = stripos($self, '/EntryX/');
-if ($pos !== false) {
-    // Detects /Project/EntryX/ or /EntryX/ automatically
-    $entryx_root = substr($self, 0, $pos + 8); 
-} else {
-    // If we're at the root of the domain OR in a case where /EntryX/ is hidden
-    $entryx_root = '/';
-}
-// Clean up double slashes if any
-$entryx_root = str_replace('//', '/', $entryx_root);
+// Project Root Configuration (Detects /Project/EntryX/ vs Server /)
+require_once __DIR__ . '/../config/project_root.php';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -206,6 +195,9 @@ $entryx_root = str_replace('//', '/', $entryx_root);
         </nav>
 
         <script>
+            // Global Route Helper
+            const ENTRYX_ROOT = '<?php echo $entryx_root; ?>';
+
             // Logout confirmation from nav
             async function confirmNavLogout() {
                 const res = await Swal.fire({

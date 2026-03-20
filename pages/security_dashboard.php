@@ -1,6 +1,7 @@
 <?php
-// Session check MUST be at the very top
-session_start();
+// === BOOTSTRAP: Load Project Root and Start Session ===
+require_once '../config/project_root.php';
+// Session check MUST be at the very top (Done by project_root)
 
 // Access Control - Security and Admins only
 if (!isset($_SESSION['user_id']) || !in_array($_SESSION['role'], ['security', 'super_admin', 'event_admin'])) {
@@ -2220,7 +2221,7 @@ window.addEventListener('resize', checkMobileLogBtn);
     async function confirmLogout() {
         if (typeof Swal === 'undefined') {
             if (confirm("Are you sure you want to end your security shift?")) {
-                window.location.href = '/Project/EntryX/api/auth.php?action=logout';
+                window.location.href = '<?php echo $entryx_root; ?>api/auth.php?action=logout';
             }
             return;
         }
@@ -2252,7 +2253,7 @@ window.addEventListener('resize', checkMobileLogBtn);
                 timer: 1500,
                 timerProgressBar: true,
                 willClose: () => {
-                    window.location.href = '/Project/EntryX/api/auth.php?action=logout';
+                    window.location.href = '<?php echo $entryx_root; ?>api/auth.php?action=logout';
                 }
             });
         }
