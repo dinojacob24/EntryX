@@ -110,7 +110,7 @@ require_once '../includes/header.php';
                 loginBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Logging In...';
 
                 try {
-                    const res = await fetch('/Project/EntryX/api/auth.php?action=login', {
+                    const res = await fetch('../api/auth.php?action=login', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ email, password })
