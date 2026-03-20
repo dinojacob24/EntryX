@@ -479,27 +479,35 @@ $insideCount = $stmtInside->fetchColumn();
             display: contents !important;
         }
 
-        /* Unified button style for the single row */
+        /* ── HERO ACTION BUTTONS (Stacked & Full Breadth) ── */
         .action-group .btn {
-            flex: 1 !important;
-            padding: 0.75rem 0.4rem !important;
-            font-size: 0.68rem !important;
+            width: 100% !important;
+            flex: none !important;
+            padding: 1.25rem !important;
+            font-size: 0.95rem !important;
+            flex-direction: row !important; /* Keep icon and text side-by-side */
+            justify-content: center !important;
             height: auto !important;
-            min-width: 0 !important;
-            width: auto !important;
-            gap: 0.35rem !important;
-            flex-direction: column !important; /* Stack icon and text for row compactness */
-            text-align: center !important;
-            border-radius: 12px !important;
+            margin-bottom: 0.8rem !important;
+            gap: 1rem !important;
+            border-radius: 16px !important;
         }
 
-        .action-group i {
-            font-size: 1rem !important;
+        .action-group > div {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 0 !important;
         }
 
-        /* ── STATS MATRIX ──
-           FORCE 2-COLUMN to save space
-        */
+        .action-group > div > div.sub-actions-stack {
+            display: flex !important;
+            flex-direction: column !important; /* Stack SUB-ADMIN and RESULTS */
+            width: 100% !important;
+            gap: 0 !important;
+            grid-template-columns: 1fr !important; /* Force override of the grid */
+        }
+
+        /* ── STATS MATRIX ── */
         .stats-matrix {
             display: grid !important;
             grid-template-columns: 1fr 1fr !important;
@@ -603,12 +611,13 @@ $insideCount = $stmtInside->fetchColumn();
         <div class="action-group"
             style="background: rgba(255,255,255,0.03); padding: 2rem; border-radius: 24px; border: 1px solid rgba(255,255,255,0.05);">
             <div style="display: flex; flex-direction: column; gap: 1rem;">
+                <!-- Full-width ADD NEW EVENT -->
                 <button class="btn btn-primary"
-                    style="border-radius: 12px; padding: 1.2rem; min-width: 250px; justify-content: center; font-weight: 800; letter-spacing: 0.05em;"
+                    style="border-radius: 12px; padding: 1.2rem; width: 100%; justify-content: center; font-weight: 800; letter-spacing: 0.05em;"
                     onclick="openModal()">
                     <i class="fa-solid fa-plus-circle"></i> ADD NEW EVENT
                 </button>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;" class="sub-actions-stack">
                     <button class="btn btn-outline"
                         style="border-radius: 12px; border-color: rgba(255,255,255,0.1); color: white;"
                         onclick="document.getElementById('adminModal').style.display='flex'">
@@ -1361,9 +1370,11 @@ $insideCount = $stmtInside->fetchColumn();
                 }
             });
         }
+        }
     }
 
-    const modal = document.getElementById('eventModal');
+    // Recover Global References for Event Form
+    const eventModal = document.getElementById('eventModal');
     const eventForm = document.getElementById('eventForm');
     const isPaid = document.getElementById('isPaid');
     const paidSettings = document.getElementById('paidSettings');
@@ -1371,7 +1382,7 @@ $insideCount = $stmtInside->fetchColumn();
     const groupSettings = document.getElementById('groupSettings');
 
     function openModal(isEdit = false) {
-        modal.style.display = 'flex';
+        eventModal.style.display = 'flex';
         document.getElementById('modalTitle').innerText = isEdit ? 'Edit Event Settings' : 'Add New Event';
         document.getElementById('saveBtn').innerText = isEdit ? 'Save Changes' : 'Publish Event';
         document.getElementById('statusSection').style.display = isEdit ? 'block' : 'none';
