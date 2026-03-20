@@ -188,7 +188,7 @@ $events = $eventObj->getAllEvents();
         });
 
         if (confirmResult.isConfirmed) {
-            window.location.href = '/Project/EntryX/api/auth.php?action=logout';
+            window.location.href = ENTRYX_ROOT + 'api/auth.php?action=logout';
         }
     }
 </script>

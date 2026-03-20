@@ -39,11 +39,11 @@ if (
                 <div>
                     <h4 style="margin-bottom: 1rem;">Quick Links</h4>
                     <ul style="list-style: none; display: flex; flex-direction: column; gap: 0.5rem;">
-                        <li><a href="<?php echo isset($_SESSION['user_id']) ? ($dashboardUrl ?? '/Project/EntryX/') : '/Project/EntryX/'; ?>"
+                        <li><a href="<?php echo isset($_SESSION['user_id']) ? ($dashboardUrl ?? $entryx_root) : $entryx_root; ?>"
                                 style="color: var(--text-muted); font-size: 0.9rem;">Home</a></li>
-                        <li><a href="/Project/EntryX/pages/results.php"
+                        <li><a href="<?php echo $entryx_root; ?>pages/results.php"
                                 style="color: var(--text-muted); font-size: 0.9rem;">Results</a></li>
-                        <li><a href="/Project/EntryX/pages/user_login.php"
+                        <li><a href="<?php echo $entryx_root; ?>pages/user_login.php"
                                 style="color: var(--text-muted); font-size: 0.9rem;">Login</a></li>
                     </ul>
                 </div>
@@ -66,7 +66,7 @@ if (
 
         <div
             style="text-align: center; <?php echo !$hideExpandedFooter ? 'padding-top: 2rem; border-top: 1px solid rgba(255,255,255,0.05);' : ''; ?> color: var(--text-muted); font-size: 0.85rem;">
-            &copy; <?php echo date('Y'); ?> EntryX Event Systems. Built for MCA Mini Project.
+            &copy; <?php echo date('Y'); ?> EntryX Event Systems.
         </div>
     </div>
 </footer>

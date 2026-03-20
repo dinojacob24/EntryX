@@ -44,21 +44,20 @@ require_once __DIR__ . '/../config/project_root.php';
         $isLoggedIn = !empty($userId);
 
         // Dashboard links per role
-        $dashboardUrl = '/Project/EntryX/pages/student_dashboard.php';
+        $dashboardUrl = $entryx_root . 'pages/student_dashboard.php';
         $dashboardLabel = 'My Dashboard';
         if ($isAdmin) {
-            $dashboardUrl = '/Project/EntryX/pages/admin_dashboard.php';
+            $dashboardUrl = $entryx_root . 'pages/admin_dashboard.php';
             $dashboardLabel = 'Admin Panel';
         }
         if ($isSecurity) {
-            $dashboardUrl = '/Project/EntryX/pages/security_dashboard.php';
+            $dashboardUrl = $entryx_root . 'pages/security_dashboard.php';
             $dashboardLabel = 'Security Terminal';
         }
         if ($isStaff) {
-            $dashboardUrl = '/Project/EntryX/pages/staff_dashboard.php';
+            $dashboardUrl = $entryx_root . 'pages/staff_dashboard.php';
             $dashboardLabel = 'Staff Panel';
-        }
-        ?>
+        }        ?>
         <nav class="nav-standard">
             <div class="container" style="display: flex; justify-content: space-between; align-items: center;">
                 <?php if ($isLoggedIn): ?>
@@ -67,16 +66,28 @@ require_once __DIR__ . '/../config/project_root.php';
                         style="display: flex; align-items: center; gap: 0.75rem; text-decoration: none;">
                     <?php else: ?>
                         <!-- GUEST: clicking logo goes to public home -->
-                        <a href="/Project/EntryX/index.php"
+                        <a href="<?php echo $entryx_root; ?>index.php"
                             style="display: flex; align-items: center; gap: 0.75rem; text-decoration: none;">
                         <?php endif; ?>
                         <div
                             style="width: 42px; height: 42px; background: var(--grad-crimson); border-radius: 12px; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 20px rgba(255,31,31,0.3);">
                             <i class="fa-solid fa-bolt" style="color: white; font-size: 1.2rem;"></i>
                         </div>
-                        <span
-                            style="font-size: 1.4rem; font-weight: 900; color: white; letter-spacing: -0.05em; font-family: 'Plus Jakarta Sans';">ENTRY<span
-                                style="color: var(--p-brand);">X</span></span>
+                        <?php if ($isLoggedIn): ?>
+                        <span style="font-size: 1rem; font-weight: 900; color: white; letter-spacing: 0.05em; font-family: 'Plus Jakarta Sans'; padding: 0.4rem 1.2rem; background: linear-gradient(135deg, rgba(255,31,31,0.2) 0%, rgba(255,31,31,0.05) 100%); border: 1px solid rgba(255,31,31,0.3); border-radius: 12px; text-transform: uppercase;" class="nav-role-badge">
+                            <?php echo htmlspecialchars(explode(' ', $_SESSION['name'])[0]); ?> | <?php
+                                $roleLabel = match($userRole) {
+                                    'internal' => 'Internal',
+                                    'external' => 'External',
+                                    'super_admin', 'event_admin' => 'Admin',
+                                    'security' => 'Security',
+                                    'staff' => 'Staff',
+                                    default => ucfirst($userRole)
+                                };
+                                echo $roleLabel;
+                            ?>
+                        </span>
+                        <?php endif; ?>
                     </a>
 
                     <div style="display: flex; gap: 2.5rem; align-items: center;">
@@ -87,7 +98,7 @@ require_once __DIR__ . '/../config/project_root.php';
                                 <a href="<?php echo $dashboardUrl; ?>" class="nav-link-premium">
                                     <i class="fa-solid fa-gauge-high" style="margin-right: 0.3rem;"></i>Dashboard
                                 </a>
-                                <a href="/Project/EntryX/pages/results.php" class="nav-link-premium">Results</a>
+                                <a href="<?php echo $entryx_root; ?>pages/results.php" class="nav-link-premium">Results</a>
                             </div>
 
                         <?php elseif ($isSecurity): ?>
@@ -328,6 +339,14 @@ require_once __DIR__ . '/../config/project_root.php';
         .main-content-wrapper {
             flex: 1;
             padding: 2rem 0;
+        }
+
+        @media (max-width: 768px) {
+            .nav-role-badge {
+                font-size: 0.65rem !important;
+                padding: 0.35rem 0.75rem !important;
+                letter-spacing: 0.05em !important;
+            }
         }
     </style>
 

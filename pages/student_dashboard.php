@@ -1,7 +1,6 @@
 <?php
 // === BOOTSTRAP: Load Project Root and Start Session ===
 require_once '../config/project_root.php';
-?>
 
 // Access Control - Students and External Users Only
 if (!isset($_SESSION['user_id'])) {
@@ -72,43 +71,8 @@ $upcomingEventsCount = count($availableEvents);
     }
 
     /* ── NAV BRANDING OVERRIDE (Same as Admin) ──
-       Hide ENTRYX text, replace with User Identity next to logo
+       Identity shown via header.php span directly
     */
-    .nav-standard .container > a span {
-        display: none !important;
-    }
-
-    .nav-standard .container > a::after {
-        content: '<?php echo htmlspecialchars(explode(" ", $userName)[0]); ?> | <?php echo strtoupper($userRole); ?>';
-        display: inline-block;
-        color: white;
-        font-weight: 950;
-        font-size: 1rem;
-        padding: 0.4rem 1.2rem;
-        background: linear-gradient(135deg, rgba(255, 31, 31, 0.2) 0%, rgba(255, 31, 31, 0.05) 100%);
-        border: 1px solid rgba(255, 31, 31, 0.3);
-        border-radius: 12px;
-        margin-left: 1rem;
-        letter-spacing: 0.1em;
-        text-transform: uppercase;
-        box-shadow: 0 4px 15px rgba(255, 31, 31, 0.1);
-    }
-
-    @media (max-width: 768px) {
-        .nav-standard .container > a::after {
-            font-size: 0.65rem !important;
-            padding: 0.35rem 0.75rem !important;
-            margin-left: 0.4rem !important;
-            letter-spacing: 0.05em !important;
-            font-weight: 800 !important;
-        }
-
-        /* Ensure nav power button is prominent on mobile */
-        .nav-standard [onclick="confirmNavLogout()"] {
-            border-radius: 12px !important;
-            padding: 0.65rem 0.9rem !important;
-        }
-    }
 
     /* Animated Background Particles */
     .dashboard-container::before {

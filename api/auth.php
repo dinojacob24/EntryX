@@ -5,6 +5,7 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+require_once __DIR__ . '/../config/project_root.php';
 require_once __DIR__ . '/../config/db_connect.php';
 require_once __DIR__ . '/../classes/User.php';
 require_once __DIR__ . '/../classes/Mailer.php';
@@ -238,7 +239,7 @@ try {
         $token = $user->createResetToken($email);
 
         if ($token) {
-            $resetLink = "/Project/EntryX/pages/reset_password.php?token=" . $token;
+            $resetLink = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . $entryx_root . 'pages/reset_password.php?token=' . $token;
 
             // Try to Send Email
             $emailSent = Mailer::sendResetEmail($email, $resetLink);

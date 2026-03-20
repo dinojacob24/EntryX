@@ -1,11 +1,7 @@
 <?php
+require_once '../config/project_root.php';
 require_once '../config/db_connect.php';
 require_once '../classes/Registration.php';
-
-if (session_status() === PHP_SESSION_NONE) {
-    session_set_cookie_params(0, '/Project/EntryX');
-    session_start();
-}
 
 header('Content-Type: application/json');
 

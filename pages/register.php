@@ -1,7 +1,6 @@
 <?php
 // === BOOTSTRAP: Load Project Root and Start Session ===
 require_once '../config/project_root.php';
-?>
 require_once '../config/db_connect.php';
 
 // Force clear session ONLY if not an admin (to allow administrators to test without being logged out)

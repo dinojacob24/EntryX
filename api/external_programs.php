@@ -4,11 +4,7 @@
  * Handles CRUD operations for external registration programs
  * Super Admin Only
  */
-
-if (session_status() === PHP_SESSION_NONE) {
-    session_set_cookie_params(0, '/Project/EntryX');
-    session_start();
-}
+require_once '../config/project_root.php';
 header('Content-Type: application/json');
 
 require_once '../config/db_connect.php';

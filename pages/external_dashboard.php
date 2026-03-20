@@ -1,5 +1,5 @@
-<?php
-session_start();
+﻿<?php
+require_once '../config/project_root.php';
 // Access Level Check - Only External Users
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'external') {
     header('Location: user_login.php');
@@ -66,238 +66,230 @@ $availableEvents = array_filter($allEvents, function ($e) use ($registeredEventI
 $totalEventsJoined = count($myRegs);
 $upcomingEventsCount = count($availableEvents);
 ?>
+<style>
+    .dashboard-container { padding: 2.5rem 0; position: relative; }
+    .dashboard-container::before {
+        content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: radial-gradient(circle at 10% 20%, rgba(255,31,31,0.05) 0%, transparent 40%),
+                    radial-gradient(circle at 90% 80%, rgba(255,31,31,0.03) 0%, transparent 40%),
+                    radial-gradient(circle at 50% 50%, rgba(10,10,10,1) 0%, rgba(0,0,0,1) 100%);
+        pointer-events: none; z-index: -1;
+    }
+    .welcome-card-premium {
+        background: linear-gradient(135deg, rgba(255,31,31,0.05) 0%, rgba(10,10,10,0.8) 100%);
+        backdrop-filter: blur(20px); border: 1px solid rgba(255,31,31,0.15); border-radius: 32px;
+        padding: 4rem; display: flex; justify-content: space-between; align-items: center;
+        position: relative; overflow: hidden; margin-bottom: 4rem;
+        box-shadow: 0 30px 60px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.03);
+    }
+    .welcome-card-premium::before {
+        content: ''; position: absolute; top: -50%; right: -20%; width: 400px; height: 400px;
+        background: radial-gradient(circle, rgba(255,31,31,0.08), transparent 60%);
+        filter: blur(60px); animation: float 8s ease-in-out infinite;
+    }
+    @keyframes float { 0%,100%{transform:translateY(0px) rotate(0deg);} 50%{transform:translateY(-20px) rotate(5deg);} }
+    .welcome-text h1 {
+        font-size: 4rem; margin-bottom: 1rem;
+        background: linear-gradient(135deg, #ffffff 0%, #ff1f1f 100%);
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        font-weight: 900; letter-spacing: -0.03em; line-height: 1.1;
+    }
+    .welcome-text p { color: var(--p-text-dim); font-size: 1.3rem; line-height: 1.6; font-weight: 500; }
+    .user-avatar-large {
+        width: 130px; height: 130px; border-radius: 35px;
+        background: linear-gradient(45deg, #10b981, #059669);
+        display: flex; align-items: center; justify-content: center;
+        color: white; font-size: 4rem; font-weight: 900;
+        box-shadow: 0 25px 50px rgba(16,185,129,0.4); flex-shrink: 0;
+        transform: rotate(-5deg); transition: 0.5s cubic-bezier(0.175,0.885,0.32,1.275);
+    }
+    .user-avatar-large:hover { transform: rotate(0deg) scale(1.1); }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2.5rem; margin-bottom: 5rem; }
+    .stat-card-ultra {
+        background: linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%);
+        border: 1px solid var(--p-border); border-radius: 28px; padding: 2.5rem;
+        display: flex; align-items: center; gap: 2rem;
+        transition: all 0.5s cubic-bezier(0.175,0.885,0.32,1.275); position: relative; overflow: hidden;
+    }
+    .stat-card-ultra:hover { background: rgba(255,255,255,0.05); border-color: rgba(255,31,31,0.3); transform: translateY(-8px) scale(1.02); box-shadow: 0 25px 50px rgba(0,0,0,0.4); }
+    .stat-icon-wrapper { width: 72px; height: 72px; border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; background: linear-gradient(135deg, rgba(255,31,31,0.15) 0%, rgba(255,31,31,0.05) 100%); color: var(--p-brand); box-shadow: 0 10px 30px rgba(255,31,31,0.2); }
+    .section-title { font-size: 2.8rem; margin-bottom: 3.5rem; display: flex; align-items: center; gap: 1.5rem; color: white; font-weight: 900; letter-spacing: -0.04em; text-shadow: 0 10px 20px rgba(0,0,0,0.5); }
+    .section-title::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, rgba(255,255,255,0.1), transparent); }
+    .event-card-glass { background: linear-gradient(135deg, rgba(15,15,15,0.9) 0%, rgba(10,10,10,0.8) 100%); backdrop-filter: blur(20px); border: 1px solid var(--p-border); border-radius: 28px; overflow: hidden; transition: all 0.5s cubic-bezier(0.165,0.84,0.44,1); position: relative; }
+    .event-card-glass:hover { transform: translateY(-12px); border-color: rgba(255,31,31,0.4); box-shadow: 0 30px 60px rgba(0,0,0,0.5), 0 0 40px rgba(255,31,31,0.1); }
+    .card-banner { height: 140px; background: linear-gradient(135deg, rgba(255,31,31,0.15) 0%, rgba(0,0,0,0.3) 100%); padding: 2rem; display: flex; justify-content: flex-end; align-items: flex-start; position: relative; overflow: hidden; }
+    .card-content { padding: 2.5rem; }
+    .event-meta-item { display: flex; align-items: center; gap: 1rem; color: var(--p-text-dim); font-size: 1rem; margin-bottom: 1rem; transition: all 0.3s ease; }
+    .event-meta-item:hover { color: white; transform: translateX(5px); }
+    .event-meta-item i { color: var(--p-brand); width: 24px; font-size: 1.1rem; }
+    .price-badge { background: linear-gradient(135deg, rgba(255,31,31,0.2) 0%, rgba(255,31,31,0.1) 100%); color: var(--p-brand); padding: 0.6rem 1.5rem; border-radius: 999px; font-weight: 800; font-size: 1.1rem; letter-spacing: 0.05em; border: 1px solid rgba(255,31,31,0.3); box-shadow: 0 5px 20px rgba(255,31,31,0.2); }
+    .price-badge.free { background: linear-gradient(135deg, rgba(16,185,129,0.2) 0%, rgba(16,185,129,0.1) 100%); color: #10b981; border-color: rgba(16,185,129,0.3); box-shadow: 0 5px 20px rgba(16,185,129,0.2); }
+    @keyframes pulse { 0%{transform:scale(1);opacity:1;} 50%{transform:scale(1.05);opacity:0.8;} 100%{transform:scale(1);opacity:1;} }
+    @media (max-width: 768px) { .welcome-card-premium{padding:2rem;flex-direction:column;gap:2rem;} .welcome-text h1{font-size:2.5rem;} .user-avatar-large{width:80px;height:80px;font-size:2.5rem;} }
+</style>
 
-<div class="dashboard-container" style="padding: 2rem 5%; min-height: 90vh; background: #000;">
-    <!-- Top Bar -->
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3rem;">
-        <div>
-            <h1 style="color: white; font-size: 2.5rem; font-weight: 800; margin-bottom: 0.5rem;">Hello,
-                <?php echo explode(' ', $userName)[0]; ?>! 👋
-            </h1>
-            <p style="color: var(--p-text-dim);">Welcome to your Guest Experience Hub.</p>
-        </div>
-        <div style="display: flex; align-items: center; gap: 1.5rem;">
-            <!-- View Entry QR Code Button -->
-            <button onclick="showEntryQR()" class="btn btn-primary"
-                style="border-radius: 99px; padding: 0.6rem 1.5rem; display: flex; align-items: center; gap: 0.5rem; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: none;">
-                <i class="fa-solid fa-qrcode"></i> View Entry QR Code
-            </button>
-            <div
-                style="background: rgba(255,255,255,0.05); padding: 0.6rem 1.5rem; border-radius: 99px; border: 1px solid var(--p-border);">
-                <span
-                    style="color: #ff1f1f; font-weight: 800; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; margin-right: 0.8rem;">GUEST</span>
-                <span
-                    style="color: white; font-weight: 600; font-size: 0.9rem;"><?php echo htmlspecialchars($userEmail); ?></span>
+<div class="dashboard-container">
+
+    <!-- Welcome Section -->
+    <div class="welcome-section reveal" style="margin-bottom: 4rem;">
+        <div class="welcome-card-premium">
+            <div class="welcome-text">
+                <span style="background: rgba(16,185,129,0.2); color: #10b981; padding: 0.4rem 1rem; border-radius: 50px; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 1.5rem; display: inline-block; border: 1px solid rgba(16,185,129,0.3);">
+                    <i class="fa-solid fa-star" style="margin-right: 0.5rem;"></i> Guest Pass
+                </span>
+                <h1>Hi, <?php echo explode(' ', $userName)[0]; ?>! 👋</h1>
+                <p>Welcome to your <strong>Guest Experience Hub</strong>. Explore and register for events.</p>
+                <button onclick="showEntryQR()" class="btn btn-primary"
+                    style="margin-top: 2rem; border-radius: 99px; padding: 0.8rem 2rem; display: inline-flex; align-items: center; gap: 0.6rem; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: none; font-weight: 700;">
+                    <i class="fa-solid fa-qrcode"></i> View Entry QR Code
+                </button>
             </div>
-            <a href="../api/auth.php?action=logout" class="btn btn-outline"
-                style="border-radius: 99px; padding: 0.6rem 1.5rem; border-color: rgba(239, 68, 68, 0.3); color: #ef4444; background: none; border-style: solid; border-width: 1px; text-decoration: none;">
-                <i class="fa-solid fa-power-off"></i> Logout
-            </a>
-
-
+            <div class="user-avatar-large"><?php echo strtoupper(substr($userName, 0, 1)); ?></div>
         </div>
     </div>
 
-    <!-- Stats Grid -->
-    <div
-        style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem; margin-bottom: 4rem;">
-        <div class="glass-panel"
-            style="padding: 2rem; display: flex; align-items: center; gap: 1.5rem; border-color: rgba(255,31,31,0.1); background: rgba(255,255,255,0.03);">
-            <div
-                style="width: 60px; height: 60px; background: rgba(16, 185, 129, 0.1); border-radius: 18px; display: flex; align-items: center; justify-content: center; color: #10b981;">
-                <i class="fa-solid fa-ticket fa-xl"></i>
-            </div>
+    <!-- Stats -->
+    <div class="stats-grid">
+        <div class="stat-card-ultra reveal" style="animation-delay: 0.1s;">
+            <div class="stat-icon-wrapper" style="color: #10b981; background: rgba(16,185,129,0.1);"><i class="fa-solid fa-ticket"></i></div>
             <div>
-                <div style="font-size: 1.8rem; font-weight: 800; color: white;"><?php echo $totalEventsJoined; ?></div>
-                <div
-                    style="color: var(--p-text-dim); font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">
-                    Events Joined</div>
+                <div style="color: var(--p-text-muted); font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.2rem;">Events Joined</div>
+                <div style="font-size: 2rem; font-weight: 800; color: white; line-height: 1;"><?php echo $totalEventsJoined; ?></div>
             </div>
         </div>
-        <div class="glass-panel"
-            style="padding: 2rem; display: flex; align-items: center; gap: 1.5rem; border-color: rgba(255,31,31,0.1); background: rgba(255,255,255,0.03);">
-            <div
-                style="width: 60px; height: 60px; background: rgba(59, 130, 246, 0.1); border-radius: 18px; display: flex; align-items: center; justify-content: center; color: #3b82f6;">
-                <i class="fa-solid fa-calendar-star fa-xl"></i>
-            </div>
+        <div class="stat-card-ultra reveal" style="animation-delay: 0.2s;">
+            <div class="stat-icon-wrapper" style="color: #ff9800; background: rgba(255,152,0,0.1);"><i class="fa-solid fa-fire-flame-curved"></i></div>
             <div>
-                <div style="font-size: 1.8rem; font-weight: 800; color: white;"><?php echo $upcomingEventsCount; ?>
-                </div>
-                <div
-                    style="color: var(--p-text-dim); font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">
-                    Available Events</div>
+                <div style="color: var(--p-text-muted); font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.2rem;">Available Events</div>
+                <div style="font-size: 2rem; font-weight: 800; color: white; line-height: 1;"><?php echo $upcomingEventsCount; ?></div>
+            </div>
+        </div>
+        <div class="stat-card-ultra reveal" style="animation-delay: 0.3s;">
+            <div class="stat-icon-wrapper" style="color: #10b981; background: rgba(16,185,129,0.1);"><i class="fa-solid fa-user-shield"></i></div>
+            <div>
+                <div style="color: var(--p-text-muted); font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.2rem;">Status</div>
+                <div style="font-size: 1.2rem; font-weight: 800; color: white; line-height: 1;">EXTERNAL GUEST</div>
             </div>
         </div>
     </div>
 
-    <!-- Main Content - Full Width Events -->
-    <div>
-        <!-- My Registered Events -->
-        <div style="margin-bottom: 4rem;">
-            <h3
-                style="color: white; font-weight: 800; font-size: 1.5rem; margin-bottom: 2rem; display: flex; align-items: center; gap: 1rem;">
-                <i class="fa-solid fa-receipt" style="color: var(--p-brand);"></i> My Event Tickets
-            </h3>
+    <!-- Hall of Fame -->
+    <h2 class="section-title reveal"><i class="fa-solid fa-trophy" style="color: #eab308;"></i> Hall of Fame</h2>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 2.5rem; margin-bottom: 5rem;">
+        <?php
+        $resStmt = $pdo->query("SELECT r.*, e.name as event_name FROM results r JOIN events e ON r.event_id = e.id ORDER BY r.published_at DESC LIMIT 3");
+        $recentResults = $resStmt->fetchAll();
+        if (empty($recentResults)): ?>
+            <div class="glass-panel reveal" style="padding: 4rem; text-align: center; grid-column: 1/-1;">
+                <p style="color: var(--p-text-dim);">Historical records will appear here once published.</p>
+            </div>
+        <?php else: foreach ($recentResults as $idx => $res): ?>
+            <div class="glass-panel reveal" style="padding: 2.5rem; border-color: rgba(234,179,8,0.2); background: rgba(234,179,8,0.03); position: relative; overflow: hidden; animation-delay: <?php echo $idx * 0.1; ?>s;">
+                <div style="position: absolute; top: -15px; right: -15px; color: rgba(234,179,8,0.1);"><i class="fa-solid fa-medal fa-6x"></i></div>
+                <div style="width: 50px; height: 50px; background: rgba(234,179,8,0.1); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #eab308; margin-bottom: 1.5rem;"><i class="fa-solid fa-award fa-xl"></i></div>
+                <h3 style="color: white; font-weight: 800; font-size: 1.5rem; margin-bottom: 0.5rem;"><?php echo htmlspecialchars($res['winner_name']); ?></h3>
+                <p style="color: #eab308; font-size: 0.85rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 1.5rem;">Winner - <?php echo htmlspecialchars($res['event_name']); ?></p>
+                <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 1.5rem;">
+                    <span style="color: var(--p-text-dim); font-size: 0.9rem; font-weight: 600;">Runner Up: <?php echo htmlspecialchars($res['runner_up_name']); ?></span>
+                    <a href="results.php" style="color: var(--p-brand); font-size: 0.9rem; font-weight: 700; text-decoration: none;">Explore All <i class="fa-solid fa-arrow-right fa-xs"></i></a>
+                </div>
+            </div>
+        <?php endforeach; endif; ?>
+    </div>
 
-            <?php if (empty($myRegs)): ?>
-                <div class="glass-panel" style="text-align: center; padding: 4rem; background: rgba(255,255,255,0.01);">
-                    <i class="fa-solid fa-ticket-simple fa-3x"
-                        style="color: var(--p-text-dim); margin-bottom: 1.5rem; opacity: 0.3;"></i>
-                    <p style="color: var(--p-text-dim);">You haven't registered for any additional events yet.</p>
-                </div>
-            <?php else: ?>
-                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 1.5rem;">
-                    <?php foreach ($myRegs as $reg): ?>
-                        <div class="glass-panel"
-                            style="padding: 1.5rem; border-color: rgba(255,255,255,0.05); transition: 0.3s; cursor: pointer; background: rgba(255,255,255,0.02);"
-                            onclick="showTicket(<?php echo htmlspecialchars(json_encode($reg)); ?>)">
-                            <div style="display: flex; gap: 1.5rem; align-items: center;">
-                                <div
-                                    style="width: 50px; height: 50px; background: rgba(255,31,31,0.1); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--p-brand); font-weight: 800;">
-                                    <?php echo date('d', strtotime($reg['event_date'])); ?>
-                                </div>
-                                <div>
-                                    <h4 style="color: white; font-weight: 700; margin: 0;">
-                                        <?php echo htmlspecialchars($reg['event_name']); ?>
-                                    </h4>
-                                    <p style="color: var(--p-text-dim); font-size: 0.8rem; margin: 0;"><i
-                                            class="fa-solid fa-location-dot"></i>
-                                        <?php echo htmlspecialchars($reg['venue']); ?></p>
-                                    <?php if (!empty($reg['team_name'])): ?>
-                                        <div style="font-size: 0.75rem; color: #10b981; font-weight: 700; margin-top: 0.3rem;">
-                                            <i class="fa-solid fa-users"></i> Team:
-                                            <?php echo htmlspecialchars($reg['team_name']); ?>
-                                        </div>
-                                    <?php endif; ?>
-                                    <span
-                                        class="status-badge <?php echo in_array($reg['payment_status'], ['free', 'completed']) ? 'status-inside' : 'status-pending'; ?>"
-                                        style="margin-top: 0.5rem; display: inline-block;">
-                                        <?php echo strtoupper(in_array($reg['payment_status'], ['free', 'completed']) ? 'Confirmed' : $reg['payment_status']); ?>
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-            <?php endif; ?>
+    <!-- My Event Passes -->
+    <h2 class="section-title reveal"><i class="fa-solid fa-ticket-simple" style="color: var(--p-brand);"></i> My Event Passes</h2>
+    <?php if (empty($myRegs)): ?>
+        <div class="glass-panel reveal" style="padding: 4rem; text-align: center; margin-bottom: 5rem;">
+            <i class="fa-regular fa-folder-open" style="font-size: 3.5rem; color: var(--p-text-muted); margin-bottom: 1.5rem;"></i>
+            <p style="color: var(--p-text-dim); font-size: 1.1rem;">You haven't secured any passes yet.</p>
+            <a href="#explore" class="btn btn-outline" style="margin-top: 2rem;">Explore Events</a>
         </div>
-
-        <!-- Hall of Fame / Results section -->
-        <div style="margin-bottom: 4rem;">
-            <h3
-                style="color: white; font-weight: 800; font-size: 1.5rem; margin-bottom: 2rem; display: flex; align-items: center; gap: 1rem;">
-                <i class="fa-solid fa-trophy" style="color: #eab308;"></i> Hall of Fame
-            </h3>
-
-            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 1.5rem;">
-                <?php
-                // Fetch recent results
-                $resStmt = $pdo->query("SELECT r.*, e.name as event_name FROM results r JOIN events e ON r.event_id = e.id ORDER BY r.published_at DESC LIMIT 3");
-                $recentResults = $resStmt->fetchAll();
-
-                if (empty($recentResults)): ?>
-                    <div class="glass-panel"
-                        style="text-align: center; padding: 3rem; background: rgba(255,255,255,0.01); width: 100%; grid-column: 1/-1;">
-                        <p style="color: var(--p-text-dim);">Historical records will appear here once published.</p>
+    <?php else: ?>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 2.5rem; margin-bottom: 6rem;">
+            <?php foreach ($myRegs as $idx => $reg): ?>
+                <div class="event-card-glass reveal" style="animation-delay: <?php echo $idx * 0.1; ?>s;">
+                    <div class="card-banner">
+                        <span class="status-badge <?php echo in_array($reg['payment_status'], ['free', 'completed']) ? 'status-inside' : 'status-pending'; ?>">
+                            <?php echo strtoupper(in_array($reg['payment_status'], ['free', 'completed']) ? 'Confirmed' : $reg['payment_status']); ?>
+                        </span>
                     </div>
-                <?php else:
-                    foreach ($recentResults as $res): ?>
-                        <div class="glass-panel"
-                            style="padding: 1.5rem; border-color: rgba(234, 179, 8, 0.2); background: rgba(234,179,8,0.03); position: relative; overflow: hidden;">
-                            <div style="position: absolute; top: -10px; right: -10px; color: rgba(234,179,8,0.1);">
-                                <i class="fa-solid fa-medal fa-5x"></i>
-                            </div>
-                            <h4 style="color: white; font-weight: 800; font-size: 1.2rem; margin-bottom: 0.3rem;">
-                                <?php echo htmlspecialchars($res['winner_name']); ?>
-                            </h4>
-                            <p
-                                style="color: #eab308; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 1rem;">
-                                Winnner - <?php echo htmlspecialchars($res['event_name']); ?></p>
-                            <div
-                                style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 1rem;">
-                                <span style="color: var(--p-text-dim); font-size: 0.8rem;">Runner Up:
-                                    <?php echo htmlspecialchars($res['runner_up_name']); ?></span>
-                                <a href="results.php"
-                                    style="color: var(--p-brand); font-size: 0.8rem; font-weight: 700; text-decoration: none;">View
-                                    All <i class="fa-solid fa-chevron-right fa-xs"></i></a>
-                            </div>
-                        </div>
-                    <?php endforeach;
-                endif; ?>
-            </div>
-        </div>
-
-        <!-- Available Events -->
-        <div>
-            <h3
-                style="color: white; font-weight: 800; font-size: 1.5rem; margin-bottom: 2rem; display: flex; align-items: center; gap: 1rem;">
-                <i class="fa-solid fa-compass" style="color: var(--p-brand);"></i> Explore Events
-            </h3>
-
-            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 2rem;">
-                <?php foreach ($availableEvents as $event): ?>
-                    <div class="glass-panel"
-                        style="padding: 2rem; border-color: rgba(255,255,255,0.05); display: flex; flex-direction: column; justify-content: space-between; background: rgba(255,255,255,0.02);">
-                        <div>
-                            <div
-                                style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem;">
-                                <span
-                                    style="padding: 0.4rem 0.8rem; background: rgba(255,31,31,0.1); color: var(--p-brand); border-radius: 8px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase;"><?php echo htmlspecialchars($event['type']); ?></span>
-                                <div style="text-align: right;">
-                                    <div style="color: #10b981; font-weight: 800; font-size: 1.1rem;">
-                                        <?php
-                                        if ($event['is_paid']) {
-                                            $basePrice = floatval($event['base_price']);
-                                            $displayPrice = $basePrice;
-
-                                            // Check if GST applies to external users
-                                            if ($event['is_gst_enabled'] && in_array($event['gst_target'], ['both', 'externals_only'])) {
-                                                $gstRate = floatval($event['gst_rate']);
-                                                $gstAmount = $basePrice * ($gstRate / 100);
-                                                $displayPrice = $basePrice + $gstAmount;
-                                            }
-
-                                            echo '₹' . number_format($displayPrice, 2);
-                                        } else {
-                                            echo 'FREE';
-                                        }
-                                        ?>
-                                    </div>
-                                </div>
-                            </div>
-                            <h4 style="color: white; font-weight: 800; font-size: 1.3rem; margin-bottom: 0.85rem;">
-                                <?php echo htmlspecialchars($event['name']); ?>
-                            </h4>
-                            <p
-                                style="color: var(--p-text-dim); font-size: 0.9rem; line-height: 1.6; margin-bottom: 1.5rem; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">
-                                <?php echo htmlspecialchars($event['description']); ?>
-                            </p>
-                        </div>
-                        <div style="border-top: 1px solid rgba(255,255,255,0.05); padding-top: 1.5rem; margin-top: auto;">
-                            <div
-                                style="display: flex; gap: 1rem; margin-bottom: 1.5rem; color: var(--p-text-dim); font-size: 0.8rem; font-weight: 600;">
-                                <span><i class="fa-regular fa-calendar"
-                                        style="color: var(--p-brand); margin-right: 0.5rem;"></i>
-                                    <?php echo date('d M Y', strtotime($event['event_date'])); ?></span>
-                                <span><i class="fa-solid fa-location-dot"
-                                        style="color: var(--p-brand); margin-right: 0.5rem;"></i>
-                                    <?php echo htmlspecialchars($event['venue']); ?></span>
-                            </div>
-                            <button onclick="handleRegistration(<?php echo htmlspecialchars(json_encode($event)); ?>)"
-                                class="btn btn-primary" style="width: 100%; border-radius: 12px; font-weight: 700;">Register
-                                Now</button>
+                    <div class="card-content">
+                        <h3 style="font-size: 1.4rem; margin-bottom: 1.5rem; color: white;"><?php echo htmlspecialchars($reg['event_name']); ?></h3>
+                        <div class="event-meta-item"><i class="fa-regular fa-calendar"></i><span><?php echo date('D, M d | h:i A', strtotime($reg['event_date'])); ?></span></div>
+                        <div class="event-meta-item"><i class="fa-solid fa-location-dot"></i><span><?php echo htmlspecialchars($reg['venue']); ?></span></div>
+                        <?php if (!empty($reg['team_name'])): ?>
+                            <div class="event-meta-item" style="color: #10b981; font-weight: 700;"><i class="fa-solid fa-users"></i><span>Team: <?php echo htmlspecialchars($reg['team_name']); ?></span></div>
+                        <?php endif; ?>
+                        <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                            <button class="btn btn-primary" style="flex: 2;" onclick="showTicket(<?php echo htmlspecialchars(json_encode($reg)); ?>)">
+                                <i class="fa-solid fa-qrcode"></i> View Ticket
+                            </button>
+                            <button class="btn btn-outline" style="flex: 1; border-color: rgba(239,68,68,0.3); color: #ef4444;"
+                                onclick="cancelRegistration(<?php echo $reg['id']; ?>, '<?php echo htmlspecialchars($reg['event_name']); ?>')">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
                         </div>
                     </div>
-                <?php endforeach; ?>
-            </div>
+                </div>
+            <?php endforeach; ?>
         </div>
+    <?php endif; ?>
+
+    <!-- Discover Events -->
+    <h2 id="explore" class="section-title reveal"><i class="fa-solid fa-sparkles" style="color: #a855f7;"></i> Discover Upcoming Events</h2>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 2.5rem; margin-bottom: 4rem;">
+        <?php foreach ($availableEvents as $idx => $event): ?>
+            <div class="event-card-glass reveal" style="animation-delay: <?php echo $idx * 0.1; ?>s;">
+                <div class="card-banner" style="background: linear-gradient(135deg, rgba(255,31,31,0.1) 0%, rgba(10,10,10,0.5) 100%);">
+                    <div style="width: 100%; display: flex; justify-content: space-between; align-items: center;">
+                        <?php if ($event['capacity'] < 10): ?>
+                            <span style="background: #ef4444; color: white; padding: 0.4rem 1rem; border-radius: 99px; font-size: 0.75rem; font-weight: 800; animation: pulse 2s infinite;">
+                                <i class="fa-solid fa-fire"></i> ONLY <?php echo $event['capacity']; ?> LEFT
+                            </span>
+                        <?php else: ?><span></span><?php endif; ?>
+                        <?php
+                        $isPaid = $event['is_paid'];
+                        $displayPrice = floatval($event['base_price']);
+                        if ($isPaid && !empty($event['is_gst_enabled']) && in_array($event['gst_target'] ?? '', ['both', 'externals_only'])) {
+                            $displayPrice += $displayPrice * (floatval($event['gst_rate']) / 100);
+                        }
+                        ?>
+                        <?php if ($isPaid): ?>
+                            <span class="price-badge">₹<?php echo number_format($displayPrice, 2); ?></span>
+                        <?php else: ?>
+                            <span class="price-badge free">FREE ACCESS</span>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                <div class="card-content">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                        <h3 style="font-size: 1.6rem; color: white; font-weight: 800; flex: 1;"><?php echo htmlspecialchars($event['name']); ?></h3>
+                        <div style="background: rgba(255,255,255,0.05); padding: 0.4rem 0.8rem; border-radius: 12px; font-size: 0.7rem; color: var(--p-text-dim); border: 1px solid rgba(255,255,255,0.1); white-space: nowrap; margin-left: 0.5rem;">
+                            <i class="fa-solid fa-user-group"></i> <?php echo $event['capacity']; ?> Slots
+                        </div>
+                    </div>
+                    <p style="color: var(--p-text-dim); font-size: 1.05rem; line-height: 1.7; margin-bottom: 2.5rem; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">
+                        <?php echo htmlspecialchars($event['description']); ?>
+                    </p>
+                    <div style="background: rgba(255,255,255,0.02); padding: 1.5rem; border-radius: 20px; margin-bottom: 2rem; border: 1px solid rgba(255,255,255,0.03);">
+                        <div class="event-meta-item" style="margin-bottom: 1.2rem;"><i class="fa-regular fa-calendar-check"></i><span style="font-weight: 600;"><?php echo date('l, M d, Y', strtotime($event['event_date'])); ?></span></div>
+                        <div class="event-meta-item" style="margin-bottom: 1.2rem;"><i class="fa-regular fa-clock"></i><span style="font-weight: 600;"><?php echo date('h:i A', strtotime($event['event_date'])); ?></span></div>
+                        <div class="event-meta-item" style="margin: 0;"><i class="fa-solid fa-location-dot"></i><span style="font-weight: 600;"><?php echo htmlspecialchars($event['venue']); ?></span></div>
+                    </div>
+                    <button class="btn btn-primary"
+                        style="width: 100%; padding: 1.2rem; border-radius: 18px; font-weight: 800; font-size: 1rem; box-shadow: 0 15px 30px rgba(255,31,31,0.2);"
+                        onclick="handleRegistration(<?php echo htmlspecialchars(json_encode($event)); ?>)">
+                        Register <i class="fa-solid fa-arrow-right-long" style="margin-left: 0.8rem;"></i>
+                    </button>
+                </div>
+            </div>
+        <?php endforeach; ?>
     </div>
-</div>
-</div>
 
 </div>
 
-<!-- Ticket Modal -->
+
 <div id="ticketModal"
     style="display:none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); backdrop-filter: blur(10px); z-index: 1000; align-items: flex-start; justify-content: center; padding: 2rem 1rem; overflow-y: auto;">
     <div class="glass-panel"
@@ -476,7 +468,7 @@ $upcomingEventsCount = count($availableEvents);
         document.body.style.overflow = 'auto';
     }
 
-    // Event Registration Logic — Razorpay Checkout
+    // Event Registration Logic â€” Razorpay Checkout
     async function handleRegistration(event) {
         const eventId = typeof event === 'object' ? event.id : event;
         const isPaid = (typeof event === 'object' && event.is_paid == '1');
@@ -618,7 +610,7 @@ $upcomingEventsCount = count($availableEvents);
             membersHtml += `
                 <div style="margin-bottom: 1.5rem; padding: 1rem; background: rgba(255,255,255,0.03); border-radius: 12px; border: 1px solid rgba(255,255,255,0.08);">
                     <div style="color: #ff1f1f; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; margin-bottom: 0.8rem; letter-spacing: 0.1em;">
-                        ${i === 1 ? '⭐ Member 1 (Team Leader)' : `👤 Member ${i}`}
+                        ${i === 1 ? 'â­ Member 1 (Team Leader)' : `ðŸ‘¤ Member ${i}`}
                     </div>
                     <input id="swal-member-name-${i}" class="swal2-input" placeholder="Full Name *" 
                         style="margin: 0 0 0.6rem 0; width: 100%; height: 2.8rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 8px;">

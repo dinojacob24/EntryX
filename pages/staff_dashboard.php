@@ -1,6 +1,5 @@
 <?php
-// Session and Authentication Checks MUST come before any includes
-session_start();
+require_once '../config/project_root.php';
 
 // Access Control - Staff Only
 if (!isset($_SESSION['user_id'])) {
