@@ -50,6 +50,38 @@ $insideCount = $stmtInside->fetchColumn();
         position: relative;
     }
 
+    /* ── NAV BRANDING OVERRIDE ──
+       Hide ENTRYX text, replace with SUPER ADMIN next to logo
+    */
+    .nav-standard .container > a span {
+        display: none !important;
+    }
+
+    .nav-standard .container > a::after {
+        content: 'SUPER ADMIN';
+        display: inline-block;
+        color: white;
+        font-weight: 950;
+        font-size: 1rem;
+        padding: 0.4rem 1.2rem;
+        background: linear-gradient(135deg, rgba(255, 31, 31, 0.2) 0%, rgba(255, 31, 31, 0.05) 100%);
+        border: 1px solid rgba(255, 31, 31, 0.3);
+        border-radius: 12px;
+        margin-left: 1rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        box-shadow: 0 4px 15px rgba(255, 31, 31, 0.1);
+    }
+
+    @media (max-width: 768px) {
+        .nav-standard .container > a::after {
+            font-size: 0.7rem !important;
+            padding: 0.3rem 0.75rem !important;
+            margin-left: 0.4rem !important;
+            letter-spacing: 0.05em !important;
+        }
+    }
+
     /* Dashboard Top Section */
     .welcome-section {
         position: relative;
@@ -555,17 +587,8 @@ $insideCount = $stmtInside->fetchColumn();
 
 <div class="dashboard-container">
     <!-- Top Bar -->
-    <div class="dashboard-top-bar reveal">
-        <div class="user-info-badge">
-            <i class="fa-solid fa-shield-halved" style="color: var(--p-brand);"></i>
-            <span><?php echo htmlspecialchars($userName); ?></span>
-            <span class="role-badge-admin">SUPER ADMIN</span>
-        </div>
-        <button class="logout-btn-premium" onclick="confirmLogout()">
-            <i class="fa-solid fa-power-off"></i>
-            <span>Logout</span>
-        </button>
-    </div>
+    <!-- Top Bar Consolidation -->
+    <!-- Brand identity moved to main nav via CSS -->
 
     <!-- Admin Management Hub -->
     <div class="admin-hero-card reveal">
