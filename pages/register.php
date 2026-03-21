@@ -66,7 +66,7 @@ require_once '../includes/header.php';
             </p>
         </div>
 
-        <form id="registerForm" enctype="multipart/form-data" autocomplete="off">
+        <form id="registerForm" enctype="multipart/form-data" autocomplete="off" novalidate>
             <!-- Hidden Fields for Program ID -->
             <input type="hidden" name="external_program_id" value="<?php echo $activeProgram['id']; ?>">
             <input type="hidden" name="payment_status"
