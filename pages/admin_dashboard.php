@@ -549,7 +549,49 @@ $insideCount = $stmtInside->fetchColumn();
         table tbody td:last-child {
             justify-content: center !important;
             display: flex !important;
+            flex-wrap: wrap !important;
+            gap: 0.6rem !important;
             padding-top: 1rem !important;
+        }
+
+        /* Action buttons inside table rows — full width on mobile */
+        table tbody td:last-child .btn,
+        table tbody td:last-child button {
+            flex: 1 1 auto !important;
+            min-width: 0 !important;
+            justify-content: center !important;
+            font-size: 0.8rem !important;
+            padding: 0.6rem 0.8rem !important;
+            white-space: nowrap !important;
+        }
+
+        /* LIVE ON SITE span — full width */
+        table tbody td:last-child span[style*="satellite"] {
+            width: 100% !important;
+            justify-content: center !important;
+        }
+
+        /* External reg status banner — stack on mobile */
+        #externalRegStatus {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 1rem !important;
+        }
+
+        #externalRegStatus > div:first-child {
+            width: 100% !important;
+        }
+
+        #externalRegStatus button {
+            width: 100% !important;
+            justify-content: center !important;
+        }
+
+        /* Glass panels inside modals — full width padding fix */
+        #externalProgramModal .glass-panel,
+        #regViewModal .glass-panel {
+            padding: 1.5rem !important;
+            border-radius: 20px !important;
         }
     }
 
@@ -809,7 +851,7 @@ $insideCount = $stmtInside->fetchColumn();
 
     <!-- Current Status Banner -->
     <div id="externalRegStatus"
-        style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 16px; padding: 1.5rem; margin-bottom: 2rem; display: flex; align-items: center; justify-content: space-between;">
+        style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 16px; padding: 1.5rem; margin-bottom: 2rem; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem;">
         <div style="display: flex; align-items: center; gap: 1rem;">
             <i class="fa-solid fa-circle-xmark" style="color: #ef4444; font-size: 1.5rem;"></i>
             <div>
@@ -822,7 +864,7 @@ $insideCount = $stmtInside->fetchColumn();
     </div>
 
     <!-- Programs Table -->
-    <div id="programsTableContainer">
+    <div id="programsTableContainer" style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
         <p style="text-align: center; color: var(--p-text-muted); padding: 2rem;">
             <i class="fa-solid fa-spinner fa-spin"></i> Loading programs...
         </p>
@@ -1729,18 +1771,19 @@ $insideCount = $stmtInside->fetchColumn();
                 const statusDiv = document.getElementById('externalRegStatus');
                 if (isExternalRegEnabled) {
                     statusDiv.innerHTML = `
-                        <div style="display: flex; align-items: center; gap: 1rem;">
-                            <i class="fa-solid fa-circle-check" style="color: #10b981; font-size: 1.5rem;"></i>
+                        <div style="display: flex; align-items: center; gap: 1rem; flex: 1; min-width: 0;">
+                            <i class="fa-solid fa-circle-check" style="color: #10b981; font-size: 1.5rem; flex-shrink: 0;"></i>
                             <div>
                                 <div style="font-weight: 700; color: white; margin-bottom: 0.3rem;">External Registration: ENABLED</div>
                                 <div style="color: var(--p-text-dim); font-size: 0.85rem;">Active Program: ${programName}</div>
                             </div>
                         </div>
-                        <button class="btn btn-outline" style="padding: 0.7rem 1.5rem; border-color: #ef4444; color: #ef4444;" 
+                        <button class="btn btn-outline" style="padding: 0.7rem 1.5rem; border-color: #ef4444; color: #ef4444; flex-shrink: 0;" 
                                 onclick="disableExternalReg()">
                             <i class="fa-solid fa-power-off"></i> Disable
                         </button>
                     `;
+                    statusDiv.style.cssText = statusDiv.style.cssText + '; display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; justify-content: space-between;';
                     statusDiv.style.background = 'rgba(16, 185, 129, 0.1)';
                     statusDiv.style.borderColor = 'rgba(16, 185, 129, 0.3)';
                 } else {
@@ -1818,7 +1861,7 @@ $insideCount = $stmtInside->fetchColumn();
                         </span>
                     </td>
                     <td style="text-align: right; padding: 1.5rem; border-radius: 0 16px 16px 0; border-top: 1px solid rgba(255,255,255,0.03); border-bottom: 1px solid rgba(255,255,255,0.03);">
-                        <div style="display: flex; gap: 0.8rem; justify-content: flex-end;">
+                        <div style="display: flex; gap: 0.8rem; justify-content: flex-end; flex-wrap: wrap; align-items: center;">
                             ${(isExternalRegEnabled && currentExternalProgramId === parseInt(program.id)) ? `
                                 <span style="color: #10b981; font-size: 0.85rem; font-weight: 700; padding: 0.6rem 1.2rem; background: rgba(16, 185, 129, 0.1); border-radius: 12px; display: flex; align-items: center; gap: 0.5rem;">
                                     <i class="fa-solid fa-satellite-dish fa-spin"></i> LIVE ON SITE
