@@ -628,8 +628,14 @@ $upcomingEventsCount = count($availableEvents);
                     <?php endif; ?>
 
                     <?php if ($event['is_paid']): ?>
+                        <?php
+                        $displayPrice = floatval($event['base_price']);
+                        if (!empty($event['is_gst_enabled']) && in_array($event['gst_target'] ?? '', ['both', 'internals_only'])) {
+                            $displayPrice += $displayPrice * (floatval($event['gst_rate']) / 100);
+                        }
+                        ?>
                         <span class="price-badge">
-                            ₹<?php echo number_format($event['base_price'], 2); ?>
+                            ₹<?php echo number_format($displayPrice, 2); ?>
                         </span>
                     <?php else: ?>
                         <span class="price-badge free">FREE ACCESS</span>
